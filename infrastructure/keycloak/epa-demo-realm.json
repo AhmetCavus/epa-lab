@@ -1,0 +1,67 @@
+{
+  "realm": "epa-demo",
+  "displayName": "ePA Authentication Lab – lokaler Test-IDP",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "loginWithEmailAllowed": false,
+  "roles": {
+    "client": {
+      "${OIDC_CLIENT_ID}": [{ "name": "require-par", "description": "PAR client policy marker" }]
+    }
+  },
+  "clients": [
+    {
+      "clientId": "${OIDC_CLIENT_ID}",
+      "name": "ePA Authorization Demo",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${OIDC_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["${OIDC_DEFAULT_REDIRECT_URI}"],
+      "webOrigins": [],
+      "defaultClientScopes": [],
+      "optionalClientScopes": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "clientProfiles": {
+    "profiles": [
+      {
+        "name": "epa-par-required",
+        "description": "Require a PAR-issued request_uri without enabling a full FAPI profile",
+        "executors": [{ "executor": "secure-par-content", "configuration": {} }]
+      }
+    ]
+  },
+  "clientPolicies": {
+    "policies": [
+      {
+        "name": "epa-auth-server-par",
+        "enabled": true,
+        "conditions": [
+          { "condition": "client-roles", "configuration": { "roles": ["require-par"] } }
+        ],
+        "profiles": ["epa-par-required"]
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "demo-versicherte",
+      "firstName": "Fiktive",
+      "lastName": "Demoperson",
+      "enabled": true,
+      "requiredActions": [],
+      "credentials": [{ "type": "password", "value": "${TEST_USER_PASSWORD}", "temporary": false }]
+    }
+  ]
+}

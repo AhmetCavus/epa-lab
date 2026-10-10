@@ -1,0 +1,29 @@
+{
+  "name": "epa-auth-lab",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "env:init": "node infrastructure/setup-env.mjs",
+    "infra:up": "docker compose --env-file .env -f infrastructure/docker-compose.yml up -d --wait --wait-timeout 180",
+    "infra:down": "docker compose --env-file .env -f infrastructure/docker-compose.yml down",
+    "infra:reset": "docker compose --env-file .env -f infrastructure/docker-compose.yml down --volumes",
+    "dev": "pnpm --filter @epa-auth-lab/authorization dev",
+    "start": "pnpm --filter @epa-auth-lab/authorization start",
+    "build": "pnpm --filter @epa-auth-lab/authorization build",
+    "typecheck": "pnpm --filter @epa-auth-lab/authorization typecheck",
+    "test": "pnpm --filter @epa-auth-lab/authorization test",
+    "test:integration": "pnpm --filter @epa-auth-lab/authorization test:integration",
+    "lint": "eslint services/epa-authorization --max-warnings 0 && prettier --check .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "prettier": "3.9.9",
+    "typescript-eslint": "8.71.1"
+  }
+}
