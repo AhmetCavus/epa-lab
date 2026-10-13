@@ -6,6 +6,8 @@ export const configuration = registerAs('lab', () => {
 
   return {
     port: environment.PORT,
+    host: environment.HOST,
+    allowPrivateNetworkHttp: environment.OIDC_ALLOW_PRIVATE_NETWORK_HTTP,
     issuer: environment.OIDC_ISSUER,
     clientId: environment.OIDC_CLIENT_ID,
     clientSecret: environment.OIDC_CLIENT_SECRET,

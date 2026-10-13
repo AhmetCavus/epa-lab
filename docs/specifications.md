@@ -111,3 +111,9 @@ Die Demo verlangt außerdem Endpoints auf derselben Origin, JSON-Antworten bis 6
 finite Deadlines und exakte Redirect-Allowlisting. Diese lokalen Sicherheitsentscheidungen
 ersetzen keine TI-Vertrauensprüfung. Die lokale HTTP-Ausnahme erfüllt nicht das TLS-Gebot
 für einen produktiven OAuth/PAR-Betrieb.
+
+Für das isolierte Entwicklungs-LAN erweitert `OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true` die
+HTTP-Ausnahme auf RFC-1918-IPv4-Adressen. Ohne expliziten Opt-in bleiben nur Loopback-HTTP
+und HTTPS erlaubt. Die Tests in `configuration.validation.spec.ts` und
+`oidc-discovery.service.spec.ts` prüfen die Grenze; öffentliche HTTP-Adressen und Link-Local
+bleiben ausgeschlossen. Die Netzwerkoption begründet keine zusätzliche Gematik-Konformität.

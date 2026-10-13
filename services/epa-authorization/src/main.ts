@@ -16,7 +16,7 @@ async function bootstrap(): Promise<void> {
   configureRequestLogging(app);
   app.useGlobalFilters(new AuthorizationErrorFilter());
   app.enableShutdownHooks();
-  await app.listen(config.port, '127.0.0.1');
+  await app.listen(config.port, config.host);
 }
 
 void bootstrap().catch(() => {

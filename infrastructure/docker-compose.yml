@@ -1,6 +1,47 @@
 name: epa-auth-lab
 
 services:
+  epa-authorization:
+    profiles: ['backend']
+    image: epa-auth-lab/authorization:local
+    build:
+      context: ..
+      dockerfile: services/epa-authorization/Dockerfile
+    init: true
+    # Host networking keeps the browser and backend on the same reachable issuer.
+    # HOST and PORT control the host listener; docker ps shows no published ports.
+    network_mode: host
+    environment:
+      HOST: ${HOST:-127.0.0.1}
+      PORT: ${PORT:-3000}
+      OIDC_ALLOW_PRIVATE_NETWORK_HTTP: ${OIDC_ALLOW_PRIVATE_NETWORK_HTTP:-false}
+      OIDC_ISSUER: ${OIDC_ISSUER:?Set OIDC_ISSUER to a URL reachable from the backend container and browser}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?Set OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?Set OIDC_CLIENT_SECRET}
+      OIDC_DEFAULT_REDIRECT_URI: ${OIDC_DEFAULT_REDIRECT_URI:?Set OIDC_DEFAULT_REDIRECT_URI}
+      OIDC_ALLOWED_REDIRECT_URIS: ${OIDC_ALLOWED_REDIRECT_URIS:?Set OIDC_ALLOWED_REDIRECT_URIS}
+      OIDC_HTTP_TIMEOUT_MS: ${OIDC_HTTP_TIMEOUT_MS:-5000}
+      OIDC_DISCOVERY_CACHE_TTL_MS: ${OIDC_DISCOVERY_CACHE_TTL_MS:-300000}
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          const host = process.env.HOST === '0.0.0.0' ? '127.0.0.1' : process.env.HOST;
+          const address = host.includes(':') ? '[' + host + ']' : host;
+          fetch('http://' + address + ':' + process.env.PORT + '/health/ready',
+          { signal: AbortSignal.timeout(5000) })
+          .then(response => process.exit(response.ok ? 0 : 1))
+          .catch(() => process.exit(1))
+      interval: 10s
+      timeout: 6s
+      start_period: 10s
+      retries: 12
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.0
     command: ['start-dev', '--import-realm']
@@ -8,14 +49,14 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:?Set KEYCLOAK_ADMIN_USERNAME}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: dev-file
-      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-http://localhost:8080}
       KC_HEALTH_ENABLED: 'true'
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?Set OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?Set OIDC_CLIENT_SECRET}
       OIDC_DEFAULT_REDIRECT_URI: ${OIDC_DEFAULT_REDIRECT_URI:?Set OIDC_DEFAULT_REDIRECT_URI}
       TEST_USER_PASSWORD: ${TEST_USER_PASSWORD:?Set TEST_USER_PASSWORD}
     ports:
-      - '127.0.0.1:8080:8080'
+      - '${KEYCLOAK_BIND_ADDRESS:-127.0.0.1}:${KEYCLOAK_PORT:-8080}:8080'
     volumes:
       - keycloak-data:/opt/keycloak/data
       - ./keycloak/epa-demo-realm.json:/opt/keycloak/data/import/epa-demo-realm.json:ro

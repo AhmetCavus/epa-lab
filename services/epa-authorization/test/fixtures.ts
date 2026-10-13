@@ -4,6 +4,8 @@ import type { OidcMetadata } from '../src/oidc/oidc-discovery.service';
 
 export const testConfiguration: ConfigType<typeof configuration> = {
   port: 3000,
+  host: '127.0.0.1',
+  allowPrivateNetworkHttp: false,
   issuer: 'http://localhost:8080/realms/epa-demo',
   clientId: 'epa-auth-server',
   clientSecret: 'fictional-unit-test-secret',

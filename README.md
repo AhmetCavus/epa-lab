@@ -19,8 +19,9 @@ Projektverzeichnis wird nicht benötigt.
 | `docs/`                       | Architektur und Spezifikationsnachweise                     | [Architektur](docs/architecture.md), [Traceability und Abweichungen](docs/specifications.md) |
 
 Weitere Werkzeuge: Node.js **24 LTS**, pnpm **10.34.6**, Docker Compose, `@nestjs/config`,
-Zod, Jest und Supertest. Der Backend-Prozess läuft auf dem Host; Docker betreibt ausschließlich
-Keycloak mit der lokalen Entwicklungsdatenbank `dev-file`.
+Zod, Jest und Supertest. Im Standard-Workflow läuft der Backend-Prozess auf dem Host und
+Keycloak mit der lokalen Entwicklungsdatenbank `dev-file` in Docker. Optional läuft auch
+das Backend im Docker-Container mit dem Compose-Profil `backend`.
 
 Der Ablauf endet bei einem akzeptierten PAR und dem Keycloak-Loginformular. Es gibt keinen
 Authorization-Code-Callback, keinen Code Exchange, keine Tokenvalidierung und keine
@@ -51,8 +52,9 @@ kopieren und die drei leeren Secret-Felder selbst mit unabhängigen Werten füll
 automatisch importiert. Die dokumentierten Grundlagen sind [Keycloaks Containerbetrieb](https://www.keycloak.org/server/containers)
 und [Realm-Import mit Environment-Variablen](https://www.keycloak.org/server/importExport).
 
-NestJS ist unter `http://localhost:3000`, Keycloak unter `http://localhost:8080` erreichbar.
-Beide Host-Ports sind an `127.0.0.1` gebunden. Der feste Keycloak-Hostname hält Browser,
+Mit den Standardwerten aus `.env.example` ist NestJS unter `http://localhost:3000`,
+Keycloak unter `http://localhost:8080` erreichbar. Beide Host-Ports sind standardmäßig
+an `127.0.0.1` gebunden. Der feste Keycloak-Hostname hält Browser,
 Discovery und Backend auf demselben Issuer.
 
 ## Environment-Konfiguration
@@ -61,21 +63,28 @@ NestJS liest `.env` aus dem Repository-Verzeichnis unabhängig vom Arbeitsverzei
 Service. Vorhandene Prozessvariablen haben Vorrang. Ungültige Konfiguration stoppt den Start;
 Validierungsfehler nennen ausschließlich die betroffenen Feldnamen.
 
-| Variable                      | Bedeutung / Standard                                                             |
-| ----------------------------- | -------------------------------------------------------------------------------- |
-| `KEYCLOAK_ADMIN_USERNAME`     | Lokaler Bootstrap-Administrator, Beispiel `epa-lab-admin`                        |
-| `KEYCLOAK_ADMIN_PASSWORD`     | Zufälliges lokales Admin-Passwort                                                |
-| `OIDC_CLIENT_SECRET`          | Server-seitiges Secret, mindestens 16 Zeichen                                    |
-| `TEST_USER_PASSWORD`          | Passwort der fiktiven Identität `demo-versicherte`                               |
-| `PORT`                        | NestJS-Port, `3000`                                                              |
-| `OIDC_ISSUER`                 | Exakt `http://localhost:8080/realms/epa-demo` im mitgelieferten Compose-Setup    |
-| `OIDC_CLIENT_ID`              | `epa-auth-server`; wird auch in den Realm-Import eingesetzt                      |
-| `OIDC_DEFAULT_REDIRECT_URI`   | `http://localhost:3000/callback`; registriert, aber ohne implementierten Handler |
-| `OIDC_ALLOWED_REDIRECT_URIS`  | JSON-Array exakter URIs, initial `["http://localhost:3000/callback"]`            |
-| `OIDC_HTTP_TIMEOUT_MS`        | Discovery-/PAR-Deadline einschließlich Response Body, `5000`                     |
-| `OIDC_DISCOVERY_CACHE_TTL_MS` | Metadaten-Cache, `300000`                                                        |
+| Variable                          | Bedeutung / Standard                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `KEYCLOAK_ADMIN_USERNAME`         | Lokaler Bootstrap-Administrator, Beispiel `epa-lab-admin`                                                                 |
+| `KEYCLOAK_ADMIN_PASSWORD`         | Zufälliges lokales Admin-Passwort                                                                                         |
+| `KEYCLOAK_BIND_ADDRESS`           | Docker Host-Bind-Adresse, standardmäßig `127.0.0.1`                                                                       |
+| `KEYCLOAK_PORT`                   | Veröffentlichter Host-Port, standardmäßig `8080`; Container-Port bleibt `8080`                                            |
+| `KEYCLOAK_HOSTNAME`               | Vom Browser und Backend erreichbare Keycloak-Basis-URL, standardmäßig `http://localhost:8080`                             |
+| `OIDC_CLIENT_SECRET`              | Server-seitiges Secret, mindestens 16 Zeichen                                                                             |
+| `TEST_USER_PASSWORD`              | Passwort der fiktiven Identität `demo-versicherte`                                                                        |
+| `PORT`                            | NestJS-Port auf dem Host oder im Backend-Container, `3000`                                                                |
+| `HOST`                            | NestJS-Bind-Adresse auf dem Host oder im Backend-Container, standardmäßig `127.0.0.1`; `0.0.0.0` für alle IPv4-Interfaces |
+| `OIDC_ALLOW_PRIVATE_NETWORK_HTTP` | Explizite HTTP-Ausnahme für private IPv4-Adressen im isolierten Entwicklungs-LAN, standardmäßig `false`                   |
+| `OIDC_ISSUER`                     | Exakter Issuer; standardmäßig `http://localhost:8080/realms/epa-demo`, für LAN-Zugriff die erreichbare Server-Adresse     |
+| `OIDC_CLIENT_ID`                  | `epa-auth-server`; wird auch in den Realm-Import eingesetzt                                                               |
+| `OIDC_DEFAULT_REDIRECT_URI`       | `http://localhost:3000/callback`; registriert, aber ohne implementierten Handler                                          |
+| `OIDC_ALLOWED_REDIRECT_URIS`      | JSON-Array exakter URIs, initial `["http://localhost:3000/callback"]`                                                     |
+| `OIDC_HTTP_TIMEOUT_MS`            | Discovery-/PAR-Deadline einschließlich Response Body, `5000`                                                              |
+| `OIDC_DISCOVERY_CACHE_TTL_MS`     | Metadaten-Cache, `300000`                                                                                                 |
 
-HTTP-Konfiguration ist nur für Loopback erlaubt; sonst ist HTTPS erforderlich. Credentials
+HTTP-Konfiguration ist standardmäßig nur für Loopback erlaubt; sonst ist HTTPS erforderlich.
+Die explizite LAN-Ausnahme erlaubt ausschließlich private IPv4-Adressen aus `10.0.0.0/8`,
+`172.16.0.0/12` und `192.168.0.0/16`, keine öffentlichen HTTP-Hosts oder Link-Local-Adressen. Credentials
 in URLs, Fragmente, Wildcards und ein Default Redirect außerhalb der Allowlist werden
 abgelehnt. Discovery darf nur Endpoints derselben Origin ohne Query-Parameter liefern.
 
@@ -84,6 +93,96 @@ Zusätzliche Redirect URIs müssen **sowohl** in `OIDC_ALLOWED_REDIRECT_URIS` **
 automatisch nur `OIDC_DEFAULT_REDIRECT_URI`. Danach die lokale Infrastruktur zurücksetzen.
 Ein Backend-Allowlist-Eintrag allein ist keine Registrierung beim IDP. Das entspricht im Demo
 keiner Registrierung in einem TI Entity Statement.
+
+### Zugriff von einem anderen Rechner im Entwicklungs-LAN
+
+Für einen Server mit LAN-Adresse `192.168.178.131` und Keycloak-Host-Port `5555`
+die folgenden Werte in `.env` setzen:
+
+```dotenv
+HOST=0.0.0.0
+KEYCLOAK_BIND_ADDRESS=0.0.0.0
+KEYCLOAK_PORT=5555
+KEYCLOAK_HOSTNAME=http://192.168.178.131:5555
+OIDC_ISSUER=http://192.168.178.131:5555/realms/epa-demo
+OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true
+```
+
+Danach `pnpm infra:up` ausführen und den Backend-Prozess beziehungsweise die VS-Code-Debug-Session
+neu starten. Der laufende Watch Mode übernimmt Änderungen beim nächsten Source-Rebuild.
+Für diese Netzwerkänderungen ist kein Datenvolume-Reset erforderlich.
+
+Docker veröffentlicht **Host-Port 5555 auf Container-Port 8080**. `KC_HOSTNAME` steuert die
+advertisierten URLs und ändert den internen Listener nicht; siehe die
+[Keycloak-Hostname-Dokumentation](https://www.keycloak.org/server/hostname).
+Im Browser des anderen Rechners funktionieren dann:
+
+- Keycloak: `http://192.168.178.131:5555/`
+- Backend-Liveness: `http://192.168.178.131:3000/health/live`
+- Backend-Readiness: `http://192.168.178.131:3000/health/ready`
+
+Der Backend-Pfad `/` hat keinen Handler und liefert 404. Das bedeutet nicht, dass Port 3000
+unerreichbar ist. `localhost` bezeichnet im Browser immer dessen eigenen Rechner;
+Keycloak-Hostname, `OIDC_ISSUER` und `x-idp-iss` müssen daher dieselbe LAN-Adresse verwenden.
+Für den manuellen PAR-Test die URLs und den Issuer-Header des unten stehenden curl-Beispiels
+entsprechend ersetzen. Der Authorization-Code-Callback bleibt in M1 nicht implementiert.
+
+Falls ein Zugriff aus dem LAN trotz passender Listener scheitert, die bestehenden
+Firewall-Regeln für TCP 5555 und 3000 sowie die Route zum Server prüfen. Die Anwendung
+ändert keine Firewall-Regeln. Dieser HTTP-Modus ist auf ein isoliertes Entwicklungs-LAN begrenzt.
+
+Bei aktivem UFW benötigt der Backend-Listener auf dem Host beziehungsweise mit Host Networking
+eine passende eingehende Freigabe. Für das LAN `192.168.178.0/24` und Backend-Port `3000`:
+
+```bash
+sudo ufw allow in proto tcp from 192.168.178.0/24 to any port 3000 comment 'ePA lab LAN access'
+sudo ufw status verbose
+```
+
+Subnetz und Port an das eigene Lab anpassen. Den Zugriff anschließend vom anderen Rechner
+mit `curl --fail http://192.168.178.131:3000/health/ready` prüfen; ein erfolgreicher Aufruf
+auf dem Server selbst bestätigt keine eingehende Firewall-Freigabe.
+
+Keycloaks veröffentlichtes Docker-Port-Mapping nimmt einen anderen Netzwerkpfad: Docker
+erstellt NAT- und Forwarding-Regeln, die UFWs normale Host-INPUT-Regeln umgehen. Deshalb kann
+Port 5555 bereits funktionieren, während der Backend-Listener auf Port 3000 blockiert wird.
+Siehe [Docker und UFW](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw).
+
+### NestJS und Keycloak gemeinsam mit Docker starten
+
+Das [Dockerfile](services/epa-authorization/Dockerfile) baut das Backend mit Node.js 24 und
+dem versionierten pnpm-Lockfile. Das Runtime-Image enthält die kompilierten Dateien und
+Produktionsabhängigkeiten; der Server läuft als Benutzer `node`. `.env`, lokale Dependencies
+und Build-Artefakte sind durch [`.dockerignore`](.dockerignore) vom Build-Kontext ausgeschlossen.
+Compose übergibt die benötigten Backend-Variablen zur Laufzeit.
+
+Der Backend-Service verwendet [Docker Host Networking](https://docs.docker.com/engine/network/drivers/host/)
+auf Linux. Er teilt das Host-Netzwerk und erreicht Keycloak über dessen veröffentlichten
+Host-Port. Damit funktionieren sowohl die lokalen Standardwerte als auch die LAN-Konfiguration
+aus dem vorherigen Abschnitt mit derselben Issuer-Adresse im Browser und Backend.
+Es gibt für NestJS kein zusätzliches Docker-Port-Mapping; `HOST` und `PORT` steuern den
+Listener direkt. Unter Docker Desktop muss Host Networking ausdrücklich aktiviert sein.
+
+Einen laufenden `pnpm dev`-Prozess oder die Debug-Session beenden, um Port 3000 freizugeben.
+Anschließend im Repository-Verzeichnis ausführen:
+
+```bash
+pnpm docker:up
+curl --fail http://localhost:3000/health/ready
+pnpm docker:logs
+```
+
+`docker:up` baut das Backend-Image, startet beide Services und wartet auf deren Readiness.
+Das Backend startet erst nach Keycloaks erfolgreichem Healthcheck. Mit `HOST=0.0.0.0` und
+`PORT=3000` lauscht es auch im Container auf allen IPv4-Interfaces des Servers und ist im LAN
+unter `http://192.168.178.131:3000/health/ready` erreichbar. Die LAN-Adresse durch die eigene
+Server-Adresse ersetzen. `KEYCLOAK_HOSTNAME`, `OIDC_ISSUER` und `x-idp-iss` verwenden dabei
+weiterhin dieselbe LAN-Adresse; ein interner Service-Name wie `keycloak` ist kein vom
+externen Browser erreichbarer Issuer.
+
+Nach Source-Änderungen erneut `pnpm docker:up` ausführen. Der Container verwendet den
+gebauten Server ohne Watch Mode. `pnpm docker:down` stoppt beide Services und erhält das
+Keycloak-Datenvolume. Für das Debugging danach wieder `pnpm infra:up` und `pnpm dev` nutzen.
 
 ## Befehle
 
@@ -94,6 +193,9 @@ keiner Registrierung in einem TI Entity Statement.
 | `pnpm infra:up`                  | Keycloak starten und Readiness abwarten                                |
 | `pnpm infra:down`                | Keycloak stoppen; Entwicklungsdaten bleiben erhalten                   |
 | `pnpm infra:reset`               | Container und **lokales Keycloak-Datenvolume löschen**                 |
+| `pnpm docker:up`                 | Backend bauen, mit Keycloak starten und Readiness abwarten             |
+| `pnpm docker:down`               | Backend und Keycloak stoppen; Entwicklungsdaten bleiben erhalten       |
+| `pnpm docker:logs`               | Laufende Backend-Container-Logs anzeigen                               |
 | `pnpm dev`                       | Backend zunächst bauen, dann Compiler und Server im Watch Mode starten |
 | `pnpm build`                     | Ausführbares Backend nach `services/epa-authorization/dist/` bauen     |
 | `pnpm start`                     | Bereits gebautes Backend starten                                       |
@@ -113,6 +215,96 @@ pnpm infra:up
 ```
 
 `.env` bleibt beim Reset erhalten. Keine manuellen Admin-Console-Schritte sind erforderlich.
+
+## Postman- und Bruno-Collections
+
+Zwei importierbare Dateien enthalten jeweils die Ordner `idp` und `epa-authorization`:
+
+- [Postman Collection v2.1](docs/api-clients/epa-auth-lab.postman_collection.json)
+- [Bruno Collection JSON](docs/api-clients/epa-auth-lab.bruno_collection.json)
+
+Beide enthalten OIDC Discovery, JWKS, einen direkten PAR mit `client_secret_basic` und
+frischem PKCE sowie das Keycloak-Loginformular. Für NestJS sind Liveness, Readiness, der
+FdV Authorization Request und Beispiele für die Fehlerantworten 400, 403 und 404 enthalten.
+Requests dokumentieren ihre Header und Form-Parameter und prüfen die Antworten automatisch.
+Bei NestJS bleibt die Authorization-Antwort bei **302** stehen; Weiterleitungen sind für
+diesen Request deaktiviert. Nur der IDP-Loginformular-Request folgt internen Weiterleitungen.
+
+### Import und Modi
+
+Separate Environment-Dateien liegen unter `docs/api-clients/environments/`:
+
+| Modus  | Postman                                                                                      | Bruno                                              |
+| ------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `dev`  | [dev.postman_environment.json](docs/api-clients/environments/dev.postman_environment.json)   | [dev.bru](docs/api-clients/environments/dev.bru)   |
+| `stag` | [stag.postman_environment.json](docs/api-clients/environments/stag.postman_environment.json) | [stag.bru](docs/api-clients/environments/stag.bru) |
+| `prod` | [prod.postman_environment.json](docs/api-clients/environments/prod.postman_environment.json) | [prod.bru](docs/api-clients/environments/prod.bru) |
+
+**Postman:** Die Collection und die drei `*.postman_environment.json`-Dateien über **Import**
+öffnen. Anschließend das gewünschte Environment `ePA Authentication Lab — dev`, `stag` oder
+`prod` auswählen und dort die Werte bearbeiten. Jede Datei enthält `MODE`, alle Server-/Client-
+Parameter und ein leeres, als sensibel markiertes `OIDC_CLIENT_SECRET`. Das aktive Environment
+überschreibt die Collection-Defaults. Ohne aktives Environment kann weiterhin die Collection-
+Variable `MODE` die Defaults aus `DEV_*`, `STAG_*` und `PROD_*` auswählen. Siehe
+[Postman-Export](https://learning.postman.com/v11/docs/getting-started/importing-and-exporting/exporting-data)
+und [Variablen](https://learning.postman.com/docs/use/send-requests/variables/variables/).
+Die Scripts verwenden Web Crypto aus dem aktuellen
+[Postman Sandbox](https://learning.postman.com/docs/tests-and-scripts/write-scripts/postman-sandbox-reference/pm-require).
+
+**Bruno:** Über **Import Collection → Bruno Collection** die JSON-Datei wählen und ein
+lokales Zielverzeichnis angeben. Anschließend eines der enthaltenen Environments `dev`,
+`stag` oder `prod` auswählen und dessen Werte bearbeiten. Die Scripts funktionieren im
+Safe Mode. Das einzelne JSON-Exportformat enthält die Environments; siehe
+[Bruno-Export](https://docs.usebruno.com/get-started/import-export-data/export-collections).
+Die separaten nativen Dateien `dev.bru`, `stag.bru` und `prod.bru` können zusätzlich in den
+Ordner `environments/` der importierten Collection kopiert werden, um die Profile wiederherzustellen.
+Anschließend das gewünschte Environment auswählen. Bei bereits vorhandenen Dateien ersetzen
+sie die entsprechenden Profile; lokale Einstellungen deshalb vorher sichern. Für die Bruno CLI
+kann eine Datei direkt mit `--env-file /absoluter/pfad/dev.bru` ausgewählt werden.
+
+`dev` verwendet den aktuellen LAN-Server: NestJS `http://192.168.178.131:3000` und Issuer
+`http://192.168.178.131:5555/realms/epa-demo`. Bei einem anderen Lab die Werte anpassen.
+`stag` und `prod` enthalten HTTPS-Platzhalter unter `example.invalid`, die vor der Nutzung
+ersetzt werden müssen. TLS-Prüfung bleibt aktiviert.
+
+| Parameter                    | Verwendung                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------ |
+| `MODE`                       | Profil `dev`, `stag` oder `prod`                                               |
+| `EPA_AUTHORIZATION_BASE_URL` | Erreichbare NestJS-Basis-URL ohne abschließenden Slash                         |
+| `OIDC_ISSUER`                | Exakter Issuer ohne abschließenden Slash; entspricht Backend und IDP Discovery |
+| `OIDC_CLIENT_ID`             | Am IDP registrierter confidential Client, im Lab `epa-auth-server`             |
+| `OIDC_DEFAULT_REDIRECT_URI`  | Exakt registrierte und vom Backend erlaubte Redirect URI                       |
+| `OIDC_SCOPE`                 | Scopes für direkten PAR, in M1 `openid`                                        |
+| `X_USERAGENT`                | FdV-Produkt/Version, standardmäßig `EPA-AUTH-LAB/0.1.0`                        |
+| `OIDC_CLIENT_SECRET`         | Nur lokal setzen; ausschließlich für den direkten PAR-Request an den IDP       |
+
+Das Client Secret ist in keinem Export enthalten. In Postman `OIDC_CLIENT_SECRET` im
+aktiven Environment lokal setzen und als sensibel markieren. In Bruno das leere Secret-Feld
+des ausgewählten Environments lokal füllen; siehe
+[Bruno Secret Variables](https://docs.usebruno.com/secrets-management/secret-variables).
+Die Bruno CLI kann alternativ `DEV_OIDC_CLIENT_SECRET`, `STAG_OIDC_CLIENT_SECRET` oder
+`PROD_OIDC_CLIENT_SECRET` aus ihrer Prozessumgebung lesen. Backend-Requests benötigen kein
+Client Secret im API-Client. Die serverseitige `.env` wird von den exportierten Collections
+nicht automatisch gelesen.
+
+### Requests ausführen
+
+1. Beide Server starten und den gewünschten Modus konfigurieren.
+2. `idp / OIDC discovery` senden. Die weiteren IDP-URLs kommen aus dieser Antwort.
+3. Für den direkten IDP-Test `JWKS`, `Pushed authorization request` und unmittelbar danach
+   `Open authorization login form` ausführen. Bei einer bestehenden Anmeldung IDP-Cookies
+   vorher löschen. Für diesen Pfad ist das lokale Client Secret erforderlich.
+4. Für den Backend-Test die Requests in `epa-authorization` ausführen. Der erfolgreiche
+   `Send authorization request FdV` speichert die `Location` in `AUTHORIZATION_URL`; sie
+   kann unmittelbar im Browser geöffnet werden. `x-redirecturi` ist optional und initial
+   deaktiviert. Zum Test einer expliziten Redirect URI den Header aktivieren.
+
+Beim Wechsel des Modus oder der Server-/Client-Konfiguration werden gespeicherte Discovery
+Endpoints und Authorization Links verworfen. Die PAR-Referenzen sind kurzlebig und werden
+beim Öffnen verbraucht; vor jedem weiteren Loginformular-Test einen neuen PAR erzeugen.
+Der Ablauf endet am Loginformular. In M1 fehlen Callback, Code Exchange und Token-/Session-APIs.
+Die Dev-Redirect-URI bleibt `http://localhost:3000/callback`, solange sie so registriert ist;
+sie ist unabhängig von den LAN-Adressen der beiden Server.
 
 ## Manueller Smoke-Test
 

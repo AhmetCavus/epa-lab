@@ -64,7 +64,7 @@ export class OidcDiscoveryService {
     ];
     const hasSafeEndpoints = endpoints.every(
       (endpoint) =>
-        isSafeConfiguredUrl(endpoint) &&
+        isSafeConfiguredUrl(endpoint, this.config.allowPrivateNetworkHttp) &&
         new URL(endpoint).origin === issuerOrigin &&
         !new URL(endpoint).search,
     );
