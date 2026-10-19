@@ -19,6 +19,9 @@ export const testMetadata: OidcMetadata = {
   issuer: testConfiguration.issuer,
   authorization_endpoint: `${testConfiguration.issuer}/protocol/openid-connect/auth`,
   pushed_authorization_request_endpoint: `${testConfiguration.issuer}/protocol/openid-connect/ext/par/request`,
+  token_endpoint: `${testConfiguration.issuer}/protocol/openid-connect/token`,
+  jwks_uri: `${testConfiguration.issuer}/protocol/openid-connect/certs`,
+  id_token_signing_alg_values_supported: ['RS256'],
   token_endpoint_auth_methods_supported: ['client_secret_basic'],
   code_challenge_methods_supported: ['S256'],
 };

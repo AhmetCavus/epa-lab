@@ -1,9 +1,9 @@
-# Architektur von Milestone 1
+# Architektur: PAR und Browser-Login
 
 Das Backend repräsentiert den ePA Authorization Server gegenüber einem zukünftigen FdV.
 Gegenüber Keycloak ist dasselbe Backend ein **confidential OAuth/OIDC Client** und Relying
-Party. Keycloak ist der **OAuth Authorization Server und OpenID Provider**. Diese Rollen
-sind kontextabhängig; NestJS authentisiert keinen Versicherten.
+Party. Keycloak ist der **OAuth Authorization Server und OpenID Provider**. Die Browser-Demo
+validiert eine lokale OIDC-Identität; sie bestätigt keine sektorale Versichertenidentität.
 
 ## Ablauf und Vertrauensgrenzen
 
@@ -89,12 +89,56 @@ Cache-Misses teilen eine Discovery-Anfrage; Fehler werden nicht gecacht. Exakte 
 und gleiche Endpoint-Origin sind zusätzliche Demo-Einschränkungen, keine allgemeine
 OIDC-Regel für alle Provider. HTTP-Redirects bei Discovery und PAR werden niemals verfolgt.
 
-Transaktionsgeheimnisse leben ausschließlich im lokalen Aufruf von `AuthorizationService`.
-Es gibt keinen In-Memory Transaction Store, Cookie oder authentisierte Session. Nach dem
-Aufruf werden die Werte verworfen und später durch den JavaScript Garbage Collector
-freigegeben; das ist keine garantierte Speicherlöschung. Ohne Store und Callback kann
-kein Code Exchange erfolgen. Ein späterer Milestone muss Zustand, Ablauf, Bindung und
-einmalige Verwendung neu modellieren.
+Für die headerbasierte FdV-Smoke-Operation leben Transaktionsgeheimnisse ausschließlich im
+lokalen Aufruf von `AuthorizationService`. Diese Operation setzt kein Browser-Cookie und
+speichert keine Login-Transaktion. `/login` verwendet denselben PAR-Ablauf und speichert
+zusätzlich eine an den Browser gebundene, einmalig verwendbare Transaktion.
+
+## Browser-Login und Callback
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Backend as NestJS /login und /callback
+    participant Store as BrowserLoginStore
+    participant IDP as Keycloak
+    Browser->>Backend: GET /login
+    Backend->>IDP: PAR mit state, nonce und PKCE-Challenge
+    IDP-->>Backend: request_uri
+    Backend->>Store: Transaktion mit Browser-Bindung, Ablauf 10 Minuten
+    Backend-->>Browser: HttpOnly-Cookie und Redirect zum IDP
+    Browser->>IDP: Demo-Nutzer anmelden
+    IDP-->>Browser: Redirect /callback?code=...&state=...&iss=...
+    Browser->>Backend: Callback mit Browser-Cookie
+    Backend->>Store: Zustand und Bindung prüfen, Transaktion einmalig entnehmen
+    Backend->>IDP: Code Exchange mit ursprünglichem PKCE-Verifier
+    IDP-->>Backend: Access Token und ID Token
+    Backend->>IDP: Entdeckte JWKS laden oder Cache verwenden
+    Backend->>Backend: RS256-Signatur, iss, aud, azp, exp, iat, nonce und optional at_hash prüfen
+    Backend->>Store: Kurzlebige Session, Tokens verbleiben im Backend
+    Backend-->>Browser: Session-Cookie und Redirect /session
+```
+
+`BrowserLoginController` besitzt die drei Browser-Routen. `BrowserLoginService` prüft Callback-
+Parameter und orchestriert die Fertigstellung. `BrowserLoginStore` hält jeweils höchstens 1000
+Login-Transaktionen und Sessions in diesem Prozess. `TokenService` verwendet den vorhandenen
+HTTP-Transport und `client_secret_basic`; `IdTokenService` prüft Signatur und Claims mit
+`jsonwebtoken` und Provider-Schlüsseln aus dem validierten JWKS-Endpoint. RS256 ist die einzige
+unterstützte ID-Token-Signaturmethode dieser Demo. Unbekannte Schlüssel-IDs lösen eine
+JWKS-Aktualisierung aus; mehrfach vorhandene IDs und ungeeignete Schlüssel werden abgelehnt.
+
+Cookies sind `HttpOnly`, `SameSite=Lax` und bei HTTPS `Secure`. Der Login-Cookie gilt nur für
+`/callback`. Eine Transaktion wird vor dem Code Exchange synchron entfernt, sodass parallele
+Callbacks und Wiederholungen keine zweite Token-Anfrage auslösen. Ein Callback ohne gültige
+Browser-Bindung verbraucht die Transaktion nicht. Providerfehler benötigen ebenfalls gültigen
+Zustand und Browser-Bindung. Die Session-ID wird nach erfolgreichem Login neu erzeugt.
+
+Sessions laufen spätestens nach 15 Minuten oder mit dem früheren Access-/ID-Token-Ablauf ab.
+Abgelaufene Einträge werden bei Store-Zugriffen entfernt; Neustarts löschen alle Einträge.
+`/session` liefert nur den Anmeldestatus, validierte Identität und Ablaufzeit. Tokens, Codes,
+PKCE-Verifier und vollständige Callback-URLs werden weder ausgegeben noch geloggt. Es gibt
+keinen Refresh, keine persistierende oder normative ePA User Session und keine Gerätebindung.
+Direkte PARs aus API-Clients gehören nicht zu einer Browser-Login-Transaktion.
 
 Jeder HTTP-Aufruf erhält eine UUID. Eine vom Client bereitgestellte gültige UUID wird exakt
 zurückgegeben und bei PAR-Start, -Abschluss und Fehlern verwendet. Logs enthalten Operation,

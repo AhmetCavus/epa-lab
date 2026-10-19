@@ -3,6 +3,9 @@ import { Test } from '@nestjs/testing';
 import type { ConfigType } from '@nestjs/config';
 import type { Server } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { parseEnv } from 'node:util';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { configuration } from '../src/config/configuration';
@@ -12,9 +15,12 @@ import { OidcDiscoveryService } from '../src/oidc/oidc-discovery.service';
 import type { OidcMetadata } from '../src/oidc/oidc-discovery.service';
 import { createAuthorizationTransaction } from '../src/oidc/authorization-transaction';
 
-async function openKeycloakLoginPage(url: URL, timeoutMs: number): Promise<Response> {
+async function openKeycloakLoginPage(
+  url: URL,
+  timeoutMs: number,
+  cookies = new Map<string, string>(),
+): Promise<Response> {
   const origin = url.origin;
-  const cookies = new Map<string, string>();
 
   for (let redirectCount = 0; redirectCount < 3; redirectCount += 1) {
     const response = await fetch(url, {
@@ -132,6 +138,59 @@ describe('real Keycloak 26.8.0 PAR integration (requires pnpm infra:up)', () => 
     const body = await response.text();
     expect(response.status).toBe(400);
     expect(body.includes('id="kc-form-login"')).toBe(false);
+  });
+
+  it('completes a real browser login, exchanges the code and validates the ID token', async () => {
+    const environment = parseEnv(await readFile(resolve(__dirname, '../../../.env'), 'utf8'));
+    const password = process.env.TEST_USER_PASSWORD ?? environment.TEST_USER_PASSWORD;
+
+    if (!password) {
+      throw new Error('TEST_USER_PASSWORD is required for the real browser login test');
+    }
+
+    const browser = request.agent(app.getHttpServer());
+    const started = await browser.get('/login').redirects(0).expect(302);
+    const cookies = new Map<string, string>();
+    const loginPage = await openKeycloakLoginPage(
+      new URL(started.get('Location') ?? ''),
+      config.httpTimeoutMs,
+      cookies,
+    );
+    const html = await loginPage.text();
+    const form = /<form\b[^>]*\bid="kc-form-login"[^>]*>/.exec(html)?.[0];
+    const action = form === undefined ? undefined : /\baction="([^"]+)"/.exec(form)?.[1];
+
+    if (!action) {
+      throw new Error('Keycloak login form action is missing');
+    }
+
+    const actionUrl = new URL(action.replace(/&amp;/g, '&'), metadata.authorization_endpoint);
+    expect(actionUrl.origin).toBe(new URL(config.issuer).origin);
+    const authenticated = await fetch(actionUrl, {
+      method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(config.httpTimeoutMs),
+      headers: {
+        cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join('; '),
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ username: 'demo-versicherte', password, credentialId: '' }),
+    });
+    expect(authenticated.status).toBe(302);
+    const callback = new URL(authenticated.headers.get('location') ?? '');
+    expect(`${callback.origin}${callback.pathname}`).toBe(config.defaultRedirectUri);
+    expect(Boolean(callback.searchParams.get('code'))).toBe(true);
+    await authenticated.body?.cancel();
+    const completed = await browser
+      .get('/callback')
+      .query(Object.fromEntries(callback.searchParams))
+      .redirects(0)
+      .expect(303);
+    expect(completed.get('Location')).toBe('/session');
+    const session = await browser.get('/session').expect(200);
+    expect(session.body).toMatchObject({ authenticated: true, user: { issuer: config.issuer } });
+    expect(session.text).not.toContain('access_token');
+    expect(session.text).not.toContain('id_token');
   });
 
   it('rejects invented request_uri references', async () => {

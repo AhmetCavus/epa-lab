@@ -4,7 +4,11 @@ import { z } from 'zod';
 import { configuration } from '../config/configuration';
 import { AuthorizationError } from '../common/errors/authorization-error';
 import type { AuthorizationTransaction } from './authorization-transaction';
-import { OidcClientService, OidcUpstreamError } from './oidc-client.service';
+import {
+  createClientAuthorization,
+  OidcClientService,
+  OidcUpstreamError,
+} from './oidc-client.service';
 import type { OidcMetadata } from './oidc-discovery.service';
 
 const parResponseSchema = z.object({
@@ -25,10 +29,6 @@ const parResponseSchema = z.object({
 });
 
 export type ParResponse = z.infer<typeof parResponseSchema>;
-
-function formEncode(credential: string): string {
-  return new URLSearchParams({ credential }).toString().slice('credential='.length);
-}
 
 @Injectable()
 export class ParService {
@@ -61,10 +61,6 @@ export class ParService {
       code_challenge: transaction.codeChallenge,
       code_challenge_method: 'S256',
     });
-    const credentials = Buffer.from(
-      `${formEncode(this.config.clientId)}:${formEncode(this.config.clientSecret)}`,
-      'utf8',
-    ).toString('base64');
 
     this.logger.log({ ...context, event: 'par_start' });
 
@@ -75,7 +71,10 @@ export class ParService {
         {
           method: 'POST',
           headers: {
-            authorization: `Basic ${credentials}`,
+            authorization: createClientAuthorization(
+              this.config.clientId,
+              this.config.clientSecret,
+            ),
             'content-type': 'application/x-www-form-urlencoded',
             accept: 'application/json',
           },

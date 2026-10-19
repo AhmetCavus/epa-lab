@@ -6,6 +6,7 @@ import { createAuthorizationTransaction } from '../oidc/authorization-transactio
 import { OidcDiscoveryService } from '../oidc/oidc-discovery.service';
 import { ParService } from '../oidc/par.service';
 import type { AuthorizationRequest } from './authorization-request';
+import { BrowserLoginStore } from './browser-login/browser-login.store';
 
 @Injectable()
 export class AuthorizationService {
@@ -15,9 +16,10 @@ export class AuthorizationService {
     @Inject(configuration.KEY) private readonly config: ConfigType<typeof configuration>,
     private readonly discovery: OidcDiscoveryService,
     private readonly par: ParService,
+    private readonly browserLogins: BrowserLoginStore,
   ) {}
 
-  async initiate(request: AuthorizationRequest): Promise<string> {
+  async initiate(request: AuthorizationRequest, browserBinding?: string): Promise<string> {
     if (request.issuer !== this.config.issuer) {
       throw new AuthorizationError(
         { status: 404, code: 'noResource' },
@@ -41,7 +43,7 @@ export class AuthorizationService {
       issuer: this.config.issuer,
     });
     const metadata = await this.discovery.discover();
-    // No callback exists in M1: secrets live only for this operation, with no persistent session.
+    // Browser logins retain their transaction; the header-only FdV smoke test remains stateless.
     const transaction = createAuthorizationTransaction();
     const pushedRequest = await this.par.push(
       metadata,
@@ -52,6 +54,10 @@ export class AuthorizationService {
     const authorizationUrl = new URL(metadata.authorization_endpoint);
     authorizationUrl.searchParams.set('client_id', this.config.clientId);
     authorizationUrl.searchParams.set('request_uri', pushedRequest.request_uri);
+
+    if (browserBinding) {
+      this.browserLogins.save({ transaction, browserBinding, metadata, redirectUri });
+    }
 
     return authorizationUrl.toString();
   }

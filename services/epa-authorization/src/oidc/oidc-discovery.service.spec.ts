@@ -60,6 +60,9 @@ describe('OidcDiscoveryService', () => {
     { ...testMetadata, authorization_endpoint: 'http://localhost:8080/auth?injected=true' },
     { ...testMetadata, token_endpoint_auth_methods_supported: ['client_secret_post'] },
     { ...testMetadata, code_challenge_methods_supported: ['plain'] },
+    { ...testMetadata, token_endpoint: 'http://attacker.example/token' },
+    { ...testMetadata, jwks_uri: 'http://localhost:9090/certs' },
+    { ...testMetadata, id_token_signing_alg_values_supported: ['none'] },
     null,
   ])('rejects invalid metadata without caching it (%#)', async (metadata) => {
     requestJson.mockResolvedValueOnce(metadata);
@@ -78,6 +81,8 @@ describe('OidcDiscoveryService', () => {
     const metadata = {
       ...testMetadata,
       issuer,
+      token_endpoint: `${issuer}/protocol/openid-connect/token`,
+      jwks_uri: `${issuer}/protocol/openid-connect/certs`,
       authorization_endpoint: `${issuer}/protocol/openid-connect/auth`,
       pushed_authorization_request_endpoint: `${issuer}/protocol/openid-connect/ext/par/request`,
     };

@@ -7,7 +7,7 @@ vars {
   @description('Confidential client registered at the IDP.')
   OIDC_CLIENT_ID: epa-auth-server
   @description('Exact URI registered at the IDP and allowed by the authorization server.')
-  OIDC_DEFAULT_REDIRECT_URI: http://localhost:3000/callback
+  OIDC_DEFAULT_REDIRECT_URI: http://192.168.178.131:3000/callback
   @description('OIDC scopes pushed to the IDP; Milestone 1 uses openid.')
   OIDC_SCOPE: openid
   @description('Required FdV identifier: product/version, matching the backend header schema.')

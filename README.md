@@ -23,10 +23,11 @@ Zod, Jest und Supertest. Im Standard-Workflow läuft der Backend-Prozess auf dem
 Keycloak mit der lokalen Entwicklungsdatenbank `dev-file` in Docker. Optional läuft auch
 das Backend im Docker-Container mit dem Compose-Profil `backend`.
 
-Der Ablauf endet bei einem akzeptierten PAR und dem Keycloak-Loginformular. Es gibt keinen
-Authorization-Code-Callback, keinen Code Exchange, keine Tokenvalidierung und keine
-authentisierte ePA User Session. VAU, TI-Föderation, reale sektorale IDPs, Authenticator,
-Gerätebindung und medizinische Daten sind außerhalb dieses Milestones.
+Die headerbasierte FdV-Operation und die direkten IDP-Requests bleiben PAR-Smoke-Tests.
+Die ergänzende Browser-Demo unter `/login` unterstützt Callback, Code Exchange, ID-Token-
+Validierung und eine kurzlebige lokale Browser-Session. Diese Session ist keine normative
+ePA User Session. VAU, TI-Föderation, reale sektorale IDPs, Authenticator, Gerätebindung
+und medizinische Daten sind außerhalb der Demo.
 
 ## Voraussetzungen und Installation
 
@@ -77,7 +78,7 @@ Validierungsfehler nennen ausschließlich die betroffenen Feldnamen.
 | `OIDC_ALLOW_PRIVATE_NETWORK_HTTP` | Explizite HTTP-Ausnahme für private IPv4-Adressen im isolierten Entwicklungs-LAN, standardmäßig `false`                   |
 | `OIDC_ISSUER`                     | Exakter Issuer; standardmäßig `http://localhost:8080/realms/epa-demo`, für LAN-Zugriff die erreichbare Server-Adresse     |
 | `OIDC_CLIENT_ID`                  | `epa-auth-server`; wird auch in den Realm-Import eingesetzt                                                               |
-| `OIDC_DEFAULT_REDIRECT_URI`       | `http://localhost:3000/callback`; registriert, aber ohne implementierten Handler                                          |
+| `OIDC_DEFAULT_REDIRECT_URI`       | `http://localhost:3000/callback`; für die LAN-Demo `http://192.168.178.131:3000/callback`                                 |
 | `OIDC_ALLOWED_REDIRECT_URIS`      | JSON-Array exakter URIs, initial `["http://localhost:3000/callback"]`                                                     |
 | `OIDC_HTTP_TIMEOUT_MS`            | Discovery-/PAR-Deadline einschließlich Response Body, `5000`                                                              |
 | `OIDC_DISCOVERY_CACHE_TTL_MS`     | Metadaten-Cache, `300000`                                                                                                 |
@@ -90,7 +91,8 @@ abgelehnt. Discovery darf nur Endpoints derselben Origin ohne Query-Parameter li
 
 Zusätzliche Redirect URIs müssen **sowohl** in `OIDC_ALLOWED_REDIRECT_URIS` **als auch** in
 `clients[].redirectUris` der Realm-Datei explizit eingetragen werden. Der Import registriert
-automatisch nur `OIDC_DEFAULT_REDIRECT_URI`. Danach die lokale Infrastruktur zurücksetzen.
+initial nur `OIDC_DEFAULT_REDIRECT_URI`. Bei einem bestehenden Realm die registrierten
+Redirect URIs zusätzlich über die Keycloak Admin Console oder Admin API aktualisieren.
 Ein Backend-Allowlist-Eintrag allein ist keine Registrierung beim IDP. Das entspricht im Demo
 keiner Registrierung in einem TI Entity Statement.
 
@@ -106,7 +108,14 @@ KEYCLOAK_PORT=5555
 KEYCLOAK_HOSTNAME=http://192.168.178.131:5555
 OIDC_ISSUER=http://192.168.178.131:5555/realms/epa-demo
 OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true
+OIDC_DEFAULT_REDIRECT_URI=http://192.168.178.131:3000/callback
+OIDC_ALLOWED_REDIRECT_URIS=["http://192.168.178.131:3000/callback"]
 ```
+
+Bei einem bestehenden Realm unter **Clients → epa-auth-server → Settings → Valid Redirect URIs**
+den bisherigen Callback durch `http://192.168.178.131:3000/callback` ersetzen. Ein Neustart
+überschreibt den vorhandenen Realm nicht; die `.env`-Änderung allein aktualisiert deshalb
+keine bereits registrierte Redirect URI.
 
 Danach `pnpm infra:up` ausführen und den Backend-Prozess beziehungsweise die VS-Code-Debug-Session
 neu starten. Der laufende Watch Mode übernimmt Änderungen beim nächsten Source-Rebuild.
@@ -125,7 +134,7 @@ Der Backend-Pfad `/` hat keinen Handler und liefert 404. Das bedeutet nicht, das
 unerreichbar ist. `localhost` bezeichnet im Browser immer dessen eigenen Rechner;
 Keycloak-Hostname, `OIDC_ISSUER` und `x-idp-iss` müssen daher dieselbe LAN-Adresse verwenden.
 Für den manuellen PAR-Test die URLs und den Issuer-Header des unten stehenden curl-Beispiels
-entsprechend ersetzen. Der Authorization-Code-Callback bleibt in M1 nicht implementiert.
+entsprechend ersetzen. Für den vollständigen Browser-Login `/login` am Backend öffnen.
 
 Falls ein Zugriff aus dem LAN trotz passender Listener scheitert, die bestehenden
 Firewall-Regeln für TCP 5555 und 3000 sowie die Route zum Server prüfen. Die Anwendung
@@ -302,9 +311,44 @@ nicht automatisch gelesen.
 Beim Wechsel des Modus oder der Server-/Client-Konfiguration werden gespeicherte Discovery
 Endpoints und Authorization Links verworfen. Die PAR-Referenzen sind kurzlebig und werden
 beim Öffnen verbraucht; vor jedem weiteren Loginformular-Test einen neuen PAR erzeugen.
-Der Ablauf endet am Loginformular. In M1 fehlen Callback, Code Exchange und Token-/Session-APIs.
-Die Dev-Redirect-URI bleibt `http://localhost:3000/callback`, solange sie so registriert ist;
-sie ist unabhängig von den LAN-Adressen der beiden Server.
+Die Collection-Smoke-Tests enden am Loginformular und speichern keine Browser-Login-Transaktion.
+Die Dev-Redirect-URI ist `http://192.168.178.131:3000/callback` und muss in Keycloak registriert
+sowie im Backend erlaubt sein. Für den vollständigen Ablauf die Browser-Demo verwenden.
+
+## Vollständiger Browser-Login
+
+Im Browser [http://192.168.178.131:3000/login](http://192.168.178.131:3000/login) öffnen;
+bei einer anderen Backend-Adresse entsprechend anpassen. `/login` verwendet den konfigurierten
+Issuer und Callback, erzeugt einen echten PAR und setzt ein `HttpOnly`-/`SameSite=Lax`-Cookie
+zur Bindung an diesen Browser. Mit `demo-versicherte` und `TEST_USER_PASSWORD` aus `.env` anmelden.
+
+Nach der Anmeldung ruft Keycloak `/callback` mit `code`, `state` und gegebenenfalls `iss` auf.
+Der Server prüft die einmalige Login-Transaktion und Browser-Bindung, tauscht den Code mit dem
+ursprünglichen PKCE-Verifier aus und validiert den RS256-signierten ID Token gegen die entdeckten
+JWKS. Geprüft werden Issuer, Audience, `azp`, Ablauf, Ausstellungszeit und `nonce`; ein vorhandener
+`at_hash` muss zum Access Token passen. Danach folgt ein Redirect zu `/session`:
+
+```json
+{
+  "authenticated": true,
+  "user": {
+    "subject": "<Keycloak-subject>",
+    "issuer": "http://192.168.178.131:5555/realms/epa-demo"
+  },
+  "expiresAt": "<ISO-8601>"
+}
+```
+
+Tokens verbleiben im Backend. Die Session wird durch ein zufälliges `HttpOnly`-Cookie identifiziert;
+bei HTTPS erhalten die Cookies zusätzlich `Secure`. Login-Transaktionen laufen nach zehn Minuten
+ab. Sessions enden spätestens mit dem Access-/ID-Token oder nach 15 Minuten. Beide Stores halten
+höchstens jeweils 1000 Einträge, entfernen abgelaufene Einträge bei Zugriffen und gehen bei einem
+Backend-Neustart verloren. Ohne gültige Session liefert `/session` `{"authenticated": false}`.
+
+Immer mit `/login` im selben Browser starten. Ein direkter PAR aus Postman oder die headerbasierte
+FdV-Smoke-Operation liefert dem Callback keine gespeicherte Browser-Transaktion; außerdem teilt
+Postman seine Cookies nicht mit dem Browser. Solche Callbacks werden abgelehnt. Browser-Cookies
+sind keine Gerätebindung oder ePA-Session-Autorisierung.
 
 ## Manueller Smoke-Test
 
@@ -326,9 +370,8 @@ und eine `Location` auf den entdeckten Keycloak Authorization Endpoint. Deren Qu
 Die Location unmittelbar und einmalig im Browser öffnen: Keycloak kann intern auf
 `login-actions/authenticate` weiterleiten und zeigt dann sein echtes Loginformular.
 Die Referenz ist kurzlebig und wird beim Aufruf verbraucht; bei Ablauf oder erneutem Aufruf
-einen neuen initialen Request senden. Authentisierung nicht abschließen: Der registrierte
-Callback ist in M1 bewusst nicht implementiert und würde mit 404 enden. Das Passwort der
-Testidentität ist für spätere Milestones in der lokalen `.env` vorhanden.
+einen neuen initialen Request senden. Dieser headerbasierte Smoke-Test endet am Loginformular.
+Für die Anmeldung mit Callback und Token Exchange stattdessen `/login` im Browser verwenden.
 
 Optionale Header: `x-redirecturi` erlaubt ausschließlich registrierte Allowlist-Werte.
 `x-authorize-representative: true` oder `x-authorize-egk: true` werden ausdrücklich mit
@@ -348,13 +391,17 @@ pnpm test:integration
 ```
 
 Unit-Tests prüfen Konfiguration, Header, Allowlisting, Discovery-Cache, PKCE inklusive
-RFC-Testvektor, PAR-Payload und -Antwort, Timeouts, Fehler und geheimnisfreie Logs. Ein
+RFC-Testvektor, PAR-Payload und -Antwort, Timeouts, Fehler und geheimnisfreie Logs. Browser-Tests
+prüfen PKCE-Code-Exchange, Browser-Bindung, Callback-Replay, Ablauf, signierte ID Tokens,
+Audience-/Issuer-/Nonce-Prüfung sowie JWKS-Cache und Key-Rotation. Ein
 lokaler TCP-Test prüft die tatsächliche Deadline bei einem unvollständigen Response Body.
 
 Die getrennte Integration erstellt eine echte NestJS-Anwendung mit Supertest und echten
 OIDC Services. Sie ruft die laufende Keycloak-Instanz auf, erhält eine reale PAR-Referenz
 und prüft das echte Loginformular mit frischen Cookies. Sie prüft außerdem PAR-Pflicht,
-ungültige Referenzen und fehlende Client Credentials. Es findet kein Benutzerlogin statt.
+ungültige Referenzen und fehlende Client Credentials. Ein zusätzlicher Test meldet
+`demo-versicherte` mit `TEST_USER_PASSWORD` aus der lokalen `.env` an und prüft Callback,
+echten Code Exchange, ID-Token-Validierung und Browser-Session.
 Erfolg wird nur bei erreichbarem Keycloak gemeldet; es gibt keinen Mock-Fallback und kein
 stillschweigendes Überspringen.
 
@@ -383,10 +430,10 @@ Credentials verwenden. Backend und Realm sind auf ein Lernexperiment begrenzt; d
 fiktive Testnutzer ist keine bestätigte Versichertenidentität.
 
 Nachfolgende Milestones können zunächst das separat entwickelte Android-FdV und den
-Authenticator anbinden. Callback, begrenzte Transaction Storage, Code Exchange, ID Token
-Validation und Gerätebindung benötigen eigene Implementierung und Tests. TI-Föderation,
-Trust Chains und VAU bleiben zusätzliche eigenständige Aufgaben. Der aktuelle Code
-behauptet keine gematik-Konformität und erzeugt keinen erfolgreichen Login als Platzhalter.
+Authenticator anbinden. Persistierende Sessions, Token Refresh und Gerätebindung benötigen
+eigene Implementierung und Tests. TI-Föderation, Trust Chains und VAU bleiben zusätzliche
+eigenständige Aufgaben. Der Browser-Login ist eine lokale OIDC-Demo; der aktuelle Code
+behauptet keine gematik-Konformität.
 
 ## Angewandte Workspace-Vorgaben
 

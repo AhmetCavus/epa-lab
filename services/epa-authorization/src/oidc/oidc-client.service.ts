@@ -10,7 +10,17 @@ export type OidcFailureReason =
   | 'invalid_json'
   | 'response_too_large'
   | 'invalid_discovery'
-  | 'invalid_par_response';
+  | 'invalid_par_response'
+  | 'invalid_token_response'
+  | 'invalid_jwks';
+
+export function createClientAuthorization(clientId: string, clientSecret: string): string {
+  const encode = (credential: string) =>
+    new URLSearchParams({ credential }).toString().slice('credential='.length);
+  const credentials = Buffer.from(`${encode(clientId)}:${encode(clientSecret)}`, 'utf8');
+
+  return `Basic ${credentials.toString('base64')}`;
+}
 
 export class OidcUpstreamError extends Error {
   constructor(

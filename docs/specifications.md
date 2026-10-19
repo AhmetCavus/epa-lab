@@ -38,6 +38,12 @@ Alle Implementation- und Testpfade sind vom Repository-Verzeichnis aus erreichba
 
 ## Gepinnter HTTP-Vertrag
 
+Die zusätzlichen Browser-Routen `/login`, `/callback` und `/session` bilden eine lokale OIDC-
+Demo außerhalb des gepinnten ePA-Vertrags. Sie unterstützen Browser-Bindung, Code Exchange,
+RS256-ID-Token-Validierung und eine kurzlebige Prozess-Session, aber keine normative ePA
+User Session, sektorale LoA-Prüfung oder Gerätebindung. Die headerbasierte FdV-Operation
+bleibt der dokumentierte stateless PAR-Smoke-Test.
+
 Der implementierte Pfad ist `GET /epa/authz/v1/send_authorization_request_fdv`.
 Pflichtheader sind `x-idp-iss` und `x-useragent`. Das User-Agent-Schema erlaubt 1–20
 alphanumerische Zeichen/Bindestriche für die Client-ID sowie 1–15 alphanumerische Zeichen,

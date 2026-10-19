@@ -9,6 +9,9 @@ const discoverySchema = z.object({
   issuer: z.string(),
   authorization_endpoint: z.string().max(2048),
   pushed_authorization_request_endpoint: z.string().max(2048),
+  token_endpoint: z.string().max(2048),
+  jwks_uri: z.string().max(2048),
+  id_token_signing_alg_values_supported: z.array(z.string()),
   token_endpoint_auth_methods_supported: z.array(z.string()),
   code_challenge_methods_supported: z.array(z.string()),
 });
@@ -61,6 +64,8 @@ export class OidcDiscoveryService {
     const endpoints = [
       metadata.authorization_endpoint,
       metadata.pushed_authorization_request_endpoint,
+      metadata.token_endpoint,
+      metadata.jwks_uri,
     ];
     const hasSafeEndpoints = endpoints.every(
       (endpoint) =>
@@ -73,6 +78,7 @@ export class OidcDiscoveryService {
       metadata.issuer !== this.config.issuer ||
       !hasSafeEndpoints ||
       !metadata.token_endpoint_auth_methods_supported.includes('client_secret_basic') ||
+      !metadata.id_token_signing_alg_values_supported.includes('RS256') ||
       !metadata.code_challenge_methods_supported.includes('S256')
     ) {
       throw new OidcUpstreamError('invalid_discovery');
