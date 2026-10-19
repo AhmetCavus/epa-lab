@@ -2,32 +2,32 @@ import type { ActorGroup, FixtureEvent, InteractionChannel } from '../../protoco
 
 export interface Checkpoint {
   readonly id: string;
-  readonly title: string;
-  readonly explanation: string;
+  readonly titleKey: string;
+  readonly explanationKey: string;
   readonly actorIds: readonly string[];
 }
 
 export type MissionPreview =
   | {
       readonly kind: 'fixture';
-      readonly note: string;
-      readonly loadLabel: string;
+      readonly noteKey: string;
+      readonly loadLabelKey: string;
       readonly events: readonly FixtureEvent[];
     }
   | {
       readonly kind: 'concept';
-      readonly note: string;
+      readonly noteKey: string;
     };
 
 export interface Mission {
   readonly id: string;
-  readonly title: string;
-  readonly subtitle: string;
-  readonly outcome: string;
-  readonly objective: string;
-  readonly topics: readonly string[];
-  readonly availability: 'Fixture preview' | 'Planned';
-  readonly previewLabel: string;
+  readonly titleKey: string;
+  readonly subtitleKey: string;
+  readonly outcomeKey: string;
+  readonly objectiveKey: string;
+  readonly topicKeys: readonly string[];
+  readonly availability: 'fixture' | 'planned';
+  readonly previewLabelKey: string;
   readonly illustration: 'identity' | 'protected-system';
   readonly groups: readonly ActorGroup[];
   readonly channels: readonly InteractionChannel[];

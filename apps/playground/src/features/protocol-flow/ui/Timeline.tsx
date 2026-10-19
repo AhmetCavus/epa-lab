@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { FixtureEvent } from '../domain/protocol-flow';
 
 interface TimelineProps {
@@ -7,27 +8,24 @@ interface TimelineProps {
 }
 
 export function Timeline({ events, selectedEventId, onSelectEvent }: TimelineProps) {
+  const { t } = useTranslation('protocol-flow');
   return (
     <section className="panel timeline-panel" aria-labelledby="timeline-title">
       <div className="panel-heading">
-        <h2 id="timeline-title">Event timeline</h2>
-        <span className="metadata">{events.length} FIXTURE SAMPLES · 0 OBSERVED EVENTS</span>
+        <h2 id="timeline-title">{t('protocol-flow:timeline.heading')}</h2>
+        <span className="metadata">{t('timeline.count', { count: events.length })}</span>
       </div>
       {events.length === 0 ? (
         <div className="empty-timeline">
           <span aria-hidden="true">╌ ◇ ╌</span>
           <div>
-            <h3>No observed events</h3>
-            <p>
-              Nothing has executed. Conceptual learning content is separate from observed evidence.
-            </p>
+            <h3>{t('protocol-flow:timeline.empty')}</h3>
+            <p>{t('protocol-flow:timeline.emptyHelp')}</p>
           </div>
         </div>
       ) : (
         <>
-          <p className="timeline-note">
-            Fixture explanation order only. No observed timestamps or operational outcomes.
-          </p>
+          <p className="timeline-note">{t('protocol-flow:timeline.orderNote')}</p>
           <ol className="timeline">
             {events.map((event, index) => (
               <li key={event.id}>
@@ -35,13 +33,15 @@ export function Timeline({ events, selectedEventId, onSelectEvent }: TimelinePro
                   aria-pressed={selectedEventId === event.id}
                   onClick={() => onSelectEvent(event.id)}
                 >
-                  <span className="sample-number">SAMPLE {String(index + 1).padStart(2, '0')}</span>
-                  <strong>{event.title}</strong>
-                  <span className="timeline-channel">{event.channel.label}</span>
+                  <span className="sample-number">
+                    {t('timeline.sampleNumber', { number: String(index + 1).padStart(2, '0') })}
+                  </span>
+                  <strong>{t(event.titleKey)}</strong>
+                  <span className="timeline-channel">{t(event.channel.labelKey)}</span>
                   <span
-                    className={`badge ${event.visibility === 'Not observable' ? 'unobservable' : 'explained'}`}
+                    className={`badge ${event.visibility === 'not-observable' ? 'unobservable' : 'explained'}`}
                   >
-                    {event.visibility}
+                    {t(`visibility.${event.visibility}`)}
                   </span>
                 </button>
               </li>

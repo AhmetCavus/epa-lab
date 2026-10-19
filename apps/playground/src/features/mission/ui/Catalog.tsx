@@ -1,29 +1,28 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Mission } from '../domain/mission';
 import { missions } from '../application/mission-catalog';
 
 export function Catalog() {
+  const { t } = useTranslation('mission');
   useEffect(() => {
-    document.title = 'Mission Catalog · Auth Protocol Playground';
-  }, []);
+    document.title = t('common:titles.catalog');
+  }, [t]);
 
   return (
     <main id="main-content" className="catalog" tabIndex={-1}>
       <section className="catalog-intro" aria-labelledby="catalog-title">
         <div>
           <p className="eyebrow">
-            MISSION CATALOG <span>/ LEARNING LAB</span>
+            {t('mission:catalog.eyebrow')} <span>{t('mission:catalog.lab')}</span>
           </p>
           <h1 id="catalog-title">
-            Understand the flow.
+            {t('mission:catalog.heading')}
             <br />
-            <span>See the boundaries.</span>
+            <span>{t('mission:catalog.headingAccent')}</span>
           </h1>
-          <p className="intro-copy">
-            Explore authentication and authorization through actors, explanations and safe evidence.
-            Choose a preview to enter Mission Control.
-          </p>
+          <p className="intro-copy">{t('mission:catalog.intro')}</p>
         </div>
         <div className="network-globe" aria-hidden="true">
           <svg viewBox="0 0 500 300" fill="none">
@@ -55,12 +54,12 @@ export function Catalog() {
               ))}
             </g>
           </svg>
-          <span>PROTOCOLS / PERSPECTIVE / PRACTICE</span>
+          <span>{t('mission:catalog.artCaption')}</span>
         </div>
       </section>
       <div className="catalog-section-heading">
-        <h2>Choose your mission</h2>
-        <span className="metadata">{missions.length} PREVIEWS · NO LIVE INTEGRATIONS</span>
+        <h2>{t('mission:catalog.choose')}</h2>
+        <span className="metadata">{t('catalog.previewCount', { count: missions.length })}</span>
       </div>
       <div className="mission-grid">
         {missions.map((mission, index) => (
@@ -72,29 +71,25 @@ export function Catalog() {
           i
         </span>
         <div>
-          <strong>A place to explore, with honest evidence.</strong>
-          <p>
-            These previews use fixture content. No sign-in, protected API call or live protocol
-            integration runs here. Planned missions stay planned until their real execution is
-            verified.
-          </p>
+          <strong>{t('mission:catalog.noticeTitle')}</strong>
+          <p>{t('mission:catalog.notice')}</p>
         </div>
       </aside>
-      <section className="learning-principles" aria-label="How Mission Control works">
+      <section className="learning-principles" aria-label={t('mission:catalog.principles.label')}>
         <div>
           <span className="principle-number">01</span>
-          <h3>Map the actors</h3>
-          <p>Understand who is responsible for each part of a journey.</p>
+          <h3>{t('mission:catalog.principles.actorsTitle')}</h3>
+          <p>{t('mission:catalog.principles.actors')}</p>
         </div>
         <div>
           <span className="principle-number">02</span>
-          <h3>Follow the explanation</h3>
-          <p>Explore checkpoints at your pace, independent of execution.</p>
+          <h3>{t('mission:catalog.principles.explanationTitle')}</h3>
+          <p>{t('mission:catalog.principles.explanation')}</p>
         </div>
         <div>
           <span className="principle-number">03</span>
-          <h3>Question the evidence</h3>
-          <p>Separate what can be observed from what is being explained.</p>
+          <h3>{t('mission:catalog.principles.evidenceTitle')}</h3>
+          <p>{t('mission:catalog.principles.evidence')}</p>
         </div>
       </section>
     </main>
@@ -102,29 +97,34 @@ export function Catalog() {
 }
 
 function MissionCard({ mission, index }: { mission: Mission; index: number }) {
+  const { t } = useTranslation('mission');
   return (
     <article className={`mission-card ${mission.illustration}`}>
       <div className="mission-art" aria-hidden="true">
         <MissionArtwork illustration={mission.illustration} />
-        <span className={`badge ${mission.preview.kind}`}>{mission.availability}</span>
+        <span className={`badge ${mission.preview.kind}`}>
+          {t(`availability.${mission.availability}`)}
+        </span>
       </div>
       <div className="card-body">
         <div className="card-kicker">
-          <span className="metadata">MISSION {String(index + 1).padStart(2, '0')}</span>
-          <span className="metadata">LEARNING PREVIEW</span>
+          <span className="metadata">
+            {t('catalog.cardNumber', { number: String(index + 1).padStart(2, '0') })}
+          </span>
+          <span className="metadata">{t('mission:catalog.learningPreview')}</span>
         </div>
-        <h3>{mission.title}</h3>
-        <p>{mission.outcome}</p>
-        <ul className="topic-list" aria-label="Topics">
-          {mission.topics.map((topic) => (
-            <li key={topic}>{topic}</li>
+        <h3>{t(mission.titleKey)}</h3>
+        <p>{t(mission.outcomeKey)}</p>
+        <ul className="topic-list" aria-label={t('mission:catalog.topics')}>
+          {mission.topicKeys.map((topic) => (
+            <li key={topic}>{t(topic)}</li>
           ))}
         </ul>
         <Link
           className={`button ${mission.preview.kind === 'fixture' ? 'primary' : 'secondary'}`}
           to={`/missions/${mission.id}/workspace`}
         >
-          {mission.previewLabel}
+          {t(mission.previewLabelKey)}
           <span aria-hidden="true">↗</span>
         </Link>
       </div>

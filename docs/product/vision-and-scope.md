@@ -48,7 +48,7 @@ A learner can explain: Resource Owner vs Browser vs OAuth Client; Authorization 
 
 ## Decisions requiring review
 
-- Product language for first release: English (proposed).
+- Product language: German by default with English support and explicit local language selection, per Accepted ADR-0004 and the approved frontend-only `localization-foundation` change. Technical documentation remains English.
 - Local-only runnable deployment for first verified slice (proposed); public interactive hosting requires separate hardening review.
 - Initial catalog: OAuth/OIDC (availability pending verification) and ePA/gematik (planned). Other mission families are conceptual only.
 - One integrated learning workspace rather than a separate gamification engine.

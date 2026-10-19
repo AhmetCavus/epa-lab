@@ -4,6 +4,8 @@
 
 ## Purpose
 
+Localization follows Accepted ADR-0004: German is the default regardless of browser language, with English available through the accessible global language control. Both mission cards and availability/preview actions use external translation resources. Brand/protocol names and mission IDs remain stable; language selection does not start a mission.
+
 **Authorized UI Slice 001:** OAuth is labeled **Fixture preview** with a working **Preview fixture** link. ePA remains **Planned** with a working **Preview concept** link to its layout-only fixture. Neither card offers a runnable mission. Only these two entries and real navigation are included.
 
 Visitors should immediately understand which protocol missions exist, what each teaches, which can be run, and how to begin.

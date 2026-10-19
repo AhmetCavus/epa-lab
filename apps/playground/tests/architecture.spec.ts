@@ -24,10 +24,15 @@ function sourceFiles(directory: string): string[] {
 
 function allowsDependency(source: string, target: string, typeOnly: boolean) {
   if (source === 'main.tsx') {
-    return target === 'app/App.tsx';
+    return target === 'app/App.tsx' || target === 'app/i18n.ts';
   }
   if (source.startsWith('app/')) {
-    return target.startsWith('app/') || target === 'features/mission/index.ts';
+    return (
+      target.startsWith('app/') ||
+      target === 'features/mission/index.ts' ||
+      (source === 'app/i18n.ts' &&
+        /^locales\/(de|en)\/(common|mission|protocol-flow)\.json$/.test(target))
+    );
   }
   const [, capability, layer] = source.split('/');
   const [, targetCapability, targetLayer] = target.split('/');
@@ -65,6 +70,19 @@ function allowsDependency(source: string, target: string, typeOnly: boolean) {
     data: ['data', 'domain'],
   };
   return allowedLayers[layer ?? '']?.includes(targetLayer ?? '') ?? false;
+}
+
+function allowsExternalDependency(source: string, specifier: string) {
+  if (source.includes('/domain/') || source.endsWith('/contracts.ts')) {
+    return false;
+  }
+  if (specifier === 'i18next') {
+    return source === 'app/i18n.ts';
+  }
+  if (specifier === 'react-i18next') {
+    return source === 'app/i18n.ts' || source.startsWith('app/') || source.includes('/ui/');
+  }
+  return !source.startsWith('features/protocol-flow/') || specifier === 'react';
 }
 
 function findCycles(graph: ReadonlyMap<string, readonly string[]>) {
@@ -121,11 +139,7 @@ test('production imports and re-exports follow capability boundaries without cyc
         return;
       }
       if (resolved.isExternalLibraryImport) {
-        if (
-          source.includes('/domain/') ||
-          source.endsWith('/contracts.ts') ||
-          (source.startsWith('features/protocol-flow/') && specifier !== 'react')
-        ) {
+        if (!allowsExternalDependency(source, specifier)) {
           violations.push(`${source}: prohibited external dependency ${specifier}`);
         }
         return;
@@ -248,6 +262,21 @@ test('canonical domain contracts compile without React or browser libraries', ()
 });
 
 test('architecture checks reject reverse edges, internal imports and cycles', () => {
+  expect(allowsDependency('app/i18n.ts', 'locales/de/common.json', false)).toBe(true);
+  expect(allowsDependency('features/mission/ui/Catalog.tsx', 'app/i18n.ts', false)).toBe(false);
+  expect(allowsDependency('features/mission/data/oauth.ts', 'locales/en/mission.json', false)).toBe(
+    false,
+  );
+  expect(allowsExternalDependency('features/protocol-flow/ui/Inspector.tsx', 'react-i18next')).toBe(
+    true,
+  );
+  expect(
+    allowsExternalDependency('features/protocol-flow/domain/protocol-flow.ts', 'react-i18next'),
+  ).toBe(false);
+  expect(
+    allowsExternalDependency('features/mission/application/useMissionWorkspace.ts', 'i18next'),
+  ).toBe(false);
+  expect(allowsExternalDependency('features/mission/data/oauth.ts', 'react-i18next')).toBe(false);
   expect(
     allowsDependency(
       'features/mission/domain/mission.ts',

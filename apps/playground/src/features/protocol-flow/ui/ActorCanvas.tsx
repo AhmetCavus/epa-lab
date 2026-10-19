@@ -1,4 +1,5 @@
 /** @jsxImportSource react */
+import { useTranslation } from 'react-i18next';
 import type { RefObject } from 'react';
 import type { ActorGroup, FixtureEvent, InteractionChannel } from '../domain/protocol-flow';
 import { InteractionPaths } from './InteractionPaths';
@@ -29,6 +30,7 @@ export function ActorCanvas({
   onSelectActor,
   onSelectEvent,
 }: ActorCanvasProps) {
+  const { t } = useTranslation('protocol-flow');
   const layout = createCanvasLayout(groups);
 
   return (
@@ -37,7 +39,7 @@ export function ActorCanvas({
         ref={viewportRef}
         className="actor-map-scroll"
         role="region"
-        aria-label="Scrollable actor map"
+        aria-label={t('protocol-flow:canvas.scrollLabel')}
         tabIndex={0}
       >
         <div
@@ -54,10 +56,10 @@ export function ActorCanvas({
               <section
                 className="actor-group"
                 key={group.id}
-                aria-label={group.label}
+                aria-label={t(group.labelKey)}
                 style={{ width: `${width / 16}em` }}
               >
-                <h3>{group.label}</h3>
+                <h3>{t(group.labelKey)}</h3>
                 <div
                   className="group-actors"
                   style={{ gridTemplateColumns: `repeat(${group.actors.length}, minmax(0, 1fr))` }}
@@ -73,10 +75,10 @@ export function ActorCanvas({
                       <span className="actor-symbol" aria-hidden="true">
                         ◇
                       </span>
-                      <strong>{actor.label}</strong>
-                      <span>{actor.role}</span>
+                      <strong>{t(actor.labelKey)}</strong>
+                      <span>{t(actor.roleKey)}</span>
                       <span className="actor-context">
-                        {highlightedActorIds.includes(actor.id) ? 'In context' : '\u00a0'}
+                        {highlightedActorIds.includes(actor.id) ? t('canvas.inContext') : '\u00a0'}
                       </span>
                     </button>
                   ))}
@@ -92,29 +94,33 @@ export function ActorCanvas({
           />
         </div>
       </div>
-      <div className="channel-legend" aria-label="Communication channel legend">
+      <div className="channel-legend" aria-label={t('protocol-flow:canvas.legend')}>
         {channels.length > 0 ? (
           channels.map((channel) => (
             <span key={channel.kind} data-channel={channel.kind}>
               <span className="legend-symbol" aria-hidden="true" />
-              {channel.label}
+              {t(channel.labelKey)}
             </span>
           ))
         ) : (
-          <span>No communication paths defined</span>
+          <span>{t('protocol-flow:canvas.noPaths')}</span>
         )}
-        <span className="legend-note">Fixture explanations only · no observed traffic</span>
+        <span className="legend-note">{t('protocol-flow:canvas.fixtureNote')}</span>
       </div>
       <details className="text-alternative">
-        <summary>Actor map text alternative</summary>
+        <summary>{t('protocol-flow:canvas.textAlternative')}</summary>
         <ul>
           {groups.map((group) => (
             <li key={group.id}>
-              <strong>{group.label}</strong>
+              <strong>{t(group.labelKey)}</strong>
               <ul>
                 {group.actors.map((actor) => (
                   <li key={actor.id}>
-                    {actor.label} — {actor.role}. {actor.description}
+                    {t('canvas.actorDescription', {
+                      actor: t(actor.labelKey),
+                      role: t(actor.roleKey),
+                      description: t(actor.descriptionKey),
+                    })}
                   </li>
                 ))}
               </ul>
@@ -123,7 +129,7 @@ export function ActorCanvas({
         </ul>
         {events.length > 0 && (
           <>
-            <h3>Fixture interactions</h3>
+            <h3>{t('protocol-flow:canvas.interactions')}</h3>
             <ol>
               {events.map((interaction) => {
                 const sourceId =
@@ -135,12 +141,21 @@ export function ActorCanvas({
                     : undefined;
                 return (
                   <li key={interaction.id}>
-                    <strong>{interaction.title}</strong>: {source?.actor.label}
-                    {interaction.kind === 'message'
-                      ? ` → ${target?.actor.label}`
-                      : ' · internal annotation, no network request'}
-                    . {interaction.channel.label} · Fixture / {interaction.visibility}.{' '}
-                    {interaction.summary}
+                    {t('canvas.interactionDescription', {
+                      title: t(interaction.titleKey),
+                      direction: t(
+                        interaction.kind === 'message'
+                          ? 'diagram.messageDirection'
+                          : 'diagram.internalExplanation',
+                        {
+                          source: source ? t(source.actor.labelKey) : '',
+                          target: target ? t(target.actor.labelKey) : '',
+                        },
+                      ),
+                      channel: t(interaction.channel.labelKey),
+                      visibility: t(`visibility.${interaction.visibility}`),
+                      summary: t(interaction.summaryKey),
+                    })}
                   </li>
                 );
               })}

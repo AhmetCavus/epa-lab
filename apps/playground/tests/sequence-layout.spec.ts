@@ -1,3 +1,7 @@
+﻿import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import deProtocolFlow from '../src/locales/de/protocol-flow.json' with { type: 'json' };
+import enProtocolFlow from '../src/locales/en/protocol-flow.json' with { type: 'json' };
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -66,6 +70,11 @@ async function expectAlignedSequence(page: Page) {
   }
 }
 
+test.beforeEach(async ({ page }) => {
+  // Existing English regressions explicitly restore a supported preference.
+  await page.addInitScript(() => localStorage.setItem('auth-protocol-playground.locale', 'en'));
+});
+
 test('shipped sequence geometry, order, selection and readable Fit survive resizing', async ({
   page,
 }) => {
@@ -125,29 +134,39 @@ test('long wrapped text, reverse arrows and uneven groups retain collision-free 
   const groups: readonly ActorGroup[] = [
     {
       id: 'outside',
-      label: 'External participant',
+      labelKey: 'layout:copy0',
       actors: [
         {
           id: 'reader',
-          label: 'Reader with a long descriptive participant name',
-          role: 'Initiator',
-          description: 'Layout fixture only.',
+          labelKey: 'layout:copy1',
+          roleKey: 'layout:copy2',
+          descriptionKey: 'layout:copy3',
         },
       ],
     },
     {
       id: 'shared',
-      label: 'Two logical roles sharing a deployment with a longer heading',
+      labelKey: 'layout:copy4',
       actors: [
-        { id: 'relay', label: 'Relay', role: 'Intermediary', description: 'Layout fixture only.' },
-        { id: 'store', label: 'Store', role: 'Destination', description: 'Layout fixture only.' },
+        {
+          id: 'relay',
+          labelKey: 'layout:copy5',
+          roleKey: 'layout:copy6',
+          descriptionKey: 'layout:copy7',
+        },
+        {
+          id: 'store',
+          labelKey: 'layout:copy8',
+          roleKey: 'layout:copy9',
+          descriptionKey: 'layout:copy10',
+        },
       ],
     },
   ];
   const common = {
-    visibility: 'Explained',
-    summary: 'Test-only layout example.',
-    explanation: 'No operational result.',
+    visibility: 'explained',
+    summaryKey: 'layout:copy11',
+    explanationKey: 'layout:copy12',
     evidence: [],
   } as const;
   const events: readonly FixtureEvent[] = [
@@ -155,80 +174,126 @@ test('long wrapped text, reverse arrows and uneven groups retain collision-free 
       ...common,
       id: 'forward',
       kind: 'message',
-      title:
-        'A deliberately long message label that wraps over several lines without covering its own directional arrow or another message label, even when participant groups have different sizes',
+      titleKey: 'layout:copy13',
       sourceActorId: 'reader',
       targetActorId: 'store',
       channel: {
         kind: 'front',
-        label: 'A long mission-defined communication channel description that also wraps',
+        labelKey: 'layout:copy14',
       },
     },
     {
       ...common,
       id: 'reverse',
       kind: 'message',
-      title: 'Response in the opposite direction',
+      titleKey: 'layout:copy15',
       sourceActorId: 'store',
       targetActorId: 'reader',
-      channel: { kind: 'back', label: 'Direct response' },
+      channel: { kind: 'back', labelKey: 'layout:copy16' },
     },
     {
       ...common,
       id: 'internal',
       kind: 'internal',
-      title: 'A local explanation with no network communication',
+      titleKey: 'layout:copy17',
       actorId: 'relay',
-      visibility: 'Not observable',
-      channel: { kind: 'internal', label: 'Internal explanation' },
+      visibility: 'not-observable',
+      channel: { kind: 'internal', labelKey: 'layout:copy18' },
     },
   ];
+
+  const layoutText = {
+    copy0: 'External participant',
+    copy1: 'Reader with a long descriptive participant name',
+    copy2: 'Initiator',
+    copy3: 'Layout fixture only.',
+    copy4: 'Two logical roles sharing a deployment with a longer heading',
+    copy5: 'Relay',
+    copy6: 'Intermediary',
+    copy7: 'Layout fixture only.',
+    copy8: 'Store',
+    copy9: 'Destination',
+    copy10: 'Layout fixture only.',
+    copy11: 'Test-only layout example.',
+    copy12: 'No operational result.',
+    copy13:
+      'A deliberately long message label that wraps over several lines without covering its own directional arrow or another message label, even when participant groups have different sizes',
+    copy14: 'A long mission-defined communication channel description that also wraps',
+    copy15: 'Response in the opposite direction',
+    copy16: 'Direct response',
+    copy17: 'A local explanation with no network communication',
+    copy18: 'Internal explanation',
+  };
   const styles = readFileSync('src/styles.css', 'utf8');
-  for (const { width, scale } of [
-    { width: 1366, scale: 1 },
-    { width: 390, scale: 1 },
-    { width: 390, scale: 1.5 },
-  ]) {
-    await page.setViewportSize({ width, height: 844 });
-    // Render the real component with test-only content; no product route or mission is added.
-    const markup = renderToStaticMarkup(
-      createElement(ActorCanvas, {
-        groups,
-        channels: events.map((event) => event.channel),
-        events,
-        event: undefined,
-        highlightedActorIds: [],
-        selectedActorId: null,
-        scale,
-        viewportRef: { current: null },
-        onSelectActor: () => {},
-        onSelectEvent: () => {},
-      }),
-    );
-    await page.setContent(
-      `<main class="panel canvas-panel" style="max-width:850px">${markup}</main>`,
-    );
-    await page.addStyleTag({ content: styles });
-    await expectAlignedSequence(page);
-    await expect(
-      page.locator('.interaction-path[data-kind="internal"] .communication-edge'),
-    ).toHaveCount(0);
-    expect(
-      Number(
-        await page.locator('[data-event-id="reverse"] .communication-edge').getAttribute('x1'),
-      ),
-    ).toBeGreaterThan(
-      Number(
-        await page.locator('[data-event-id="reverse"] .communication-edge').getAttribute('x2'),
-      ),
-    );
-    const rowHeights = await page
-      .locator('.interaction-target')
-      .evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().height));
-    expect(rowHeights[0]).toBeGreaterThan(rowHeights[1] ?? Infinity);
-    await page.screenshot({
-      path: test.info().outputPath(`long-labels-${width}-${scale}.png`),
-      fullPage: true,
+  for (const language of ['de', 'en']) {
+    const i18n = createInstance();
+    await i18n.init({
+      lng: language,
+      fallbackLng: 'de',
+      defaultNS: 'protocol-flow',
+      resources: {
+        en: { 'protocol-flow': enProtocolFlow, layout: layoutText },
+        de: {
+          'protocol-flow': deProtocolFlow,
+          layout: Object.fromEntries(
+            Object.entries(layoutText).map(([key, value]) => [
+              key,
+              'AusfÃ¼hrliche Testbeschreibung: ' + value,
+            ]),
+          ),
+        },
+      },
     });
+    for (const { width, scale } of [
+      { width: 1366, scale: 1 },
+      { width: 390, scale: 1 },
+      { width: 390, scale: 1.5 },
+    ]) {
+      await page.setViewportSize({ width, height: 844 });
+      // Render the real component with test-only content; no product route or mission is added.
+      const markup = renderToStaticMarkup(
+        createElement(
+          I18nextProvider,
+          { i18n },
+          createElement(ActorCanvas, {
+            groups,
+            channels: events.map((event) => event.channel),
+            events,
+            event: undefined,
+            highlightedActorIds: [],
+            selectedActorId: null,
+            scale,
+            viewportRef: { current: null },
+            onSelectActor: () => {},
+            onSelectEvent: () => {},
+          }),
+        ),
+      );
+      await page.setContent(
+        `<main class="panel canvas-panel" style="max-width:850px">${markup}</main>`,
+      );
+      await page.addStyleTag({ content: styles });
+      await expectAlignedSequence(page);
+      await expect(
+        page.locator('.interaction-path[data-kind="internal"] .communication-edge'),
+      ).toHaveCount(0);
+      expect(
+        Number(
+          await page.locator('[data-event-id="reverse"] .communication-edge').getAttribute('x1'),
+        ),
+      ).toBeGreaterThan(
+        Number(
+          await page.locator('[data-event-id="reverse"] .communication-edge').getAttribute('x2'),
+        ),
+      );
+      const rowHeights = await page
+        .locator('.interaction-target')
+        .evaluateAll((rows) => rows.map((row) => row.getBoundingClientRect().height));
+      expect(rowHeights[0]).toBeGreaterThan(rowHeights[1] ?? Infinity);
+      await page.screenshot({
+        path: test.info().outputPath(`long-labels-${language}-${width}-${scale}.png`),
+        fullPage: true,
+      });
+    }
   }
 });

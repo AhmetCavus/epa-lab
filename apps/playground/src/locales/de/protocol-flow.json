@@ -1,0 +1,66 @@
+{
+  "channels": {
+    "front": "Frontkanal",
+    "back": "Rückkanal",
+    "internal": "Provider-intern"
+  },
+  "visibility": {
+    "explained": "Erklärt",
+    "not-observable": "Nicht beobachtbar"
+  },
+  "canvas": {
+    "scrollLabel": "Scrollbare Akteursübersicht",
+    "inContext": "Im Kontext",
+    "legend": "Legende der Kommunikationskanäle",
+    "noPaths": "Keine Kommunikationswege definiert",
+    "fixtureNote": "Nur Beispielerklärungen · kein beobachteter Datenverkehr",
+    "textAlternative": "Textalternative zur Akteursübersicht",
+    "interactions": "Beispielinteraktionen",
+    "actorDescription": "{{actor}} — {{role}}. {{description}}",
+    "interactionDescription": "{{title}}: {{direction}}. {{channel}} · Beispiel / {{visibility}}. {{summary}}"
+  },
+  "diagram": {
+    "empty": "Keine Kommunikationsbeispiele geladen.",
+    "emptyHelp": "Erkunde die Zuständigkeiten der Akteure oder die Lernschritte.",
+    "messageDirection": "{{source}} → {{target}}",
+    "internalDirection": "{{source}} · interne Erläuterung",
+    "internalExplanation": "{{source}} · interne Erläuterung, keine Netzwerkanfrage",
+    "inspect": "{{title}} untersuchen. {{direction}}. {{channel}}. Beispiel — {{visibility}}.",
+    "selected": "Ausgewählt",
+    "example": "Beispiel",
+    "channelVisibility": "{{channel}} · {{visibility}}"
+  },
+  "inspector": {
+    "heading": "Inspektor",
+    "selected": "AUSGEWÄHLTES BEISPIEL",
+    "context": "KONTEXT",
+    "whatHappened": "Was ist passiert?",
+    "noSelection": "Keine Auswahl",
+    "noOperation": "Es wurde kein Vorgang ausgeführt. Dieser Bereich enthält konzeptionelle Lerninhalte.",
+    "source": "Quelle",
+    "fixtureSource": "Statisches Beispiel",
+    "conceptSource": "Konzeptioneller Inhalt",
+    "observer": "Tatsächlicher Beobachter",
+    "noObserver": "Keiner — nicht beobachtet",
+    "timestamp": "Beobachteter Zeitstempel",
+    "unavailable": "Nicht verfügbar",
+    "safeEvidence": "Sichere Nachweise",
+    "exampleDetails": "BEISPIELDETAILS · KEIN BEOBACHTETES ERGEBNIS",
+    "noObservedEvidence": "KEINE BEOBACHTETEN NACHWEISE",
+    "emptyEvidence": "Für diese Auswahl liegen keine beobachteten Nachweise vor.",
+    "why": "Warum ist das wichtig?",
+    "chooseExplanation": "Wähle einen Lernschritt, Akteur oder ein Beispiel, um die Erklärung zu lesen.",
+    "actorsChannel": "Akteure und Kanal",
+    "chooseSample": "Wähle ein Beispiel, um Quelle, Ziel und Kanal zu untersuchen.",
+    "actorRole": "{{actor}} · {{role}}"
+  },
+  "timeline": {
+    "heading": "Ereigniszeitleiste",
+    "count_one": "{{count, number}} BEISPIEL · 0 BEOBACHTETE EREIGNISSE",
+    "count_other": "{{count, number}} BEISPIELE · 0 BEOBACHTETE EREIGNISSE",
+    "empty": "Keine beobachteten Ereignisse",
+    "emptyHelp": "Es wurde nichts ausgeführt. Konzeptionelle Lerninhalte sind von beobachteten Nachweisen getrennt.",
+    "orderNote": "Nur Erklärungsreihenfolge der Beispiele. Keine beobachteten Zeitstempel oder Betriebsergebnisse.",
+    "sampleNumber": "BEISPIEL {{number}}"
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "definitions": {
+    "oauthOidc": {
+      "title": "OAuth 2.0 / OIDC",
+      "subtitle": "Authorization Code + PKCE · fixture preview",
+      "outcome": "Understand the roles, browser redirects and server-side boundaries behind a secure sign-in journey.",
+      "objective": "Explain how a browser, confidential client and provider work together, and why API authorization is a separate decision.",
+      "previewLabel": "Preview fixture",
+      "topics": {
+        "oauth": "OAuth 2.0",
+        "oidc": "OIDC",
+        "pkce": "PKCE",
+        "apiAuthorization": "API authorization"
+      },
+      "groups": {
+        "person": {
+          "label": "User"
+        },
+        "device": {
+          "label": "User device"
+        },
+        "application": {
+          "label": "Our application"
+        },
+        "keycloak": {
+          "label": "Keycloak · one deployment"
+        },
+        "resource": {
+          "label": "Demo backend"
+        }
+      },
+      "actors": {
+        "user": {
+          "label": "Human user",
+          "role": "Resource Owner",
+          "description": "The person initiating the journey. The human, rather than the SPA, is the Resource Owner."
+        },
+        "browser": {
+          "label": "Browser / SPA",
+          "role": "User agent",
+          "description": "Displays the playground and follows browser redirects. It is not the OAuth client in this architecture."
+        },
+        "bff": {
+          "label": "NestJS BFF",
+          "role": "OAuth / OIDC Client",
+          "description": "The proposed confidential client owns transactions, server-held tokens and the application session. No backend is connected to this preview."
+        },
+        "authorization-server": {
+          "label": "Authorization Server",
+          "role": "OAuth role",
+          "description": "Handles authorization requests and code exchange. This logical role shares the Keycloak deployment with the Identity Provider."
+        },
+        "identity-provider": {
+          "label": "Identity Provider",
+          "role": "OIDC / federation concept",
+          "description": "Authenticates the user in Keycloak’s UI. This is a logical role, not a second deployed server or an original OAuth 2.0 role."
+        },
+        "resource-server": {
+          "label": "Resource Server",
+          "role": "API authorization",
+          "description": "Independently validates the Access Token and permissions before returning synthetic data in a future runnable mission."
+        }
+      },
+      "checkpoints": {
+        "roles": {
+          "title": "Understand the actors",
+          "explanation": "Separate the human user, browser, OAuth client, Authorization Server, Identity Provider and Resource Server. Two Keycloak roles share one deployment."
+        },
+        "authorization": {
+          "title": "Follow the front channel",
+          "explanation": "In a real flow, the BFF initiates a redirect and the browser navigates to Keycloak. This preview never starts authentication or leaves for a provider."
+        },
+        "identity": {
+          "title": "Locate authentication",
+          "explanation": "Credentials belong in Keycloak’s login experience. The playground does not provide a password form or observe provider-internal authentication."
+        },
+        "exchange": {
+          "title": "Examine the back channel",
+          "explanation": "The BFF correlates the callback, exchanges the code directly with Keycloak and validates the OIDC response. A successful exchange would not directly instrument Keycloak’s internal checks."
+        },
+        "tokens": {
+          "title": "Distinguish token purposes",
+          "explanation": "An ID Token conveys the authentication result to the client. An Access Token is used at the Resource Server. Neither belongs in this inspector."
+        },
+        "resource": {
+          "title": "Find the API boundary",
+          "explanation": "A session alone does not prove API authorization. The Resource Server must check the intended audience, issuer, lifetime, trust and permission."
+        },
+        "evidence": {
+          "title": "Review evidence limits",
+          "explanation": "Load the fixture samples to explore safe explanatory fields. None is an observed trace; no authentication, API permission or session outcome is demonstrated."
+        }
+      },
+      "preview": {
+        "note": "Fixture-only preview. Samples explain a possible journey; no network operation, authentication or session is created.",
+        "loadLabel": "Load fixture samples"
+      },
+      "events": {
+        "authorization-example": {
+          "title": "Browser authorization redirect",
+          "summary": "An example of the browser following a BFF-initiated redirect to the Authorization Server. No redirect occurred.",
+          "explanation": "The BFF is the OAuth client. It creates the authorization transaction; the browser carries the request to Keycloak. A learning checkpoint cannot pause or execute this redirect."
+        },
+        "provider-internal-example": {
+          "title": "Provider-internal PKCE binding",
+          "summary": "A teaching note about a provider-internal check, not an instrumented event.",
+          "explanation": "The Authorization Server checks the verifier against the original challenge during code exchange. A BFF could observe the exchange outcome, but cannot claim a direct trace of this internal check."
+        },
+        "exchange-example": {
+          "title": "Direct code exchange",
+          "summary": "An example of direct BFF-to-provider communication. No exchange or session was created.",
+          "explanation": "The BFF exchanges the authorization code and validates the OIDC response before establishing a session. Tokens stay server-side. This fixture contains no code, verifier, token response, or session result."
+        },
+        "resource-example": {
+          "title": "Independent resource authorization",
+          "summary": "An example of a protected-resource boundary. No resource request was sent or permitted.",
+          "explanation": "A Resource Server independently validates trust, issuer, audience, lifetime and permission for an Access Token. An ID Token describes an authentication result for the client and is not an API access credential."
+        }
+      },
+      "evidence": {
+        "responseType": "Example response type",
+        "pkceMethod": "Example PKCE method",
+        "channel": "Channel",
+        "client": "OAuth client",
+        "credentialPurpose": "Credential purpose",
+        "resourceType": "Resource type",
+        "syntheticOnly": "Synthetic only"
+      }
+    },
+    "epa": {
+      "title": "ePA / gematik",
+      "subtitle": "Protected-system boundaries · conceptual layout",
+      "outcome": "Explore a conceptual map of identity, authorization and protected-system responsibilities in an ePA journey.",
+      "objective": "Test how different actors and security boundaries fit the workspace. Exact protocol choreography is a future specification decision.",
+      "previewLabel": "Preview concept",
+      "topics": {
+        "identity": "Identity boundaries",
+        "authorization": "Authorization",
+        "protectedSystems": "Protected systems"
+      },
+      "groups": {
+        "insured": {
+          "label": "Person"
+        },
+        "access": {
+          "label": "Access channel"
+        },
+        "identity": {
+          "label": "Identity boundary"
+        },
+        "authorization": {
+          "label": "Authorization boundary"
+        },
+        "protected": {
+          "label": "Protected subsystem"
+        }
+      },
+      "actors": {
+        "insured-person": {
+          "label": "Insured person",
+          "role": "User",
+          "description": "Illustrative initiator of a protected ePA journey. No real patient or medical data is used."
+        },
+        "fdv": {
+          "label": "FdV / client",
+          "role": "Scenario-dependent",
+          "description": "Illustrative user-facing access channel. This layout does not imply an implemented browser-based FdV."
+        },
+        "sectoral-idp": {
+          "label": "Sectoral IdP",
+          "role": "Identity responsibility",
+          "description": "Illustrative authentication or federation responsibility, when applicable to a future specified scenario."
+        },
+        "epa-authorization": {
+          "label": "ePA Authorization Service",
+          "role": "Authorization responsibility",
+          "description": "A conceptual authorization boundary. No ePA authorization operation is implemented or demonstrated."
+        },
+        "vau": {
+          "label": "ePA system / VAU",
+          "role": "Protected-system topic",
+          "description": "A protected subsystem and secure-communication topic to model separately. No live TI connection, exact sequence, or certification is claimed."
+        }
+      },
+      "checkpoints": {
+        "actors": {
+          "title": "Discover responsibilities",
+          "explanation": "These actor types test the layout. They do not imply that every actor participates in one sequence or that a specific ePA scenario has been implemented."
+        },
+        "identity": {
+          "title": "Examine identity boundaries",
+          "explanation": "Identify where identity or federation responsibilities could belong. Current applicable gematik specifications must determine the future scenario."
+        },
+        "authorization": {
+          "title": "Inspect authorization boundaries",
+          "explanation": "Identity and authorization responsibilities are distinct. This conceptual map specifies no requests, decisions, credentials or operational results."
+        },
+        "protected": {
+          "title": "Understand protected systems",
+          "explanation": "A protected subsystem and secure-communication boundary need their own specification. No VAU behavior is simulated here."
+        },
+        "evidence": {
+          "title": "Separate concept from evidence",
+          "explanation": "There is no live integration, telemetry or simulated operational result. The empty timeline is intentional. This preview makes no gematik compliance or certification claim."
+        }
+      },
+      "preview": {
+        "note": "Planned — no live integration, telemetry or simulated operational results. Actor placement is conceptual and does not define a protocol sequence."
+      },
+      "events": {}
+    }
+  },
+  "catalog": {
+    "eyebrow": "MISSION CATALOG",
+    "lab": "/ LEARNING LAB",
+    "heading": "Understand the flow.",
+    "headingAccent": "See the boundaries.",
+    "intro": "Explore authentication and authorization through actors, explanations and safe evidence. Choose a preview to enter Mission Control.",
+    "artCaption": "PROTOCOLS / PERSPECTIVE / PRACTICE",
+    "choose": "Choose your mission",
+    "previewCount_one": "{{count, number}} PREVIEW · NO LIVE INTEGRATIONS",
+    "previewCount_other": "{{count, number}} PREVIEWS · NO LIVE INTEGRATIONS",
+    "noticeTitle": "A place to explore, with honest evidence.",
+    "notice": "These previews use fixture content. No sign-in, protected API call or live protocol integration runs here. Planned missions stay planned until their real execution is verified.",
+    "principles": {
+      "label": "How Mission Control works",
+      "actorsTitle": "Map the actors",
+      "actors": "Understand who is responsible for each part of a journey.",
+      "explanationTitle": "Follow the explanation",
+      "explanation": "Explore checkpoints at your pace, independent of execution.",
+      "evidenceTitle": "Question the evidence",
+      "evidence": "Separate what can be observed from what is being explained."
+    },
+    "cardNumber": "MISSION {{number}}",
+    "learningPreview": "LEARNING PREVIEW",
+    "topics": "Topics"
+  },
+  "availability": {
+    "fixture": "Fixture preview",
+    "planned": "Planned"
+  },
+  "workspace": {
+    "eyebrow": "MISSION CONTROL",
+    "preview": "/ PREVIEW",
+    "noRun": "No live run",
+    "mission": "Your mission",
+    "learn": "LEARN",
+    "objective": "OBJECTIVE",
+    "checkpoints": "Learning checkpoints",
+    "checkpointSelected": "{{current, number}} / {{total, number}} selected",
+    "noneSelected": "None selected",
+    "checkpointNote": "Checkpoint selection is learning navigation. It does not execute a flow.",
+    "actorMap": "Actor map",
+    "viewport": "Actor map viewport",
+    "zoomOut": "Zoom out",
+    "zoomIn": "Zoom in",
+    "zoom": "Map zoom",
+    "fit": "Fit",
+    "explore": "Explore the map",
+    "context": "Select an actor, checkpoint or fixture sample to explore its context.",
+    "loaded": "Fixture samples loaded",
+    "replay": "Replay explanation",
+    "reset": "Reset view"
+  },
+  "announcements": {
+    "loaded": "Fixture samples loaded. No live operation occurred.",
+    "replayed": "Explanation replayed from the first fixture sample.",
+    "reset": "View reset. Loaded fixture samples are preserved.",
+    "fitted": "Map at readable size. Scroll horizontally to reach additional participants."
+  }
+}

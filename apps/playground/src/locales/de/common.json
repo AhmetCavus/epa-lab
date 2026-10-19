@@ -1,0 +1,36 @@
+{
+  "skipLink": "Zum Inhalt springen",
+  "brandLink": "Auth Protocol Playground · Missionskatalog",
+  "tagline": "Protokolle erkunden. Grenzen verstehen.",
+  "navigation": {
+    "label": "Hauptnavigation",
+    "missions": "Missionen"
+  },
+  "language": {
+    "label": "Sprache",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "header": {
+    "slice": "UI-SLICE 001",
+    "preview": "VORSCHAU"
+  },
+  "footer": {
+    "notice": "Lernvorschau mit Beispieldaten · keine Live-Protokollausführung"
+  },
+  "notFound": {
+    "eyebrow": "UNBEKANNTES ZIEL",
+    "heading": "Diese Vorschau gibt es hier nicht.",
+    "description": "Wähle eine Missionsvorschau aus dem Katalog."
+  },
+  "actions": {
+    "back": "Zurück zu den Missionen",
+    "backArrow": "← Zurück zu den Missionen"
+  },
+  "titles": {
+    "catalog": "Missionskatalog · Auth Protocol Playground",
+    "workspace": "{{mission}} · Mission Control",
+    "notFound": "Seite nicht gefunden · Auth Protocol Playground"
+  },
+  "description": "Protokollrollen und sichere Nachweise in einer Lernumgebung mit Beispieldaten erkunden."
+}

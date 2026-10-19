@@ -26,7 +26,8 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 button,
-input {
+input,
+select {
   font: inherit;
 }
 button,
@@ -49,6 +50,7 @@ a:hover {
   text-decoration: underline;
 }
 button:focus-visible,
+select:focus-visible,
 a:focus-visible,
 summary:focus-visible,
 [tabindex='0']:focus-visible {
@@ -158,6 +160,23 @@ button {
 }
 .header-label span {
   color: var(--accent);
+}
+.language-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.language-control select {
+  min-height: 36px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #285271;
+  border-radius: 6px;
+  color: #edf4fc;
+  background: #142b42;
 }
 .catalog {
   max-width: 1280px;
@@ -1137,6 +1156,7 @@ dd {
   .site-header {
     padding: 16px 20px;
     gap: 16px;
+    flex-wrap: wrap;
   }
   .brand strong {
     font-size: 12px;

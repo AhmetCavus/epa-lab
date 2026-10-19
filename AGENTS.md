@@ -4,9 +4,11 @@
 
 The owner additionally authorized `capability-first-arch-refactoring` through an explicit apply request. This permits structural frontend changes that preserve the existing fixture-only behavior and visuals; it does not authorize Slice 002 or backend integration.
 
+The owner authorized `localization-foundation` and adoption of ADR-0004 through an explicit apply request on 2026-10-19. This permits German-default/English frontend localization only; all backend/Slice 002 gates remain in force.
+
 ## Project conventions
 
-- All Codex prompts and technical documentation are in English; content can be localized in future missions as explicitly specified.
+- All Codex prompts and technical documentation are in English. Current frontend copy supports German (default/fallback) and English per ADR-0004.
 - Respect decisions established by the user: browser SPA, NestJS BFF, Keycloak, mission-agnostic catalog and workspace.
 - Keep the generic shell unaware of OAuth/ePA nouns, step counts, or specific validation behaviors.
 - Mission declarations may be statically registered; do not propose dynamic plugins, universal protocol DSLs, microfrontends or a generic gamification engine without a demonstrated requirement.
@@ -28,6 +30,17 @@ Follow [ADR-0003](docs/architecture/decisions/ADR-0003-capability-first-code-org
 - Cross-capability imports use explicit public entries: mission `index.ts`; protocol-flow `contracts.ts` for types, `selection.ts` for application coordination and `index.ts` for UI. Internal modules import their owning modules directly; domains/application must not import a UI barrel. Avoid cycles, including type-only/re-export edges.
 - Keep static registration simple. Add shared code only for demonstrated reuse; omit unused layers and speculative repositories, factories, service/controller classes, dependency injection or plugin frameworks.
 - Run the focused architecture tests alongside existing browser/accessibility checks when changing imports or ownership. Structural refactors preserve stylesheet/asset contents and observable behavior.
+
+## Localization
+
+Follow Accepted [ADR-0004](docs/architecture/decisions/ADR-0004-localization-and-i18n.md):
+
+- German (`de`) is the default/fallback independent of browser language; English (`en`) is supported. Persist only explicit language choice under `auth-protocol-playground.locale`, with guarded storage access.
+- Keep user-facing copy in UTF-8 `src/locales/{de,en}/{common,mission,protocol-flow}.json`, using semantic keys, interpolation and plural forms. Add matching entries in both languages and run localization resource checks.
+- Initialize i18next once in `app/i18n.ts` before rendering. Only composition imports resource JSON/i18next; feature UI may use `react-i18next`. Features must not import app initialization. Domain/data/application must not import localization runtimes or dictionaries.
+- Domain/data carry neutral content references and stable classifications/IDs; UI resolves text. Never translate technical evidence values, protocol literals or identifiers. Preserve fixture/conceptual/not-observable annotations in both languages.
+- Store workspace identity and notification intent rather than translated display text. Language changes must not reset navigation, mission/checkpoint/selection, loaded fixtures or map scale.
+- Preserve keyboard/accessibility behavior and design. Verify both languages at narrow widths and actual browser zoom; retain diagram-local scrolling instead of shrinking translated text.
 
 ## Decision and change discipline
 

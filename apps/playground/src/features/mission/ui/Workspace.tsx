@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Mission } from '../domain/mission';
@@ -5,6 +6,7 @@ import { useMissionWorkspace } from '../application/useMissionWorkspace';
 import { ActorCanvas, Inspector, Timeline } from '../../protocol-flow';
 
 export function Workspace({ mission }: { mission: Mission }) {
+  const { t } = useTranslation('mission');
   const {
     checkpointId,
     checkpoint,
@@ -28,8 +30,8 @@ export function Workspace({ mission }: { mission: Mission }) {
   const mapViewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = `${mission.title} · Mission Control`;
-  }, [mission.title]);
+    document.title = t('common:titles.workspace', { mission: t(mission.titleKey) });
+  }, [mission.titleKey, t]);
 
   function resetView() {
     resetWorkspace();
@@ -40,26 +42,28 @@ export function Workspace({ mission }: { mission: Mission }) {
     // Fit preserves the readable baseline. Narrow maps scroll instead of shrinking text.
     setScale(1);
     mapViewportRef.current?.scrollTo({ left: 0 });
-    announce('Map at readable size. Scroll horizontally to reach additional participants.');
+    announce('fitted');
   }
 
   return (
     <main id="main-content" className="workspace" tabIndex={-1}>
       <Link className="back-link" to="/missions">
-        ← Back to Missions
+        {t('common:actions.backArrow')}
       </Link>
       <header className="workspace-heading">
         <div>
           <p className="eyebrow">
-            MISSION CONTROL <span>/ PREVIEW</span>
+            {t('mission:workspace.eyebrow')} <span>{t('mission:workspace.preview')}</span>
           </p>
-          <h1>{mission.title}</h1>
-          <p>{mission.subtitle}</p>
+          <h1>{t(mission.titleKey)}</h1>
+          <p>{t(mission.subtitleKey)}</p>
         </div>
         <div className="workspace-status">
-          <span className={`badge ${mission.preview.kind}`}>{mission.availability}</span>
+          <span className={`badge ${mission.preview.kind}`}>
+            {t(`availability.${mission.availability}`)}
+          </span>
           <span className="metadata" role="status">
-            No live run
+            {t('mission:workspace.noRun')}
           </span>
         </div>
       </header>
@@ -67,24 +71,27 @@ export function Workspace({ mission }: { mission: Mission }) {
         <span className="notice-icon" aria-hidden="true">
           i
         </span>
-        <p>{mission.preview.note}</p>
+        <p>{t(mission.preview.noteKey)}</p>
       </div>
       <div className="workspace-grid">
         <aside className="panel mission-panel" aria-labelledby="mission-panel-title">
           <div className="panel-heading">
-            <h2 id="mission-panel-title">Your mission</h2>
-            <span className="metadata">LEARN</span>
+            <h2 id="mission-panel-title">{t('mission:workspace.mission')}</h2>
+            <span className="metadata">{t('mission:workspace.learn')}</span>
           </div>
           <div className="objective">
-            <p className="eyebrow">OBJECTIVE</p>
-            <p>{mission.objective}</p>
+            <p className="eyebrow">{t('mission:workspace.objective')}</p>
+            <p>{t(mission.objectiveKey)}</p>
           </div>
           <div className="checkpoint-heading">
-            <h3>Learning checkpoints</h3>
+            <h3>{t('mission:workspace.checkpoints')}</h3>
             <span>
               {selectedIndex >= 0
-                ? `${selectedIndex + 1} / ${mission.checkpoints.length} selected`
-                : 'None selected'}
+                ? t('workspace.checkpointSelected', {
+                    current: selectedIndex + 1,
+                    total: mission.checkpoints.length,
+                  })
+                : t('workspace.noneSelected')}
             </span>
           </div>
           <ol className="checkpoints">
@@ -98,38 +105,40 @@ export function Workspace({ mission }: { mission: Mission }) {
                   <span className="checkpoint-number" aria-hidden="true">
                     {String(index + 1).padStart(2, '0')}
                   </span>
-                  <span>{entry.title}</span>
+                  <span>{t(entry.titleKey)}</span>
                 </button>
               </li>
             ))}
           </ol>
-          <p className="panel-footnote">
-            Checkpoint selection is learning navigation. It does not execute a flow.
-          </p>
+          <p className="panel-footnote">{t('mission:workspace.checkpointNote')}</p>
         </aside>
         <section className="panel canvas-panel" aria-labelledby="canvas-title">
           <div className="panel-heading canvas-heading">
-            <h2 id="canvas-title">Actor map</h2>
-            <div className="canvas-controls" role="group" aria-label="Actor map viewport">
+            <h2 id="canvas-title">{t('mission:workspace.actorMap')}</h2>
+            <div
+              className="canvas-controls"
+              role="group"
+              aria-label={t('mission:workspace.viewport')}
+            >
               <button
                 className="icon-button"
-                aria-label="Zoom out"
+                aria-label={t('mission:workspace.zoomOut')}
                 disabled={scale <= 1}
                 onClick={() => setScale((current) => Math.max(1, current - 0.25))}
               >
                 −
               </button>
-              <output aria-label="Map zoom">{Math.round(scale * 100)}%</output>
+              <output aria-label={t('mission:workspace.zoom')}>{Math.round(scale * 100)}%</output>
               <button
                 className="icon-button"
-                aria-label="Zoom in"
+                aria-label={t('mission:workspace.zoomIn')}
                 disabled={scale >= 1.5}
                 onClick={() => setScale((current) => Math.min(1.5, current + 0.25))}
               >
                 +
               </button>
               <button className="text-button" onClick={fitMap}>
-                Fit
+                {t('mission:workspace.fit')}
               </button>
             </div>
           </div>
@@ -149,22 +158,26 @@ export function Workspace({ mission }: { mission: Mission }) {
           />
           <div className="canvas-explanation" data-selected={Boolean(event)}>
             <span
-              className={`badge ${event?.visibility === 'Not observable' ? 'unobservable' : 'explained'}`}
+              className={`badge ${event?.visibility === 'not-observable' ? 'unobservable' : 'explained'}`}
             >
-              {event?.visibility ?? 'Explained'}
+              {t(`protocol-flow:visibility.${event?.visibility ?? 'explained'}`)}
             </span>
-            <h3>{event?.title ?? actor?.label ?? checkpoint?.title ?? 'Explore the map'}</h3>
+            <h3>
+              {t(event?.titleKey ?? actor?.labelKey ?? checkpoint?.titleKey ?? 'workspace.explore')}
+            </h3>
             <p>
-              {event?.summary ??
-                actor?.description ??
-                checkpoint?.explanation ??
-                'Select an actor, checkpoint or fixture sample to explore its context.'}
+              {t(
+                event?.summaryKey ??
+                  actor?.descriptionKey ??
+                  checkpoint?.explanationKey ??
+                  'workspace.context',
+              )}
             </p>
           </div>
           <div className="workspace-actions">
             {mission.preview.kind === 'fixture' && (
               <button className="button primary" disabled={hasLoadedSamples} onClick={loadSamples}>
-                {hasLoadedSamples ? 'Fixture samples loaded' : mission.preview.loadLabel}
+                {t(hasLoadedSamples ? 'workspace.loaded' : mission.preview.loadLabelKey)}
               </button>
             )}
             <button
@@ -172,24 +185,24 @@ export function Workspace({ mission }: { mission: Mission }) {
               disabled={events.length === 0}
               onClick={replayExplanation}
             >
-              Replay explanation
+              {t('mission:workspace.replay')}
             </button>
             <button className="text-button" onClick={resetView}>
-              Reset view
+              {t('mission:workspace.reset')}
             </button>
           </div>
         </section>
         <Inspector
           event={event}
           actor={actor}
-          contextTitle={checkpoint?.title}
-          contextExplanation={checkpoint?.explanation}
+          contextTitle={checkpoint ? t(checkpoint.titleKey) : undefined}
+          contextExplanation={checkpoint ? t(checkpoint.explanationKey) : undefined}
           actors={actors}
         />
         <Timeline events={events} selectedEventId={event?.id ?? null} onSelectEvent={selectEvent} />
       </div>
       <p className="sr-only" role="status">
-        {announcement}
+        {announcement ? t(`announcements.${announcement}`) : ''}
       </p>
     </main>
   );

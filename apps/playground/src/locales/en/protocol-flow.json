@@ -1,0 +1,66 @@
+{
+  "channels": {
+    "front": "Front channel",
+    "back": "Back channel",
+    "internal": "Provider internal"
+  },
+  "visibility": {
+    "explained": "Explained",
+    "not-observable": "Not observable"
+  },
+  "canvas": {
+    "scrollLabel": "Scrollable actor map",
+    "inContext": "In context",
+    "legend": "Communication channel legend",
+    "noPaths": "No communication paths defined",
+    "fixtureNote": "Fixture explanations only · no observed traffic",
+    "textAlternative": "Actor map text alternative",
+    "interactions": "Fixture interactions",
+    "actorDescription": "{{actor}} — {{role}}. {{description}}",
+    "interactionDescription": "{{title}}: {{direction}}. {{channel}} · Fixture / {{visibility}}. {{summary}}"
+  },
+  "diagram": {
+    "empty": "No communication samples loaded.",
+    "emptyHelp": "Explore actor responsibilities or learning checkpoints.",
+    "messageDirection": "{{source}} → {{target}}",
+    "internalDirection": "{{source}} · internal annotation",
+    "internalExplanation": "{{source}} · internal annotation, no network request",
+    "inspect": "Inspect {{title}}. {{direction}}. {{channel}}. Fixture — {{visibility}}.",
+    "selected": "Selected",
+    "example": "Example",
+    "channelVisibility": "{{channel}} · {{visibility}}"
+  },
+  "inspector": {
+    "heading": "Inspector",
+    "selected": "SELECTED FIXTURE",
+    "context": "CONTEXT",
+    "whatHappened": "What happened",
+    "noSelection": "No selection",
+    "noOperation": "No operation occurred. This panel contains conceptual learning content.",
+    "source": "Source",
+    "fixtureSource": "Static fixture sample",
+    "conceptSource": "Conceptual content",
+    "observer": "Actual observer",
+    "noObserver": "None — not observed",
+    "timestamp": "Observed timestamp",
+    "unavailable": "Not available",
+    "safeEvidence": "Safe Evidence",
+    "exampleDetails": "EXAMPLE DETAILS · NOT AN OBSERVED RESULT",
+    "noObservedEvidence": "NO OBSERVED EVIDENCE",
+    "emptyEvidence": "No observed evidence is available for this selection.",
+    "why": "Why it matters",
+    "chooseExplanation": "Choose a checkpoint, actor or sample to read its explanation.",
+    "actorsChannel": "Actors & channel",
+    "chooseSample": "Select a sample to inspect its source, destination and channel.",
+    "actorRole": "{{actor}} · {{role}}"
+  },
+  "timeline": {
+    "heading": "Event timeline",
+    "count_one": "{{count, number}} FIXTURE SAMPLE · 0 OBSERVED EVENTS",
+    "count_other": "{{count, number}} FIXTURE SAMPLES · 0 OBSERVED EVENTS",
+    "empty": "No observed events",
+    "emptyHelp": "Nothing has executed. Conceptual learning content is separate from observed evidence.",
+    "orderNote": "Fixture explanation order only. No observed timestamps or operational outcomes.",
+    "sampleNumber": "SAMPLE {{number}}"
+  }
+}

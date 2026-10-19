@@ -1,0 +1,271 @@
+{
+  "definitions": {
+    "oauthOidc": {
+      "title": "OAuth 2.0 / OIDC",
+      "subtitle": "Authorization Code + PKCE · Beispielvorschau",
+      "outcome": "Verstehe die Rollen, Browserweiterleitungen und serverseitigen Grenzen hinter einem sicheren Anmeldeablauf.",
+      "objective": "Erkläre das Zusammenspiel von Browser, vertraulichem Client und Provider und warum API-Autorisierung eine eigenständige Entscheidung ist.",
+      "previewLabel": "Beispiele ansehen",
+      "topics": {
+        "oauth": "OAuth 2.0",
+        "oidc": "OIDC",
+        "pkce": "PKCE",
+        "apiAuthorization": "API-Autorisierung"
+      },
+      "groups": {
+        "person": {
+          "label": "Nutzer"
+        },
+        "device": {
+          "label": "Endgerät"
+        },
+        "application": {
+          "label": "Unsere Anwendung"
+        },
+        "keycloak": {
+          "label": "Keycloak · eine Bereitstellung"
+        },
+        "resource": {
+          "label": "Demo-Backend"
+        }
+      },
+      "actors": {
+        "user": {
+          "label": "Menschlicher Nutzer",
+          "role": "Resource Owner",
+          "description": "Die Person, die den Ablauf beginnt. Der Mensch ist der Resource Owner, nicht die SPA."
+        },
+        "browser": {
+          "label": "Browser / SPA",
+          "role": "User Agent",
+          "description": "Zeigt das Lernlabor an und folgt Browserweiterleitungen. In dieser Architektur ist er nicht der OAuth-Client."
+        },
+        "bff": {
+          "label": "NestJS BFF",
+          "role": "OAuth / OIDC Client",
+          "description": "Der geplante vertrauliche Client verwaltet Transaktionen, serverseitige Tokens und die Anwendungssitzung. An diese Vorschau ist kein Backend angebunden."
+        },
+        "authorization-server": {
+          "label": "Authorization Server",
+          "role": "OAuth-Rolle",
+          "description": "Bearbeitet Autorisierungsanfragen und den Codeaustausch. Diese logische Rolle teilt sich die Keycloak-Bereitstellung mit dem Identity Provider."
+        },
+        "identity-provider": {
+          "label": "Identity Provider",
+          "role": "OIDC / Föderationskonzept",
+          "description": "Authentifiziert den Nutzer in der Keycloak-Oberfläche. Dies ist eine logische Rolle, kein zweiter bereitgestellter Server und keine ursprüngliche OAuth-2.0-Rolle."
+        },
+        "resource-server": {
+          "label": "Resource Server",
+          "role": "API-Autorisierung",
+          "description": "Prüft Access Token und Berechtigungen eigenständig, bevor er in einer künftigen ausführbaren Mission synthetische Daten zurückgibt."
+        }
+      },
+      "checkpoints": {
+        "roles": {
+          "title": "Verstehe die Akteure",
+          "explanation": "Unterscheide Mensch, Browser, OAuth-Client, Authorization Server, Identity Provider und Resource Server. Zwei Keycloak-Rollen teilen sich eine Bereitstellung."
+        },
+        "authorization": {
+          "title": "Folge dem Frontkanal",
+          "explanation": "In einem echten Ablauf leitet der BFF eine Weiterleitung ein und der Browser navigiert zu Keycloak. Diese Vorschau startet keine Authentifizierung und navigiert nicht zu einem Provider."
+        },
+        "identity": {
+          "title": "Verorte die Authentifizierung",
+          "explanation": "Zugangsdaten gehören in die Keycloak-Anmeldung. Das Lernlabor bietet kein Passwortformular und beobachtet keine providerinterne Authentifizierung."
+        },
+        "exchange": {
+          "title": "Untersuche den Rückkanal",
+          "explanation": "Der BFF ordnet den Callback zu, tauscht den Code direkt mit Keycloak aus und validiert die OIDC-Antwort. Ein erfolgreicher Austausch würde Keycloaks interne Prüfungen nicht direkt instrumentieren."
+        },
+        "tokens": {
+          "title": "Unterscheide Tokenzwecke",
+          "explanation": "Ein ID Token übermittelt dem Client das Authentifizierungsergebnis. Ein Access Token wird am Resource Server verwendet. Beide gehören nicht in diesen Inspektor."
+        },
+        "resource": {
+          "title": "Finde die API-Grenze",
+          "explanation": "Eine Sitzung allein belegt keine API-Autorisierung. Der Resource Server muss Zielgruppe, Aussteller, Gültigkeitsdauer, Vertrauen und Berechtigung prüfen."
+        },
+        "evidence": {
+          "title": "Prüfe die Nachweisgrenzen",
+          "explanation": "Lade die Beispiele, um sichere Erläuterungsfelder zu erkunden. Keines ist ein beobachteter Trace; Authentifizierung, API-Berechtigung oder Sitzungsergebnis werden nicht nachgewiesen."
+        }
+      },
+      "preview": {
+        "note": "Vorschau nur mit Beispieldaten. Die Beispiele erklären einen möglichen Ablauf; es entstehen keine Netzwerkanfrage, Authentifizierung oder Sitzung.",
+        "loadLabel": "Beispiele laden"
+      },
+      "events": {
+        "authorization-example": {
+          "title": "Autorisierungsweiterleitung im Browser",
+          "summary": "Ein Beispiel dafür, wie der Browser einer vom BFF eingeleiteten Weiterleitung zum Authorization Server folgt. Es fand keine Weiterleitung statt.",
+          "explanation": "Der BFF ist der OAuth-Client. Er erstellt die Autorisierungstransaktion; der Browser übermittelt die Anfrage an Keycloak. Ein Lernschritt kann diese Weiterleitung weder anhalten noch ausführen."
+        },
+        "provider-internal-example": {
+          "title": "Providerinterne PKCE-Bindung",
+          "summary": "Ein Lernhinweis zu einer providerinternen Prüfung, kein instrumentiertes Ereignis.",
+          "explanation": "Der Authorization Server prüft beim Codeaustausch den Verifier gegen die ursprüngliche Challenge. Ein BFF könnte das Austauschergebnis beobachten, aber keinen direkten Trace dieser internen Prüfung beanspruchen."
+        },
+        "exchange-example": {
+          "title": "Direkter Codeaustausch",
+          "summary": "Ein Beispiel direkter Kommunikation zwischen BFF und Provider. Es wurden weder Austausch noch Sitzung ausgeführt bzw. erstellt.",
+          "explanation": "Der BFF tauscht den Authorization Code aus und validiert die OIDC-Antwort, bevor er eine Sitzung einrichtet. Tokens bleiben serverseitig. Dieses Beispiel enthält weder Code, Verifier, Tokenantwort noch Sitzungsergebnis."
+        },
+        "resource-example": {
+          "title": "Eigenständige Ressourcenautorisierung",
+          "summary": "Ein Beispiel für die Grenze einer geschützten Ressource. Es wurde keine Ressourcenanfrage gesendet oder erlaubt.",
+          "explanation": "Ein Resource Server prüft Vertrauen, Aussteller, Zielgruppe, Gültigkeitsdauer und Berechtigung eines Access Token eigenständig. Ein ID Token beschreibt das Authentifizierungsergebnis für den Client und ist kein API-Zugriffsnachweis."
+        }
+      },
+      "evidence": {
+        "responseType": "Beispiel-Antworttyp",
+        "pkceMethod": "Beispiel-PKCE-Methode",
+        "channel": "Kanal",
+        "client": "OAuth-Client",
+        "credentialPurpose": "Verwendungszweck",
+        "resourceType": "Ressourcentyp",
+        "syntheticOnly": "Nur synthetische Daten"
+      }
+    },
+    "epa": {
+      "title": "ePA / gematik",
+      "subtitle": "Grenzen geschützter Systeme · konzeptionelles Layout",
+      "outcome": "Erkunde eine konzeptionelle Übersicht der Zuständigkeiten für Identität, Autorisierung und geschützte Systeme in einem ePA-Ablauf.",
+      "objective": "Prüfe, wie unterschiedliche Akteure und Sicherheitsgrenzen in den Arbeitsbereich passen. Die genaue Protokollabfolge ist eine künftige Spezifikationsentscheidung.",
+      "previewLabel": "Konzept ansehen",
+      "topics": {
+        "identity": "Identitätsgrenzen",
+        "authorization": "Autorisierung",
+        "protectedSystems": "Geschützte Systeme"
+      },
+      "groups": {
+        "insured": {
+          "label": "Person"
+        },
+        "access": {
+          "label": "Zugangskanal"
+        },
+        "identity": {
+          "label": "Identitätsgrenze"
+        },
+        "authorization": {
+          "label": "Autorisierungsgrenze"
+        },
+        "protected": {
+          "label": "Geschütztes Teilsystem"
+        }
+      },
+      "actors": {
+        "insured-person": {
+          "label": "Versicherte Person",
+          "role": "Nutzer",
+          "description": "Beispielhafte Person, die einen geschützten ePA-Ablauf beginnt. Es werden keine echten Patienten- oder Gesundheitsdaten verwendet."
+        },
+        "fdv": {
+          "label": "FdV / Client",
+          "role": "Szenarioabhängig",
+          "description": "Beispielhafter Zugangskanal für Nutzer. Dieses Layout impliziert kein implementiertes browserbasiertes FdV."
+        },
+        "sectoral-idp": {
+          "label": "Sektoraler IdP",
+          "role": "Identitätszuständigkeit",
+          "description": "Beispielhafte Zuständigkeit für Authentifizierung oder Föderation, sofern sie auf ein künftig spezifiziertes Szenario zutrifft."
+        },
+        "epa-authorization": {
+          "label": "ePA-Autorisierungsdienst",
+          "role": "Autorisierungszuständigkeit",
+          "description": "Eine konzeptionelle Autorisierungsgrenze. Es wird kein ePA-Autorisierungsvorgang implementiert oder vorgeführt."
+        },
+        "vau": {
+          "label": "ePA-System / VAU",
+          "role": "Geschütztes System",
+          "description": "Ein geschütztes Teilsystem und sichere Kommunikation als getrennt zu modellierende Themen. Es werden keine Live-TI-Verbindung, genaue Abfolge oder Zertifizierung beansprucht."
+        }
+      },
+      "checkpoints": {
+        "actors": {
+          "title": "Entdecke die Zuständigkeiten",
+          "explanation": "Diese Akteurstypen prüfen das Layout. Sie implizieren weder, dass alle Akteure an einer einzigen Abfolge teilnehmen, noch, dass ein konkretes ePA-Szenario implementiert wurde."
+        },
+        "identity": {
+          "title": "Untersuche Identitätsgrenzen",
+          "explanation": "Ordne mögliche Zuständigkeiten für Identität oder Föderation ein. Die aktuell geltenden gematik-Spezifikationen müssen das künftige Szenario bestimmen."
+        },
+        "authorization": {
+          "title": "Prüfe Autorisierungsgrenzen",
+          "explanation": "Identität und Autorisierung haben unterschiedliche Zuständigkeiten. Diese konzeptionelle Übersicht legt weder Anfragen, Entscheidungen, Zugangsdaten noch Betriebsergebnisse fest."
+        },
+        "protected": {
+          "title": "Verstehe geschützte Systeme",
+          "explanation": "Ein geschütztes Teilsystem und die Grenze sicherer Kommunikation benötigen eine eigene Spezifikation. Hier wird kein VAU-Verhalten simuliert."
+        },
+        "evidence": {
+          "title": "Trenne Konzept und Nachweis",
+          "explanation": "Es gibt keine Live-Integration, Telemetrie oder simulierten Betriebsergebnisse. Die leere Zeitleiste ist beabsichtigt. Diese Vorschau beansprucht weder gematik-Konformität noch Zertifizierung."
+        }
+      },
+      "preview": {
+        "note": "Geplant — keine Live-Integration, Telemetrie oder simulierten Betriebsergebnisse. Die Akteursanordnung ist konzeptionell und definiert keine Protokollabfolge."
+      },
+      "events": {}
+    }
+  },
+  "catalog": {
+    "eyebrow": "MISSIONSKATALOG",
+    "lab": "/ LERNLABOR",
+    "heading": "Verstehe den Ablauf.",
+    "headingAccent": "Erkenne die Grenzen.",
+    "intro": "Erkunde Authentifizierung und Autorisierung anhand von Akteuren, Erklärungen und sicheren Nachweisen. Wähle eine Vorschau für Mission Control.",
+    "artCaption": "PROTOKOLLE / PERSPEKTIVE / PRAXIS",
+    "choose": "Wähle deine Mission",
+    "previewCount_one": "{{count, number}} VORSCHAU · KEINE LIVE-INTEGRATIONEN",
+    "previewCount_other": "{{count, number}} VORSCHAUEN · KEINE LIVE-INTEGRATIONEN",
+    "noticeTitle": "Raum zum Erkunden, mit ehrlichen Nachweisen.",
+    "notice": "Diese Vorschauen verwenden Beispieldaten. Hier laufen weder Anmeldung noch geschützte API-Aufrufe oder Live-Protokollintegrationen. Geplante Missionen bleiben geplant, bis ihre echte Ausführung verifiziert ist.",
+    "principles": {
+      "label": "So funktioniert Mission Control",
+      "actorsTitle": "Ordne die Akteure ein",
+      "actors": "Verstehe, wer für welchen Teil eines Ablaufs verantwortlich ist.",
+      "explanationTitle": "Folge der Erklärung",
+      "explanation": "Erkunde Lernschritte in deinem Tempo, unabhängig von einer Ausführung.",
+      "evidenceTitle": "Hinterfrage die Nachweise",
+      "evidence": "Unterscheide Beobachtungen von Erklärungen."
+    },
+    "cardNumber": "MISSION {{number}}",
+    "learningPreview": "LERNVORSCHAU",
+    "topics": "Themen"
+  },
+  "availability": {
+    "fixture": "Beispielvorschau",
+    "planned": "Geplant"
+  },
+  "workspace": {
+    "eyebrow": "MISSION CONTROL",
+    "preview": "/ VORSCHAU",
+    "noRun": "Keine Live-Ausführung",
+    "mission": "Deine Mission",
+    "learn": "LERNEN",
+    "objective": "LERNZIEL",
+    "checkpoints": "Lernschritte",
+    "checkpointSelected": "{{current, number}} / {{total, number}} ausgewählt",
+    "noneSelected": "Keine Auswahl",
+    "checkpointNote": "Die Auswahl eines Lernschritts dient der Navigation. Sie führt keinen Ablauf aus.",
+    "actorMap": "Akteursübersicht",
+    "viewport": "Ansicht der Akteursübersicht",
+    "zoomOut": "Verkleinern",
+    "zoomIn": "Vergrößern",
+    "zoom": "Diagrammzoom",
+    "fit": "Einpassen",
+    "explore": "Erkunde die Übersicht",
+    "context": "Wähle einen Akteur, Lernschritt oder ein Beispiel, um den Kontext zu erkunden.",
+    "loaded": "Beispiele geladen",
+    "replay": "Erklärung wiederholen",
+    "reset": "Ansicht zurücksetzen"
+  },
+  "announcements": {
+    "loaded": "Beispiele geladen. Es wurde kein Live-Vorgang ausgeführt.",
+    "replayed": "Erklärung ab dem ersten Beispiel wiederholt.",
+    "reset": "Ansicht zurückgesetzt. Geladene Beispiele bleiben erhalten.",
+    "fitted": "Diagramm in lesbarer Größe. Scrolle horizontal, um weitere Teilnehmer zu erreichen."
+  }
+}

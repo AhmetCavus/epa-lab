@@ -1,6 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  // Existing English regressions explicitly restore a supported preference.
+  await page.addInitScript(() => localStorage.setItem('auth-protocol-playground.locale', 'en'));
+});
+
 test('catalog availability, keyboard previews and browser navigation are honest', async ({
   page,
 }) => {
@@ -99,11 +104,11 @@ test('sample selection, learning selection and reset stay independent of executi
   ).toHaveCount(2);
   expect(
     await page.evaluate(() => ({
-      local: localStorage.length,
+      local: Object.entries(localStorage),
       session: sessionStorage.length,
       cookie: document.cookie,
     })),
-  ).toEqual({ local: 0, session: 0, cookie: '' });
+  ).toEqual({ local: [['auth-protocol-playground.locale', 'en']], session: 0, cookie: '' });
   expect(unexpectedRequests).toEqual([]);
   expect(browserErrors).toEqual([]);
   await page.screenshot({ path: test.info().outputPath('oauth-workspace.png'), fullPage: true });

@@ -1,4 +1,5 @@
 /** @jsxImportSource react */
+import { useTranslation } from 'react-i18next';
 import { useEffect, useId, useRef } from 'react';
 import type { FixtureEvent } from '../domain/protocol-flow';
 import type { CanvasLayout } from './interaction-layout';
@@ -16,6 +17,7 @@ export function InteractionPaths({
   selectedEventId,
   onSelectEvent,
 }: InteractionPathsProps) {
+  const { t } = useTranslation('protocol-flow');
   const markerId = `direction-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -56,9 +58,9 @@ export function InteractionPaths({
       </svg>
       {events.length === 0 && (
         <p className="diagram-empty">
-          No communication samples loaded.
+          {t('protocol-flow:diagram.empty')}
           <br />
-          Explore actor responsibilities or learning checkpoints.
+          {t('protocol-flow:diagram.emptyHelp')}
         </p>
       )}
       {events.map((event, index) => {
@@ -73,8 +75,11 @@ export function InteractionPaths({
         }
         const direction =
           event.kind === 'message'
-            ? `${source.actor.label} → ${target?.actor.label}`
-            : `${source.actor.label} · internal annotation`;
+            ? t('diagram.messageDirection', {
+                source: t(source.actor.labelKey),
+                target: target ? t(target.actor.labelKey) : '',
+              })
+            : t('diagram.internalDirection', { source: t(source.actor.labelKey) });
         const isSelected = selectedEventId === event.id;
 
         return (
@@ -84,18 +89,28 @@ export function InteractionPaths({
             data-event-id={event.id}
             data-channel={event.channel.kind}
             aria-pressed={isSelected}
-            aria-label={`Inspect ${event.title}. ${direction}. ${event.channel.label}. Fixture — ${event.visibility}.`}
+            aria-label={t('diagram.inspect', {
+              title: t(event.titleKey),
+              direction,
+              channel: t(event.channel.labelKey),
+              visibility: t(`visibility.${event.visibility}`),
+            })}
             onClick={() => onSelectEvent(event.id)}
           >
             <span className="interaction-label">
               <span className="message-heading">
                 <span className="message-number">{String(index + 1).padStart(2, '0')}</span>
-                <strong>{event.title}</strong>
-                <span className="path-selection-label">{isSelected ? 'Selected' : 'Example'}</span>
+                <strong>{t(event.titleKey)}</strong>
+                <span className="path-selection-label">
+                  {t(isSelected ? 'diagram.selected' : 'diagram.example')}
+                </span>
               </span>
               <span className="message-direction">{direction}</span>
               <span className="interaction-channel">
-                {event.channel.label} · {event.visibility}
+                {t('diagram.channelVisibility', {
+                  channel: t(event.channel.labelKey),
+                  visibility: t(`visibility.${event.visibility}`),
+                })}
               </span>
             </span>
             <svg className="path-drawing" viewBox={`0 0 ${layout.width} 40`} aria-hidden="true">

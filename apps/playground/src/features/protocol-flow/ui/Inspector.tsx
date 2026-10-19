@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Actor, FixtureEvent } from '../domain/protocol-flow';
 
 interface InspectorProps {
@@ -15,6 +16,7 @@ export function Inspector({
   contextExplanation,
   actors,
 }: InspectorProps) {
+  const { t } = useTranslation('protocol-flow');
   const sourceId = event?.kind === 'internal' ? event.actorId : event?.sourceActorId;
   const source = actors.find((entry) => entry.id === sourceId);
   const target =
@@ -25,80 +27,83 @@ export function Inspector({
   return (
     <aside className="panel inspector" aria-labelledby="inspector-title">
       <div className="panel-heading">
-        <h2 id="inspector-title">Inspector</h2>
-        <span className="metadata">{event ? 'SELECTED FIXTURE' : 'CONTEXT'}</span>
+        <h2 id="inspector-title">{t('protocol-flow:inspector.heading')}</h2>
+        <span className="metadata">{t(event ? 'inspector.selected' : 'inspector.context')}</span>
       </div>
       <div className="inspector-content" aria-live="polite" aria-atomic="true">
         <span
-          className={`badge ${event?.visibility === 'Not observable' ? 'unobservable' : 'explained'}`}
+          className={`badge ${event?.visibility === 'not-observable' ? 'unobservable' : 'explained'}`}
         >
-          {event?.visibility ?? 'Explained'}
+          {t(`visibility.${event?.visibility ?? 'explained'}`)}
         </span>
         <section>
-          <h3>What happened</h3>
-          <h4>{event?.title ?? actor?.label ?? contextTitle ?? 'No selection'}</h4>
-          <p>
-            {event?.summary ??
-              'No operation occurred. This panel contains conceptual learning content.'}
-          </p>
+          <h3>{t('protocol-flow:inspector.whatHappened')}</h3>
+          <h4>
+            {event || actor
+              ? t(event?.titleKey ?? actor?.labelKey ?? 'inspector.noSelection')
+              : (contextTitle ?? t('inspector.noSelection'))}
+          </h4>
+          <p>{t(event?.summaryKey ?? 'inspector.noOperation')}</p>
           <dl className="provenance">
             <div>
-              <dt>Source</dt>
-              <dd>{event ? 'Static fixture sample' : 'Conceptual content'}</dd>
+              <dt>{t('protocol-flow:inspector.source')}</dt>
+              <dd>{t(event ? 'inspector.fixtureSource' : 'inspector.conceptSource')}</dd>
             </div>
             <div>
-              <dt>Actual observer</dt>
-              <dd>None — not observed</dd>
+              <dt>{t('protocol-flow:inspector.observer')}</dt>
+              <dd>{t('protocol-flow:inspector.noObserver')}</dd>
             </div>
             <div>
-              <dt>Observed timestamp</dt>
-              <dd>Not available</dd>
+              <dt>{t('protocol-flow:inspector.timestamp')}</dt>
+              <dd>{t('protocol-flow:inspector.unavailable')}</dd>
             </div>
           </dl>
         </section>
         <section className="evidence-section">
-          <h3>Safe Evidence</h3>
+          <h3>{t('protocol-flow:inspector.safeEvidence')}</h3>
           <p className="metadata">
-            {event ? 'EXAMPLE DETAILS · NOT AN OBSERVED RESULT' : 'NO OBSERVED EVIDENCE'}
+            {t(event ? 'inspector.exampleDetails' : 'inspector.noObservedEvidence')}
           </p>
           {event && event.evidence.length > 0 ? (
             <dl className="evidence-fields">
               {event.evidence.map((field) => (
-                <div key={field.label}>
-                  <dt>{field.label}</dt>
-                  <dd>{field.value}</dd>
+                <div key={field.labelKey}>
+                  <dt>{t(field.labelKey)}</dt>
+                  <dd>{field.value.kind === 'literal' ? field.value.value : t(field.value.key)}</dd>
                 </div>
               ))}
             </dl>
           ) : (
-            <p>No observed evidence is available for this selection.</p>
+            <p>{t('protocol-flow:inspector.emptyEvidence')}</p>
           )}
         </section>
         <section className="interpretation">
-          <h3>Why it matters</h3>
+          <h3>{t('protocol-flow:inspector.why')}</h3>
           <p>
-            {event?.explanation ??
-              actor?.description ??
-              contextExplanation ??
-              'Choose a checkpoint, actor or sample to read its explanation.'}
+            {event || actor
+              ? t(event?.explanationKey ?? actor?.descriptionKey ?? 'inspector.chooseExplanation')
+              : (contextExplanation ?? t('inspector.chooseExplanation'))}
           </p>
         </section>
         <section>
-          <h3>Actors &amp; channel</h3>
+          <h3>{t('protocol-flow:inspector.actorsChannel')}</h3>
           {event ? (
             <>
               <p>
                 {event.kind === 'message'
-                  ? `${source?.label} → ${target?.label}`
-                  : `${source?.label} · internal annotation, no network request`}
+                  ? t('diagram.messageDirection', {
+                      source: source ? t(source.labelKey) : '',
+                      target: target ? t(target.labelKey) : '',
+                    })
+                  : t('diagram.internalExplanation', { source: source ? t(source.labelKey) : '' })}
               </p>
-              <span className="badge explained">{event.channel.label}</span>
+              <span className="badge explained">{t(event.channel.labelKey)}</span>
             </>
           ) : (
             <p>
               {actor
-                ? `${actor.label} · ${actor.role}`
-                : 'Select a sample to inspect its source, destination and channel.'}
+                ? t('inspector.actorRole', { actor: t(actor.labelKey), role: t(actor.roleKey) })
+                : t('inspector.chooseSample')}
             </p>
           )}
         </section>

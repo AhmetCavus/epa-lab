@@ -1,18 +1,20 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 export function NotFound() {
+  const { t } = useTranslation('common');
   useEffect(() => {
-    document.title = 'Page not found · Auth Protocol Playground';
-  }, []);
+    document.title = t('titles.notFound');
+  }, [t]);
 
   return (
     <main id="main-content" className="not-found" tabIndex={-1}>
-      <p className="eyebrow">UNKNOWN DESTINATION</p>
-      <h1>That preview isn’t here.</h1>
-      <p>Choose one of the mission previews in the catalog.</p>
+      <p className="eyebrow">{t('common:notFound.eyebrow')}</p>
+      <h1>{t('common:notFound.heading')}</h1>
+      <p>{t('common:notFound.description')}</p>
       <Link className="button primary" to="/missions">
-        Back to Missions
+        {t('common:actions.back')}
       </Link>
     </main>
   );

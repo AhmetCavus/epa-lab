@@ -1,6 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  // Existing English regressions explicitly restore a supported preference.
+  await page.addInitScript(() => localStorage.setItem('auth-protocol-playground.locale', 'en'));
+});
+
 test('canvas and timeline share one directed selection and internal annotations have no network edge', async ({
   page,
 }) => {
@@ -128,6 +133,9 @@ for (const viewport of [
       reducedMotion: 'reduce',
     });
     try {
+      await context.addInitScript(() =>
+        localStorage.setItem('auth-protocol-playground.locale', 'en'),
+      );
       const page = await context.newPage();
       await page.goto('http://127.0.0.1:4173/missions/oauth-oidc/workspace');
       await page.getByRole('button', { name: 'Load fixture samples' }).click();
