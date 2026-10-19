@@ -1,0 +1,36 @@
+{
+  "skipLink": "Skip to content",
+  "brandLink": "Auth Protocol Playground · Mission Catalog",
+  "tagline": "Explore protocols. Understand boundaries.",
+  "navigation": {
+    "label": "Main navigation",
+    "missions": "Missions"
+  },
+  "language": {
+    "label": "Language",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "header": {
+    "slice": "UI SLICE 001",
+    "preview": "PREVIEW"
+  },
+  "footer": {
+    "notice": "Fixture-only learning preview · no live protocol execution"
+  },
+  "notFound": {
+    "eyebrow": "UNKNOWN DESTINATION",
+    "heading": "That preview isn’t here.",
+    "description": "Choose one of the mission previews in the catalog."
+  },
+  "actions": {
+    "back": "Back to Missions",
+    "backArrow": "← Back to Missions"
+  },
+  "titles": {
+    "catalog": "Mission Catalog · Auth Protocol Playground",
+    "workspace": "{{mission}} · Mission Control",
+    "notFound": "Page not found · Auth Protocol Playground"
+  },
+  "description": "Explore protocol roles and safe evidence in a fixture-only learning workspace."
+}
