@@ -1,0 +1,39 @@
+{
+  "id": "epa-lab",
+  "name": "Auth Protocol Playground",
+  "slug": "epa-lab",
+  "type": "app",
+  "category": "hosted-app",
+  "composeFile": "infrastructure/docker-compose.playground.yml",
+  "publicUrl": "https://auth-playground.yappai.de",
+  "description": "Fixture-only authentication protocol playground with a mission catalog and conceptual workspaces.",
+  "services": [
+    {
+      "name": "playground",
+      "containerName": "epa-lab-playground",
+      "healthUrl": "http://epa-lab-playground/health"
+    }
+  ],
+  "healthChecks": [
+    {
+      "label": "Playground HTTP",
+      "type": "http",
+      "url": "http://epa-lab-playground/health",
+      "expectedStatus": 200,
+      "timeoutMs": 3000
+    },
+    {
+      "label": "Playground container",
+      "type": "container",
+      "containerName": "epa-lab-playground"
+    }
+  ],
+  "actions": {
+    "start": true,
+    "stop": true,
+    "restart": true,
+    "logs": true,
+    "delete": false
+  },
+  "tags": ["playground", "static-spa", "fixture-preview", "traefik"]
+}

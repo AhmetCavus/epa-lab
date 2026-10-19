@@ -4,6 +4,8 @@
 
 **Owner-authorized exception:** UI Slice 001 may implement the fixture-only Catalog and mission-agnostic Workspace in isolated `apps/playground`, as recorded in `AGENTS.md` and the change's UI checklist. All OAuth/backend implementation and architecture approvals remain DRAFT. This exception takes precedence over the general design-only gate for this slice.
 
+**Owner-authorized static deployment (2026-10-19):** Publish the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and register it as a Yoster hosted project. This authorizes the dedicated static Nginx/Compose stack, Traefik routing and hosting metadata only. The deployment must serve the existing catalog and direct workspace routes, report container/HTTP health, and remain independent of the existing authorization/Keycloak stack. All real authentication and backend gates remain in force.
+
 ## Purpose
 
 A browser-based, developer-oriented Mission Control to teach authentication and authorization protocols through runnable, safely observable missions and explanatory visualizations.

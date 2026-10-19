@@ -6,6 +6,8 @@ The owner additionally authorized `capability-first-arch-refactoring` through an
 
 The owner authorized `localization-foundation` and adoption of ADR-0004 through an explicit apply request on 2026-10-19. This permits German-default/English frontend localization only; all backend/Slice 002 gates remain in force.
 
+The owner authorized deployment of the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and registration as a Yoster hosted project on 2026-10-19. This permits its static Nginx container, dedicated Compose stack and Traefik routing. It does not authorize backend/OAuth integration or exposure of the existing authorization service or Keycloak.
+
 ## Project conventions
 
 - All Codex prompts and technical documentation are in English. Current frontend copy supports German (default/fallback) and English per ADR-0004.

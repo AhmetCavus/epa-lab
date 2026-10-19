@@ -1,0 +1,23 @@
+name: epa-lab
+
+services:
+  playground:
+    image: epa-lab/playground:local
+    container_name: epa-lab-playground
+    build:
+      context: ../apps/playground
+    restart: unless-stopped
+    expose:
+      - '80'
+    networks:
+      - dev-proxy
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--spider', 'http://127.0.0.1/health']
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+networks:
+  dev-proxy:
+    external: true

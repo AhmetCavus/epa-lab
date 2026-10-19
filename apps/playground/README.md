@@ -1,6 +1,6 @@
 # Auth Protocol Playground — UI Slice 001
 
-An isolated React/TypeScript browser app for the authorized fixture-only Catalog and Mission Control Workspace. It coexists with the existing `epa-auth-lab` services without calling or changing them. It is intentionally independent of the root's backend-only pnpm commands and workspace membership.
+An isolated React/TypeScript browser app for the authorized fixture-only Catalog and Mission Control Workspace. It coexists with the existing `epa-auth-lab` services without calling or changing them. It is independent of the root's backend commands and workspace membership; root `playground:*` scripts manage its hosted deployment.
 
 From the repository root, with Node 24:
 
@@ -15,6 +15,31 @@ Open <http://127.0.0.1:5173/missions>. Both workspace routes also support direct
 - `/missions/epa-concept/workspace`: planned, conceptual actor/checkpoint layout, with no telemetry or simulated operational results.
 
 Selecting a learning checkpoint never loads events or executes anything. Replay explanation selects the first loaded sample. Reset view clears selections and restores the map scale while retaining loaded samples. Fit returns to the readable 100% map scale; narrow diagrams scroll horizontally instead of shrinking essential text. Map controls never change browser page zoom. Refreshing or changing mission discards transient UI state; only an explicit language preference persists, with no session, backend connection or credential handling.
+
+## Hosted deployment
+
+The owner authorized static UI hosting on 2026-10-19 at <https://auth-playground.yappai.de>. From the repository root:
+
+```sh
+npm run playground:up
+npm run playground:logs
+npm run playground:down
+```
+
+The dedicated `infrastructure/docker-compose.playground.yml` stack builds this package with Node 24 and serves only its compiled assets with Nginx. It requires the existing external `dev-proxy` Docker network. It needs no `.env`, backend, Keycloak, database or published host port. The existing `infra:*` and `docker:*` commands manage the separate authorization stack.
+
+Traefik's watched file `../infra/traefik/dynamic/epa-lab.yml` (relative to the repository root) routes `auth-playground.yappai.de` on its existing `web` entry point to `http://epa-lab-playground:80`, following the other hosted projects. Keep that host configuration alongside this stack when moving hosts. The current Traefik Docker provider reports a Docker API version mismatch, so this deployment uses the working file provider. Nginx supports direct SPA routes and refreshes, returns 404 for missing assets, revalidates the app entry point and exposes `/health`. The image build context is limited to this package.
+
+Public HTTPS follows the host's existing Cloudflare setup: add `auth-playground.yappai.de` as a published application route on the YappAI tunnel with HTTP service `http://shared-traefik:80`. Use the incoming hostname, or set the HTTP Host Header to `auth-playground.yappai.de` if an override is required. The hostname also needs the proxied DNS record for that tunnel; the Cloudflare dashboard can create it with the route. TLS terminates at Cloudflare, so this stack does not add a separate certificate resolver or an HTTPS redirect at the HTTP origin.
+
+Yoster discovers the root `yappai.host.json` manifest on its next project request. It manages only the playground stack and checks its container plus internal HTTP endpoint. After source changes, use **Start → Build images before starting** in Yoster or rerun `npm run playground:up`.
+
+Verify host routing even before public DNS is configured:
+
+```sh
+curl --resolve auth-playground.yappai.de:80:127.0.0.1 http://auth-playground.yappai.de/health
+curl --resolve auth-playground.yappai.de:80:127.0.0.1 http://auth-playground.yappai.de/missions/oauth-oidc/workspace
+```
 
 ## Language and translation resources
 

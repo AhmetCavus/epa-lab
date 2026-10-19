@@ -49,7 +49,7 @@ A learner can explain: Resource Owner vs Browser vs OAuth Client; Authorization 
 ## Decisions requiring review
 
 - Product language: German by default with English support and explicit local language selection, per Accepted ADR-0004 and the approved frontend-only `localization-foundation` change. Technical documentation remains English.
-- Local-only runnable deployment for first verified slice (proposed); public interactive hosting requires separate hardening review.
+- Static, fixture-only UI hosting at `auth-playground.yappai.de` and Yoster registration were authorized on 2026-10-19. Public hosting of real authentication and backend execution still requires separate review and authorization.
 - Initial catalog: OAuth/OIDC (availability pending verification) and ePA/gematik (planned). Other mission families are conceptual only.
 - One integrated learning workspace rather than a separate gamification engine.
 - Standalone repository vs coexistence with `epa-auth-lab` (unresolved).

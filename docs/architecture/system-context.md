@@ -18,14 +18,14 @@ flowchart TB
 
 ## Role mapping
 
-| Role | Component | Remark |
-|---|---|---|
-| Resource Owner | Human user | Not the React SPA |
-| User Agent | Browser hosting SPA | Follows redirects and presents Keycloak login UI |
-| OAuth/OIDC Client | NestJS BFF | Confidential client and PKCE transaction owner |
-| Authorization Server | Keycloak | Issues authorization codes and tokens |
-| Identity Provider | Keycloak | Performs authentication (separate logical role) |
-| Resource Server | Demo protected API | Independently validates Access Token and permission |
+| Role                 | Component           | Remark                                              |
+| -------------------- | ------------------- | --------------------------------------------------- |
+| Resource Owner       | Human user          | Not the React SPA                                   |
+| User Agent           | Browser hosting SPA | Follows redirects and presents Keycloak login UI    |
+| OAuth/OIDC Client    | NestJS BFF          | Confidential client and PKCE transaction owner      |
+| Authorization Server | Keycloak            | Issues authorization codes and tokens               |
+| Identity Provider    | Keycloak            | Performs authentication (separate logical role)     |
+| Resource Server      | Demo protected API  | Independently validates Access Token and permission |
 
 OIDC IdP is not one of the four original OAuth 2.0 roles; keep it explicit for educational accuracy.
 
@@ -89,6 +89,8 @@ The shell handles generic catalog/learning/timeline UI. The OAuth execution capa
 ## Open architecture decisions
 
 UI Slice 001 is hosted in an isolated `apps/playground` package alongside the existing `epa-auth-lab` services. Repository inspection confirmed those services and infrastructure already exist. The UI does not call or alter them. This is a UI-only coexistence boundary, not approval of backend integration.
+
+On 2026-10-19, the owner authorized static UI deployment at `auth-playground.yappai.de` and registration in Yoster. The dedicated `infrastructure/docker-compose.playground.yml` stack builds only `apps/playground`, serves its compiled assets with Nginx and joins the existing `dev-proxy` network. Traefik's watched host configuration `../infra/traefik/dynamic/epa-lab.yml` routes the hostname to `http://epa-lab-playground:80`; public HTTPS requires the hostname on the existing Cloudflare tunnel. The root `yappai.host.json` manages and monitors only this static stack. No backend, authentication provider, session or database is part of this deployment.
 
 - Host the first mission in a standalone repository vs adding non-breaking modules to `epa-auth-lab`.
 - Separate Resource Server process or independently authorized module with clear trust boundary for first deployment.

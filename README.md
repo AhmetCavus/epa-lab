@@ -2,7 +2,7 @@
 
 > **Project state:** **UI Slice 001 authorized**; authentication/backend changes remain DRAFT. The fixture-only browser app is isolated in [`apps/playground`](apps/playground/README.md), alongside the existing `epa-auth-lab` backend and infrastructure.
 
-Run the UI from this repository root with `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`, then open <http://127.0.0.1:5173/missions>. Root pnpm commands continue to target the existing backend. See the [UI package guide](apps/playground/README.md) for build and browser checks.
+Run the UI from this repository root with `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`, then open <http://127.0.0.1:5173/missions>. The `playground:*` root scripts manage the hosted UI; existing backend commands retain their behavior. See the [UI package guide](apps/playground/README.md) for build, deployment and browser checks.
 
 **Explore protocols. Execute flows. Understand security.**
 
@@ -80,7 +80,7 @@ Architecture and OAuth documents remain `DRAFT` unless otherwise noted. The UI-o
 
 ## Integration note
 
-The design handoff originated as a standalone starter. Repository inspection confirmed it now coexists with existing `epa-auth-lab` code. Slice 001 is an isolated UI package in `apps/playground`; existing services, configuration and infrastructure are preserved. Future backend integration and deployment remain open decisions requiring explicit approval.
+The design handoff originated as a standalone starter. Repository inspection confirmed it now coexists with existing `epa-auth-lab` code. Slice 001 is an isolated UI package in `apps/playground`; existing backend services, configuration and infrastructure are preserved. The owner authorized static UI hosting at `auth-playground.yappai.de` and Yoster registration on 2026-10-19. Backend integration and public hosting of real authentication remain open decisions requiring explicit approval.
 
 ## UI Slice 001
 

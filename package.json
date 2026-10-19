@@ -8,6 +8,9 @@
   },
   "scripts": {
     "env:init": "node infrastructure/setup-env.mjs",
+    "playground:up": "docker compose -f infrastructure/docker-compose.playground.yml up -d --build --wait --wait-timeout 180",
+    "playground:down": "docker compose -f infrastructure/docker-compose.playground.yml down",
+    "playground:logs": "docker compose -f infrastructure/docker-compose.playground.yml logs --follow playground",
     "infra:up": "docker compose --env-file .env -f infrastructure/docker-compose.yml up -d --wait --wait-timeout 180",
     "infra:down": "docker compose --env-file .env -f infrastructure/docker-compose.yml down",
     "infra:reset": "docker compose --env-file .env -f infrastructure/docker-compose.yml down --volumes",
