@@ -132,3 +132,58 @@ Date: 2026-10-17. The owner requested continued implementation after the verific
 The previous verification section is a historical record of the finding before this correction. Current UI finding status: **zero open critical findings, warnings or suggestions from that review**. Formal approval of the broader change, its ADRs and the real OAuth/backend implementation remains pending. The existing five UI tasks remain complete; no broader task is marked complete by this correction.
 
 Follow-up validation: strict TypeScript and production build passed; the existing catalog navigation/browser scenario passed; package formatting and strict OpenSpec validation passed. No new tests were added for this copy-only correction.
+
+## Approved catalog asset integration — 2026-10-19
+
+The owner's focused asset-integration request replaces generated decorative catalog artwork with the existing approved JPEGs. All six source images and both reference PNGs were visually inspected. This is an artwork substitution in the existing two-mission catalog; it adds no missions, dependencies, backend work or architectural framework. The deferred localization copy review remains deferred and no wording was changed.
+
+### Assets and placement
+
+Original filenames/formats are preserved in `public/assets/`. SHA-256 comparisons confirm all six public and production-build copies are byte-identical to `docs/design/assets/`; originals remain unchanged.
+
+| Filename                        | Source dimensions / ratio           | Placement                                                                                |
+| ------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| `oauth-card-header.jpg`         | 800 × 400 / 2:1                     | OAuth/OIDC card; cyan identity shield/server artwork                                     |
+| `epa-card-header.jpg`           | 800 × 400 / 2:1                     | ePA card; magenta medical-folder artwork                                                 |
+| `mission-catalog-hero-wide.jpg` | 2172 × 724 / 3:1                    | Wide Earth-horizon hero above 760px                                                      |
+| `mission-catalog-hero.jpg`      | 1672 × 941 / approximately 1.7768:1 | Alternative Earth/network hero at 760px and below                                        |
+| `openid-card-header.jpg`        | 800 × 400 / 2:1                     | Copied and browser-decoded; no matching registered OpenID credential mission/card exists |
+| `saml.jpg`                      | 800 × 400 / 2:1                     | Copied and browser-decoded; no matching registered SAML mission/card exists              |
+
+The OpenID asset depicts a mobile credential/verification concept, matching the reference's OpenID4VCI / SD-JWT card. It is not substituted for the existing OAuth/OIDC-login preview. No placeholder mission entries were invented to display OpenID or SAML images.
+
+### Changes
+
+- `src/features/mission/ui/Catalog.tsx`: one local artwork-path mapping, responsive hero `<picture>` and decorative card `<img>` elements. Hero uses full-composition `contain` with bottom/right positioning; centered card `cover` crops decorative edges within the existing 180px frame while retaining shield/folder focal points. Image dimensions are explicit and all image alt text is empty inside existing decorative artwork regions.
+- `src/styles.css`: replace generated-art styling with image fitting and readability overlays. The existing narrow layout gets a stronger dark overlay behind copy. Card dimensions, hover/focus styling, typography, layout, status badges, localization and preview links remain.
+- Removed the inline SVG globe/network hero, `MissionArtwork`'s procedural SVG card illustrations and their radial-gradient/glow styling. No base64 image literals were present. Functional sequence diagrams, arrowheads, lifelines, interactive actor/event highlighting and icons were untouched.
+- Updated `docs/design/visual-references.md` with the inspected inventory and `mission-catalog.md` with current asset usage, preserving earlier verification history.
+
+### Validation and rendered comparison
+
+- TypeScript and production build passed. The existing full suite passed **36/36 tests** (35.8s), including architecture, localization, browser interactions, accessibility and sequence geometry.
+- After the final narrow readability-overlay adjustment, the build passed again and all **8 bilingual responsive/accessibility cases** passed (17.6s). No test expectations were weakened or new dependencies introduced.
+- Package formatting and strict OpenSpec validation of `mission-control-design-foundation` passed.
+- Dedicated asset verification loaded/decoded all six URLs from the built app, checked active responsive hero sources and decorative alternatives, and found **zero broken/HTTP-error asset requests**. Five obsolete-image requests were cancelled with `net::ERR_ABORTED` while the same browser resized between responsive sources; the selected images and every original URL subsequently decoded successfully. These cancellations are distinct from failed asset loading.
+- **10 before and 14 after screenshots:** German and English at 1366, 1024, 760, 390 and 320 CSS px; after captures additionally cover actual native Chrome 100%/200% zoom. Installed Chrome 155.0.8059.84 zoom was set/read back through browser settings in an isolated profile, not emulated by viewport scaling.
+- Across all **10 matched viewport/locale comparisons**, hero, card and image-frame positions/sizes are unchanged. Card heights were also stable before/after image decoding. No page overflow was detected. The final catalog contains image artwork and no remaining decorative SVG illustration placeholders.
+- Visual inspection confirms the approved horizon/planet composition and cyan/magenta mission artwork replace the generated equivalents. Hero images retain their proportions without cropping; readable text stays above the dark overlay. Card central subjects remain recognizable at desktop and narrow sizes. Existing Mission Control interaction tests continue to pass.
+
+Evidence is under `.cache/asset-integration/`: `asset-hashes.json`, `layout-comparison.json`, `after/loaded-assets.json`, and before/after `evidence.json`. The local verification helper owns and closes its preview/browser processes.
+
+| Screen                   | Before                                                      | After                                                                                                                              |
+| ------------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Desktop catalog, German  | [Before](.cache/asset-integration/before/de-width-1366.png) | [After](.cache/asset-integration/after/de-width-1366.png)                                                                          |
+| Narrow catalog, German   | [Before](.cache/asset-integration/before/de-width-390.png)  | [After](.cache/asset-integration/after/de-width-390.png)                                                                           |
+| Narrow catalog, English  | [Before](.cache/asset-integration/before/en-width-320.png)  | [After](.cache/asset-integration/after/en-width-320.png)                                                                           |
+| Actual 200% browser zoom | —                                                           | [German](.cache/asset-integration/after/de-native-zoom-200.png) / [English](.cache/asset-integration/after/en-native-zoom-200.png) |
+
+No asset-integration defects remain in the checked matrix. OpenID credential/SAML rendering awaits matching mission definitions; their images are copied and verified, with current mission availability/navigation unchanged.
+
+### Full-width hero correction — 2026-10-19
+
+The owner subsequently requested that the hero expand to the full viewport width, showing a 3304px-wide browser capture. The catalog background now fills the viewport independently of its 1208px centered content column. Hero imagery uses proportional `cover` fitting with centered desktop horizon framing and right-centered narrow framing. The caption, headings, cards and supporting sections retain their established content alignment. This supersedes the initial contained/full-composition hero treatment above; the original images, card rendering and all behavior remain unchanged.
+
+Verified German and English at 3304, 2560, 1920, 1366, 1024, 760, 390 and 320px: **16/16 geometry checks** confirm both hero edges meet the content viewport edges, headings align with cards, the content column retains its expected centered position, and no page overflow occurs. Images decoded successfully. Screenshots and geometry are under `.cache/asset-integration/full-width/`, including [the 3304px view](.cache/asset-integration/full-width/de-3304.png), [1366px](.cache/asset-integration/full-width/de-1366.png) and [390px](.cache/asset-integration/full-width/de-390.png).
+
+Production build/TypeScript and package formatting passed. The existing eight bilingual responsive/accessibility cases passed again after this correction. No new dependencies or permanent tests were needed for this CSS-only adjustment.

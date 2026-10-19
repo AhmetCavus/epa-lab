@@ -42,6 +42,8 @@ The approved frontend-only `mission-control-design-foundation` refinement preser
 
 The 2026-10-18 visual refinement uses a compact globe/network hero and distinct code-native mission illustrations, following the reference imagery. Artwork carries the availability badge; shared card anatomy aligns titles, outcomes, topics and preview actions. Quiet inline notices and spacing provide hierarchy without nested bordered cards. Decorative artwork is not interactive, describes no observed traffic and stays outside the accessibility tree.
 
+The owner's 2026-10-19 asset-integration request replaces that generated decorative artwork with the approved JPEGs documented in [visual-references.md](visual-references.md#approved-runtime-artwork). The existing card height, typography, availability and navigation remain. Following the owner's full-width correction, the hero background spans the viewport while copy and cards retain their centered column. Use the wide horizon for desktop and the alternative planet/network image at the existing narrow breakpoint, with cover fitting, focal-point positioning and a readability overlay. Current OAuth and ePA cards use their matching headers; OpenID credential and SAML artwork is copied for future matching missions without adding catalog entries.
+
 Default, hovered, focused (keyboard), loading, available, planned, temporarily unavailable, and empty catalog. Avoid decorative clickable elements without an action. Initially omit searching, filters and sorting: two cards do not warrant them.
 
 ## Layout guidance

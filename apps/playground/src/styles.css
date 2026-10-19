@@ -179,15 +179,19 @@ button {
   background: #142b42;
 }
 .catalog {
-  max-width: 1280px;
   margin: auto;
   padding: 0 36px 40px;
+}
+.catalog > :not(.catalog-intro) {
+  max-width: 1208px;
+  margin-inline: auto;
 }
 .catalog-intro {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1208px);
+  justify-content: center;
   align-items: center;
   min-height: 300px;
   gap: 24px;
@@ -217,34 +221,38 @@ button {
   max-width: 570px;
   font-size: 16px;
 }
-.network-globe {
+.catalog-hero {
   position: absolute;
   z-index: -1;
-  right: -36px;
-  top: 0;
-  width: 56%;
-  height: 100%;
+  inset: 0 -36px;
   overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, black 20%);
 }
-.network-globe svg {
+.catalog-hero picture,
+.catalog-hero img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  filter: drop-shadow(0 -4px 14px #39aaff33);
 }
-.network-globe > span {
+.catalog-hero img {
+  object-fit: cover;
+  object-position: center;
+}
+.catalog-hero::after {
+  content: '';
   position: absolute;
-  right: 24px;
+  inset: 0;
+  background: linear-gradient(90deg, var(--canvas) 8%, #080f1db3 42%, #080f1d00 78%);
+}
+.catalog-hero > span {
+  position: absolute;
+  z-index: 1;
+  right: max(24px, calc((100% - 1280px) / 2 + 24px));
   top: 32px;
   font:
     12px Consolas,
     monospace;
   color: #a6d2e9;
   letter-spacing: 1px;
-}
-.globe-lights {
-  filter: drop-shadow(0 0 6px #4dd4ff);
 }
 .catalog-intro > div:first-child {
   grid-column: 1 / -1;
@@ -298,8 +306,7 @@ button {
   position: relative;
   overflow: hidden;
   border-radius: 12px 12px 0 0;
-  color: #61d9ff;
-  background: radial-gradient(ellipse at 50% 60%, #13476a, #051726 70%);
+  background: var(--panel);
 }
 .mission-art > .badge {
   position: absolute;
@@ -307,17 +314,12 @@ button {
   left: 20px;
   box-shadow: 0 4px 12px #0005;
 }
-.mission-illustration {
+.mission-image {
   display: block;
   width: 100%;
   height: 100%;
-}
-.art-focus {
-  filter: drop-shadow(0 0 8px currentColor);
-}
-.protected-system .mission-art {
-  color: #c0afff;
-  background: radial-gradient(ellipse at 50% 60%, #343159, #10152c 70%);
+  object-fit: cover;
+  object-position: center;
 }
 
 .card-body {
@@ -1181,12 +1183,16 @@ dd {
     min-height: auto;
     padding: 36px 0;
   }
-  .network-globe {
-    width: 100%;
-    opacity: 0.3;
-    right: 0;
+  .catalog-hero {
+    inset: 0 -20px;
   }
-  .network-globe > span {
+  .catalog-hero img {
+    object-position: right center;
+  }
+  .catalog-hero::after {
+    background: linear-gradient(90deg, var(--canvas) 8%, #080f1db3 70%);
+  }
+  .catalog-hero > span {
     display: none;
   }
   .catalog h1 {
