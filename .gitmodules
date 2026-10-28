@@ -1,0 +1,3 @@
+[submodule "hapi-fhir-jpaserver-secured-starter"]
+	path = services/hapi-fhir-jpaserver-secured-starter
+	url = https://github.com/AhmetCavus/hapi-fhir-jpaserver-secured-starter
