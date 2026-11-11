@@ -2,16 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug pnpm dev",
+      "name": "Debug auth-client",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
-      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/services/auth-client/dist/main.js",
+      "cwd": "${workspaceFolder}/services/auth-client",
+      "preLaunchTask": "auth-client: build",
+      "runtimeArgs": ["--enable-source-maps"],
       "console": "integratedTerminal",
-      "autoAttachChildProcesses": true,
       "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/services/epa-authorization/dist/**/*.js"],
+      "outFiles": ["${workspaceFolder}/services/auth-client/dist/**/*.js"],
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
     }
   ]
