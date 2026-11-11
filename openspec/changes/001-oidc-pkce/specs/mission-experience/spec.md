@@ -193,7 +193,7 @@ Run/event access SHALL require valid browser viewing ownership independently of 
 
 ### Requirement: Bound run retention and event collections
 
-Run viewing SHALL expire within fifteen minutes without renewal through logout. Run/context collections SHALL remain bounded to 1000 entries each, and each run SHALL contain at most 100 events.
+Run viewing SHALL expire within fifteen minutes without renewal through logout. Run/context collections SHALL remain bounded to 1000 entries each, and each run SHALL contain at most 100 events. These limits SHALL NOT prevent session invalidation, pending-login cancellation, or credential cleanup.
 
 #### Scenario: Expired history cannot be recovered
 
@@ -205,10 +205,20 @@ Run viewing SHALL expire within fifteen minutes without renewal through logout. 
 #### Scenario: Capacity is reached
 
 - **GIVEN** a required collection or per-run event limit is reached
-- **WHEN** another action would exceed that limit
-- **THEN** the action is rejected safely before creating new external work
+- **WHEN** another ordinary execution action would exceed that limit
+- **THEN** that execution action is rejected safely before creating new external work
+- **AND** logout, login cancellation, and authentication cleanup remain available independently of trace capacity
 - **AND** no event stream is silently truncated and presented as complete
 - **AND** the UI does not claim an unperformed protocol action occurred.
+
+#### Scenario: Reflecting logout when its observation cannot be stored
+
+- **GIVEN** an authenticated runtime context with eligible safe history at the trace limit
+- **WHEN** authorized local logout succeeds but its event cannot be appended
+- **THEN** the Workspace reflects the authoritative unauthenticated session state
+- **AND** it cannot use retained history to regain resource access
+- **AND** existing history remains non-sensitive, bounded, owned by the replacement unauthenticated context, and subject to its original expiry
+- **AND** the unrecorded observation/trace completeness is marked unavailable without inventing an event, timestamp, or sequence.
 
 ### Requirement: Use a versioned typed safe event contract
 

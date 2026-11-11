@@ -289,6 +289,44 @@ Local application sign-out SHALL remove authentication and server-held token ref
 - **THEN** it creates a new transaction
 - **AND** an existing Keycloak SSO session can complete it without contradicting the prior local logout outcome.
 
+### Requirement: Prevent stale callbacks after logout
+
+A successful standard logout SHALL cancel context-bound pending login attempts, including consumed callbacks still completing asynchronous work. A callback SHALL recheck its original context and attempt eligibility after exchange/validation and before session commit. A cancelled or superseded attempt SHALL NOT recreate authentication.
+
+#### Scenario: Rejecting a pending transaction cancelled by logout
+
+- **GIVEN** an active standard application session and a pending login bound to the same context
+- **WHEN** a valid same-origin, anti-CSRF-protected logout completes before that login's callback arrives
+- **THEN** the active session is invalidated and the pending transaction is cancelled
+- **AND** its later callback is rejected before token exchange and creates no authenticated session or cookie
+- **AND** other browsers and existing ePA/PAR contexts are unaffected.
+
+#### Scenario: Logout during an in-flight callback
+
+- **GIVEN** a standard callback has been correctly correlated and consumed, and token exchange or asynchronous token validation is waiting to complete
+- **AND** the originating context has an active application session
+- **WHEN** valid local logout invalidates that session and cancels its login attempts
+- **AND** the asynchronous callback work later returns otherwise valid tokens
+- **THEN** the final context/attempt eligibility check rejects the stale completion before committing a session
+- **AND** returned credential references are discarded without being exposed or retained for authentication
+- **AND** no authenticated cookie is issued and the replacement unauthenticated viewing context is not overwritten
+- **AND** a session read remains unauthenticated until a fresh explicitly started login succeeds.
+
+### Requirement: Authentication cleanup is independent of event persistence
+
+Session invalidation, login cancellation, and credential cleanup SHALL complete independently of teaching-event persistence. Trace capacity exhaustion or event-recording failure SHALL NOT prevent or roll back authorized logout or expiry cleanup. Only eligible bounded non-sensitive viewing history SHALL be retained.
+
+#### Scenario: Exhausted event storage during logout
+
+- **GIVEN** an authenticated standard context with a pending login and a run at its 100-event limit
+- **AND** the event recorder rejects a further append or fails while trying to record logout
+- **WHEN** a valid same-origin, anti-CSRF-protected logout request is handled
+- **THEN** the active session is invalidated, its pending login is cancelled, and server-held credential references are removed despite the event failure
+- **AND** a stale callback cannot commit authentication after cleanup
+- **AND** the old authenticated cookie cannot authorize access and a protected action returns 401 without an authenticated FHIR request
+- **AND** retained history stays within existing entry/event bounds and its original lifetime
+- **AND** an unavailable logout observation is not fabricated or used to claim the trace is complete.
+
 ### Requirement: Protect local logout against cross-site requests
 
 The logout operation SHALL require the configured same Origin and a valid anti-CSRF value bound to the current browser context. GET requests SHALL NOT perform logout.
