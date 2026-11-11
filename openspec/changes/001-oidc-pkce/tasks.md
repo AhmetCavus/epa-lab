@@ -1,10 +1,14 @@
-# Change 001 — Planning and Future Tasks
+# Change 001 — Integration Tasks
 
-**Status:** OAuth/backend work remains DRAFT / PLANNING ONLY. The owner authorized the separate **UI Slice 001** below in `AGENTS.md` and requested its implementation. This exception does not approve the real-flow tasks.
+**Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
 
-## UI Slice 001 (authorized, fixture-only)
+The owner authorized revisions to planning artifacts only. Confirming an artifact edit does not approve runtime implementation. Existing auth-client source is a reuse baseline, not evidence that this mission's integration acceptance has passed.
 
-Boundary: an isolated React/TypeScript app in `apps/playground`, coexisting with the verified existing `epa-auth-lab` repository. No changes to existing backend, Android, infrastructure, or their configuration. This resolves the hosting boundary for this UI slice only; future backend integration remains an Open Decision.
+Group 1 contains review/readiness work. Groups 2–9 remain blocked until task 1.4 is explicitly satisfied. All new tasks remain unchecked. Preserve unrelated work, the public fixture-only deployment, existing ePA/PAR behavior, and prior verification history.
+
+## 0. Completed UI Slice 001 history
+
+The fixture-only SPA is implemented in `apps/playground`. These five completed tasks are retained verbatim as historical UI evidence; they do not complete the new runtime work.
 
 - [x] UI-1: Create the isolated browser app and document local run commands and repository boundary.
 - [x] UI-2: Implement a statically registered, honestly labeled two-mission catalog with working preview routes and planned availability.
@@ -12,36 +16,98 @@ Boundary: an isolated React/TypeScript app in `apps/playground`, coexisting with
 - [x] UI-4: Implement explicitly loaded OAuth fixture samples, a timeline and Safe Evidence inspector with truthful provenance; keep the ePA preview conceptual with no operational results.
 - [x] UI-5: Verify the UI slice with type/build checks and browser scenarios, document evidence and adaptations, and keep real OAuth approval/verification pending.
 
-UI-only evidence: [`apps/playground/verification.md`](../../../apps/playground/verification.md). Original real-flow tasks below remain pending; this change is not approved or verified as a real OAuth implementation.
+Evidence: [UI verification](../../../apps/playground/verification.md), the implemented design-foundation and architecture changes, and the frontend localization change. Keep its separately deferred owner copy review unchanged.
 
-## Design and acceptance (authorized work)
+## 1. Review and explicit implementation authorization
 
-- [ ] Review Catalog design: layout, availability, CTA states and accessibility.
-- [ ] Review Workspace design: canvas, mission panel, timeline and inspector.
-- [ ] Refine and approve high-fidelity visuals + state-specific mockups.
-- [ ] Validate shell reuse with OAuth and conceptual ePA fixtures.
-- [ ] Decide standalone repository vs `epa-auth-lab` integration.
-- [ ] Approve ADR-0001 and ADR-0002.
-- [ ] Approve OpenSpec scenarios and architecture event contract.
-- [ ] Record explicit owner authorization for implementation.
+- [ ] 1.1 Review this proposal/design and both capability specs against existing Catalog/Workspace visuals and the standard/ePA boundary. Verify the review record covers runnable availability, redirect/return/recovery/logout states, conceptual-only ePA, roles/channels, and the unchanged visual contract; record owner decisions without silently accepting them.
+- [ ] 1.2 Reconcile current architecture/UX documentation with the draft's actual components, route/session contracts, fixed Workspace return, resource authorization, and observer/reporter semantics. Verify `docs/architecture/system-context.md`, the two UX documents, and the proposal/design/specs describe the same boundaries while preserving prior verification records.
+- [ ] 1.3 Obtain and record review of ADR-0001/ADR-0002, cookie/CSRF and resource policy, safe event contract, and negative acceptance cases. Verify reviewer/date/decision are explicit and Accepted ADR-0003/ADR-0004 remain intact; unresolved first-integration decisions prevent readiness.
+- [ ] 1.4 Obtain explicit owner approval of this complete change and authorization to implement the local/private scope. Verify readiness/acceptance is recorded and the change is deliberately marked APPROVED before starting group 2; planning-file confirmations and CLI artifact status are insufficient.
 
-## Implementation (BLOCKED until approval)
+## 2. Verify repository ownership and repair local integration wiring
 
-- [ ] Create only the packages/apps required by the approved first vertical slice.
-- [ ] Configure a testable pinned Keycloak environment and demo realm.
-- [ ] Implement confidential BFF OIDC Authorization Code + PKCE handling and app session.
-- [ ] Implement mission registry/content and generic catalog/workspace views.
-- [ ] Implement independent demo Resource Server authorization.
-- [ ] Add typed safe event projection and event inspector.
-- [ ] Connect UX states to actual observable outcomes; provide safe error/recovery flows.
+Dependency: group 1 approval. Reuse the existing repositories and services; do not start another BFF or Resource Server.
 
-## Verification (BLOCKED until implementation)
+- [ ] 2.1 Record the implementation baseline and known breakages before source changes. Inspect both reference PNGs in `docs/design/assets`, capture fixture UI/style/artwork baselines, and run the applicable current auth-client/UI/HAPI checks. Verify the record identifies actual paths/versions, existing failures or unavailable checks, and the root/nested working-tree state without changing unrelated work.
+- [ ] 2.2 Canonicalize the HAPI submodule at `services/res-server` after checking both HAPI worktrees for commits, tracked edits, and untracked work. Preserve unique work before removing the duplicate parent gitlink and reconciling mappings; verify `git ls-files --stage`, `.gitmodules`, targeted submodule status, and a clean recursive checkout resolve one canonical HAPI pointer without losing history.
+- [ ] 2.3 Repair the Node tooling and lockfile references to the absent `services/epa-authorization` path, including root lint and ESLint project configuration. Retain the existing package identity unless a verified repair needs a rename; verify frozen installation, backend typecheck/build/tests, and lint resolve `services/auth-client`, and update the relevant command documentation.
+- [ ] 2.4 Repair auth-client Dockerfile copy/build/runtime paths and the root Compose build reference. Verify Compose with `config --quiet`, build the existing backend service, and check readiness without printing secrets; preserve compatible service/image labels and document the corrected commands.
+- [ ] 2.5 Wire the canonical HAPI/its existing database into a local/private integration profile with a non-conflicting host port and a BFF-reachable address. Reuse the existing Compose/Docker assets and preserve the Keycloak volume and static playground stack; verify backend/provider/resource connectivity, loopback/private exposure, health checks, and documented local startup/shutdown without a volume reset.
+- [ ] 2.6 Repair current README/EPA/architecture/specification links and run commands affected by the path moves. Verify active links resolve and commands name real files/services; distinguish stable package/service/protocol actor IDs from stale filesystem paths, and leave historical reports unchanged.
 
-- [ ] Real Keycloak flow succeeds from a clean checkout.
-- [ ] State/PKCE/OIDC callback errors do not create sessions.
-- [ ] Anonymous/wrong-audience/missing-permission resource requests fail.
-- [ ] Cookie/session and CSRF defenses tested appropriately.
-- [ ] Sign-out invalidates the application session.
-- [ ] No secrets or credentials appear in browser-accessible traces, storage or ordinary logs.
-- [ ] UX and accessibility state checklist passes.
-- [ ] Mark VERIFIED only with documented test evidence.
+## 3. Add an isolated standard Keycloak client
+
+Dependency: corrected local tooling/wiring. The existing ePA client and PAR policy remain regression baselines.
+
+- [ ] 3.1 Add confidential client `playground-oidc` in the existing realm with exact mission callback, S256 enforcement, and only Authorization Code flow. Add its secret/environment setup and document the separate profile; verify missing/plain PKCE is rejected, no secret reaches the SPA, and the client does not acquire the ePA require-PAR marker.
+- [ ] 3.2 Configure standard Access Token audience `playground-fhir` and permission `demo.fhir.read`, requested with `openid`. Verify the intended Access Token claims, the ID Token's separate client audience, and a valid narrower grant without resource permission using safe assertions; document the exercise's claim policy without logging tokens.
+- [ ] 3.3 Provide and exercise fresh-realm setup and a repeatable migration for an existing local realm. Verify ordinary standard authorization works without PAR, the ePA client still rejects PAR bypass, and existing ePA configuration/data survive a repeated migration; document migration/rollback without deleting the realm volume.
+
+## 4. Extend the existing client with fixed profile-aware behavior
+
+Dependency: configured clients. Extend existing auth-client modules and preserve their existing tests.
+
+- [ ] 4.1 Add validated, server-selected standard/ePA profile configuration with separate client credentials/callback settings and explicit local runtime enablement. Verify legacy-only configuration still works, incomplete enabled mission configuration fails safely, and query/header/callback input cannot select credentials or issuer; document the settings and profile boundary.
+- [ ] 4.2 Make discovery validation appropriate to each profile: standard authorization/token/JWKS support and PAR required only for ePA. Verify no-PAR standard metadata, invalid/untrusted endpoints, safe transport, cache identity, and existing ePA discovery regressions; keep provider endpoints discovered rather than guessed and document the differing prerequisites.
+- [ ] 4.3 Add direct standard authorization-request construction reusing state/nonce/PKCE generation, while keeping ePA PAR construction. Verify standard requests contain code/S256 and never call PAR, retries use fresh values, and ePA still uses client_id/request_uri with the existing allowlist/header contract; document this finite branch without a generic protocol framework.
+- [ ] 4.4 Bind exchange credentials, callback URI, issuer, ID Token audience/authorized party, nonce, and signing-key validation to the stored transaction profile. Verify cross-profile rejection and the authorization spec's signature/algorithm/issuer/audience/lifetime/nonce/hash/PKCE/code failure matrix, retaining real cryptographic checks in the focused suite; document the reused validation boundary.
+
+## 5. Implement the standard browser/session lifecycle
+
+Dependency: group 4. These are new mission routes in the existing process; legacy ePA routes remain intact.
+
+- [ ] 5.1 Extend bounded process-local storage for mission browser contexts, pending transactions, and owned runs without a second persistence layer. Verify ten-minute pending expiry, fifteen-minute context/run bounds, 1000-entry collection capacity, cookie/profile isolation, rotation invalidating old IDs, and restart recovery; document the ownership/lifetime model.
+- [ ] 5.2 Implement `GET /api/oauth/login` as browser navigation using the fixed standard profile and mission-scoped binding/context cookies. Verify fresh run association, HttpOnly/SameSite/Secure/path behavior, rejection of caller-selected return/client settings, and legacy `/login` regressions; document the correct browser entry and canonical application host.
+- [ ] 5.3 Implement `GET /api/oauth/callback` with one-time correlated completion and clean 303 return to `/missions/oauth-oidc/workspace`. Verify missing/mismatched cookies, wrong host/instance, lost/expired state, provider denial, malformed query, replay/concurrency, and exchange/validation failures; ensure unowned callbacks neither expose nor change another run and document safe recovery.
+- [ ] 5.4 Implement `GET /api/oauth/session` with minimal authentication/expiry/current-run state and context-bound anti-CSRF material. Verify truthful authenticated/anonymous/expired results, no tokens/raw claims or broad credentialed CORS, no-store behavior, and unchanged ePA `/session` response; document the frontend DTO.
+- [ ] 5.5 Implement `POST /api/oauth/logout` with exact-Origin and anti-CSRF checks, token removal, old-cookie invalidation, and an unauthenticated rotated viewing context. Verify GET/foreign-Origin/wrong-or-missing-CSRF rejection, original history lifetime, and independent Keycloak SSO behavior; document local logout without token-revocation claims.
+
+## 6. Implement the missing HAPI Resource Server boundary
+
+Dependency: canonical submodule and client claim policy. Change only `services/res-server`; its current security declaration is not a verified implementation.
+
+- [ ] 6.1 Verify/correct the pinned Spring resource-server dependencies, property binding, and security activation for the local mission. Add focused security-test support and documented issuer/audience configuration; verify dependency resolution and fail-closed startup/configuration without relying on the placeholder enable flag or unrelated issuer.
+- [ ] 6.2 Implement inbound bearer validation for trusted signature/algorithm/key, issuer, `playground-fhir` audience, exp/nbf, and Access Token purpose. Verify actual decoder/filter handling with signed test JWTs and trusted test JWKS for missing/malformed/forged/wrong-issuer/wrong-audience/expired/future/ID-Token cases; document the supported token profile and safe failures.
+- [ ] 6.3 Provide the synthetic R4 `Basic/playground-demo` fixture through local integration/test setup. Verify it contains no patient/clinical content, is reproducibly available to the allowed read, and introduces no anonymous write/seed HTTP endpoint; document its fictional purpose and setup.
+- [ ] 6.4 Require `demo.fhir.read` for the exact synthetic read and deny undeclared data operations/alternate interfaces. Verify 200 for valid read, 403 without permission or for other reads/writes/search/history/batch/transactions, 401 for invalid credentials, and no MCP/CDS/test-interface bypass; verify only documented data-free health/readiness exceptions and document the narrow policy.
+- [ ] 6.5 Emit bounded Resource Server decision/reason headers for the allowed read and safe authentication/authorization denials. Verify only the design's enum values appear, status/report agree, and no token, raw exception, claim dump, or body is logged as evidence; document these reports as explicit Resource Server assertions.
+- [ ] 6.6 Review and record the HAPI repository change and parent submodule pointer through the normal authorized commit workflow. Verify the parent references the reviewed/tested security commit and a fresh recursive checkout reproduces it; document the pinned commit and rollback while preserving unrelated nested work.
+
+## 7. Add BFF resource access and safe run observations
+
+Dependency: standard session lifecycle and the verified local Resource Server boundary.
+
+- [ ] 7.1 Implement `GET /api/oauth/resource` for the single configured FHIR read with the server-held standard Access Token and bounded transport/result handling. Verify anonymous/expired/signed-out/ePA-only sessions return 401 without an authenticated upstream call, arbitrary destinations/credentials are refused, and valid/denied/timeout results are safely projected; document the resource DTO and fixed upstream operation.
+- [ ] 7.2 Define the schema-version-1 discriminated event DTO and per-kind safe evidence allowlists. Verify valid examples, stable event/run IDs and per-run sequence, actual observer/time, actor/channel associations, and rejection of unknown versions/kinds/fields or secret-bearing evidence; document the contract without an arbitrary metadata map or shared infrastructure framework.
+- [ ] 7.3 Instrument actual authorization, redirect issuance, callback, exchange, session, and resource outcomes at their existing observation boundaries. Verify event order and observer/channel accuracy on success/failure and that unknown/unowned/replayed callbacks do not fabricate observations or mutate another browser's run; document the event-to-observer table and unobservable Keycloak steps.
+- [ ] 7.4 Validate the Resource Server's explicit bounded decision report and project it inside the BFF-observed resource response. Verify absent/malformed/unknown/conflicting reports produce an unavailable reason, BFF rejection without HAPI contact creates no Resource Server denial, and no internal validation list/timestamp is inferred; document observer versus reporter semantics.
+- [ ] 7.5 Implement `GET /api/oauth/runs/:runId/events` with independent browser-viewing ownership and bounded retention. Verify two-browser isolation, run-ID-only/old-cookie rejection, stable repeated reads, logout viewing under the original fifteen-minute lifetime, 1000-entry bounds and 100-event rejection before external work; document capacity/restart recovery and prevent silent trace truncation.
+- [ ] 7.6 Add focused disclosure checks for event/session/resource projection and routine backend/proxy/resource logging. Verify sentinel passwords/codes/verifiers/state/nonce/tokens/secrets/cookies/raw claims/callback queries/full bodies never escape, including unsupported data and upstream failures; document permitted diagnostic fields and disable unsafe raw callback/query logging.
+
+## 8. Connect the existing SPA without redesign
+
+Dependency: browser API and safe event contract. Apply ADR-0003/ADR-0004 and the inspected visual references.
+
+- [ ] 8.1 Extend the neutral protocol-flow contract/rendering for observed events alongside fixtures and unobservable annotations. Verify synchronized actor/path/timeline/Inspector selection, real observer/time/outcome presentation, no provider-internal network arrows, retained fixture behavior, and focused architecture/cycle/public-entry checks; document the narrow new presentation variant without protocol imports in the renderer.
+- [ ] 8.2 Add the mission-owned API adapter and execution coordination using existing application/domain/data boundaries. Verify schema rejection, literal safe evidence, same-origin requests, absence of bearer/browser persistence, isolated conceptual ePA, and fixture mode without backend calls; document the explicitly enabled runtime binding and keep unverified availability off.
+- [ ] 8.3 Connect Start authentication, callback return, and refresh to session/run restoration at the existing OAuth Workspace route. Verify normal browser navigation, correct current-run restoration, real pending/recovery states, unknown/expired/restarted context handling, and no protocol replay on viewing; document the browser round trip and fixed return target.
+- [ ] 8.4 Connect resource access, local Sign out, and Retry while retaining Replay explanation and Reset view semantics. Verify independent authentication/resource outcomes, fresh retry identity, no execution from checkpoint/actor/replay/reset, no false Resource Server denial after BFF rejection, and safe owned-history access after logout; document the action/state behavior in the UX guide.
+- [ ] 8.5 Add matching German/English semantic resources for runtime actions, outcomes, reasons, and accessibility announcements. Verify key/interpolation parity, German default/fallback, guarded explicit locale persistence, technical values unchanged, and mission/run/fixture/selection/map state retained through language switching; document new keys without localization-runtime imports in domain/data/application.
+- [ ] 8.6 Compare current fixture and new runtime screens against the recorded visual baseline and both PNG references. Verify artwork/panel hierarchy, readable map Fit/scrolling, keyboard/focus/reduced motion, and both locales at 1366/1024/390/320 CSS pixels plus actual desktop 100%/200% page zoom; record screenshots/a11y results and leave unavailable checks explicitly unverified.
+
+## 9. Complete integrated acceptance and evidence
+
+Dependency: all preceding implementation groups. This group checks the combined system; focused tests/documentation belong with the task that introduces each behavior.
+
+- [ ] 9.1 Exercise the real browser journey across SPA, auth-client, existing Keycloak, and secured HAPI from a reproducible local checkout. Verify standard login works without a PAR call, returns to Workspace, restores the same run on refresh, permits the synthetic read, and local logout makes the next BFF request fail while eligible history stays inspectable; record only sanitized evidence.
+- [ ] 9.2 Run the cross-component negative matrix: cookie/state loss, expiry/replay/concurrency, client-profile substitution, provider denial, failed PKCE/token validation, restart recovery, direct HAPI 401/403 cases, cross-browser event access, capacity limits, and logout CSRF. Verify actual observable results against both specs and record failures/skips instead of inferring coverage from successful login.
+- [ ] 9.3 Re-run real ePA header/PAR and existing browser-demo regressions beside the new standard client, plus the unchanged public fixture configuration. Verify the ePA PAR requirement/contracts, legacy `/session`, conceptual ePA UI, and independent standard behavior all survive; record commands and results without adding the deferred comparison UI.
+- [ ] 9.4 Run the applicable auth-client typecheck/build/test/integration checks, HAPI Gradle security/integration/build checks, SPA typecheck/build/browser/architecture/localization/format checks, and strict OpenSpec validation. Verify the final scenario-to-evidence map covers the complete accepted scope, logs/artifacts contain no secrets or raw callback capture, and limitations/unavailable checks are explicit.
+- [ ] 9.5 Enable runnable availability only for the verified local runtime binding and deliver its dated verification record and rollback instructions. Verify fixture-only builds/public deployment remain honest and unchanged, no public auth ingress was introduced, and implementation/verification status advances only with actual evidence and required owner review.
+
+## Workflow follow-up
+
+- After review explicitly authorizes implementation, use `$openspec-apply-change 001-oidc-pkce` to carry the approved plan into code.
+- After implementation and verification satisfy the accepted change, request the separate verification/archive workflow as appropriate; do not archive or sync specs during this planning update.
+- Public authentication deployment, standard-versus-PAR comparison, durable/distributed storage, SMART on FHIR, and real TI/ePA integration require later scope and authorization.

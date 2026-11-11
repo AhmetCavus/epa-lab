@@ -1,39 +1,43 @@
-# Change 001 — First Runnable Mission (OAuth / OIDC + PKCE)
+# Change 001 — First Runnable OAuth/OIDC + PKCE Mission
 
 **Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
 
-**UI Slice 001 exception:** The owner has authorized the Catalog and mission-agnostic Workspace using clearly labeled fixture events (`AGENTS.md`, owner request: “Start with slice 001”). Only the UI checklist in `tasks.md` is authorized. The OAuth/backend proposal below remains DRAFT. The UI lives in the isolated `apps/playground` package alongside the existing repository; it does not integrate with its services.
+**Planning revision:** 2026-11-11
 
-## Problem
+The owner requested reconciliation of this change with the existing repository. This is planning authorization only. The completed fixture-only UI Slice 001 remains authorized; this revision does not authorize OAuth/backend changes, submodule cleanup, infrastructure changes, or public authentication hosting.
 
-A basic Keycloak login demonstration alone will not demonstrate protocol understanding or a reusable learning experience. The first slice must deliver the **Mission Catalog + Mission Control Workspace** and a real, secure, inspectable Authorization Code + PKCE journey.
+## Why
 
-## Proposed scope
+Mission Control already exists in `apps/playground`, and `services/auth-client` already implements a local PAR-based browser login demonstration. The missing deliverable is their integration with the existing Keycloak and HAPI FHIR components into a real, securely authorized learning journey with honest evidence.
 
-- Show a mission catalog with honest availability and a planned ePA card.
-- Open the generic workspace using a selected mission definition.
-- Explain user, browser, BFF Client, Keycloak AS, Keycloak IdP, demo Resource Server as distinct logical actors.
-- Start a real OIDC Authorization Code + PKCE S256 flow through Keycloak.
-- Establish a secure BFF-managed user session only after valid callback/token handling.
-- Inspect per-run sanitized BFF / Resource Server observations, separate from teaching explanations.
-- Request one synthetic resource through the BFF, with Resource Server authorization.
-- End application session and inspect the denied request outcome afterward.
-- Validate UI reuse with a design-only ePA fixture (not ePA runtime).
+## What Changes
 
-## Out of scope
+- Reuse the React SPA in `apps/playground`, the NestJS OAuth/OIDC client in `services/auth-client`, Keycloak under `infrastructure/keycloak`, and the HAPI FHIR Git submodule at `services/res-server`. Extend auth-client to perform the BFF responsibilities; create no duplicate BFF, Resource Server, or protocol framework.
+- Define the first mission as Authorization Code + PKCE S256 with OIDC, using a separate confidential Keycloak client configuration without mandatory PAR. Preserve the existing ePA client, required-PAR policy, header-based smoke-test operation, and PAR-based browser demonstration. A later comparison of standard and PAR variants is outside this integration.
+- Specify browser navigation from the existing OAuth workspace to login, one-time callback correlation, validated server-side token exchange, cookie-based application session, safe return to Mission Control, session recovery, and local application logout. Tokens and protocol secrets remain in auth-client.
+- Secure one synthetic FHIR resource in the existing HAPI server. Require independent access-token signature, issuer, audience, time, token-purpose, and permission validation, with direct Resource Server acceptance tests for success, invalid/missing credentials, insufficient permission, and denied operations.
+- Define browser-owned, bounded run records and a versioned, typed safe event contract with operation-specific evidence, actual observer provenance, and front-channel/back-channel distinctions. Provider-internal checks remain Explained / Not observable. Resource response status alone does not establish which internal validation passed.
+- Preserve the current Mission Catalog and Workspace design, artwork, panel hierarchy, selection behavior, keyboard access, diagram scrolling, German-default/English localization, fixture preview, and conceptual-only ePA mission. Introduce mission-owned execution behavior through existing capability boundaries.
+- Identify and plan repairs for obsolete `services/epa-authorization` paths, Docker/Compose/tooling references, and duplicate HAPI Git entries. Keep `services/res-server` canonical; verify both worktrees and preserve local work before any future removal.
+- Replace speculative creation tasks with small integration steps, each carrying its own verification and relevant documentation. Retain the five completed UI tasks as historical evidence; existing backend source alone does not complete future integration acceptance.
 
-PAR, real ePA/TI integration, user registration, AI tutor, token revelation, raw packet capture, runtime mission plugins, public deployment hardening, badge/score infrastructure.
+## Capabilities
 
-## Proof of value
+### New Capabilities
 
-A developer can complete the mission from Catalog to finished run, explain the actor/channel boundaries and why the protected API accepted or denied access, and inspect safe evidence rather than trusting a scripted animation.
+- `authorization-flow`: Correlated browser login, isolated standard/ePA client behavior, application sessions and logout, and independently authorized synthetic resource access.
+- `mission-experience`: Existing fixture behavior plus real mission navigation, safe run/event access, truthful evidence presentation, recovery, and preserved Mission Control interaction and localization.
 
-## Dependencies / blockers
+### Modified Capabilities
 
-- Approve catalog and workspace UX / high-fidelity design.
-- Accept ADR-0001, ADR-0002 and resolve hosting boundary.
-- Approve detailed scenarios in `specs/` and the technical design.
+None. The project's main-spec inventory is currently empty; both capability files already exist as deltas in this change.
 
-## Review status
+## Impact
 
-**Only UI Slice 001 code is authorized.** Real authentication, backend, protected APIs, Keycloak and infrastructure remain outside that authorization.
+Future implementation affects the existing SPA, auth-client, Keycloak client configuration, HAPI submodule and its parent Git pointer, repository tooling, local Compose wiring, and current architecture/UX documentation. It adds no standalone service, broker, database, dynamic plugin system, or UI redesign.
+
+## Review and Scope Boundaries
+
+Review the updated design, scenarios, route/session/event contracts, Resource Server policy, and ADR-0001/ADR-0002 alignment before marking the change APPROVED and explicitly authorizing implementation. Preserve Accepted ADR-0003 and ADR-0004. Public OAuth/backend deployment requires separate authorization; the existing static UI hosting authorization does not cover it.
+
+Real ePA/TI integration, SMART on FHIR, patient data, certification claims, provider-wide SSO logout, refresh-token workflows, durable run storage, distributed sessions, and a standard-versus-PAR comparison UI remain outside this first integration.
