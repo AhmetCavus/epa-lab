@@ -2,9 +2,9 @@
 
 **Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
 
-The owner authorized revisions to planning artifacts only. Confirming an artifact edit does not approve runtime implementation. Existing auth-client source is a reuse baseline, not evidence that this mission's integration acceptance has passed.
+The owner authorized documentation/readiness work for tasks 1.1–1.3 only. Confirming a planning artifact or completing advisory review does not approve runtime implementation. Existing auth-client source is a reuse baseline, not evidence that this mission's integration acceptance has passed.
 
-Group 1 contains review/readiness work. Groups 2–9 remain blocked until task 1.4 is explicitly satisfied. All new tasks remain unchecked. Preserve unrelated work, the public fixture-only deployment, existing ePA/PAR behavior, and prior verification history.
+Group 1 contains review/readiness work. Tasks 1.1–1.3 have recorded documentation/advisory review evidence; task 1.4 remains unchecked. Groups 2–9 remain blocked and unchecked until task 1.4 is explicitly satisfied. Preserve unrelated work, the public fixture-only deployment, existing ePA/PAR behavior, and prior verification history.
 
 ## 0. Completed UI Slice 001 history
 
@@ -20,12 +20,12 @@ Evidence: [UI verification](../../../apps/playground/verification.md), the imple
 
 ## 1. Review and explicit implementation authorization
 
-- [ ] 1.1 Review this proposal/design and both capability specs against existing Catalog/Workspace visuals and the standard/ePA boundary. Verify the review record covers runnable availability, redirect/return/recovery/logout states, conceptual-only ePA, roles/channels, and the unchanged visual contract; record owner decisions without silently accepting them. Include context-bound pending/in-flight login cancellation, the post-async pre-commit eligibility check, and cleanup independent of event persistence in that review.
-- [ ] 1.2 Reconcile current architecture/UX documentation with the draft's actual components, route/session contracts, fixed Workspace return, resource authorization, and observer/reporter semantics. Verify `docs/architecture/system-context.md`, the two UX documents, and the proposal/design/specs describe the same boundaries while preserving prior verification records. Use the design's required system-context alignment checklist for the exact API/component mapping and separate standard/ePA flows; documenting those edits alone does not complete this reconciliation task.
-- [ ] 1.3 Obtain and record review of ADR-0001/ADR-0002, cookie/CSRF and resource policy, safe event contract, and negative acceptance cases. Verify reviewer/date/decision are explicit and Accepted ADR-0003/ADR-0004 remain intact; unresolved first-integration decisions prevent readiness. Verify the focused cancelled-callback, logout-during-exchange/validation, and exhausted-event-storage logout scenarios have explicit observable assertions before readiness can be accepted.
+- [x] 1.1 Review this proposal/design and both capability specs against existing Catalog/Workspace visuals and the standard/ePA boundary. Verify the review record covers runnable availability, redirect/return/recovery/logout states, conceptual-only ePA, roles/channels, and the unchanged visual contract; record owner decisions without silently accepting them. Include context-bound pending/in-flight login cancellation, the post-async pre-commit eligibility check, and cleanup independent of event persistence in that review.
+- [x] 1.2 Reconcile current architecture/UX documentation with the draft's actual components, route/session contracts, fixed Workspace return, resource authorization, and observer/reporter semantics. Verify `docs/architecture/system-context.md`, the two UX documents, and the proposal/design/specs describe the same boundaries while preserving prior verification records. Use the design's required system-context alignment checklist for the exact API/component mapping and separate standard/ePA flows; documenting those edits alone does not complete this reconciliation task.
+- [x] 1.3 Obtain and record review of ADR-0001/ADR-0002, cookie/CSRF and resource policy, safe event contract, and negative acceptance cases. Verify reviewer/date/decision are explicit and Accepted ADR-0003/ADR-0004 remain intact; unresolved first-integration decisions prevent readiness. Verify the focused cancelled-callback, logout-during-exchange/validation, and exhausted-event-storage logout scenarios have explicit observable assertions before readiness can be accepted.
 - [ ] 1.4 Obtain explicit owner approval of this complete change and authorization to implement the local/private scope. Verify readiness/acceptance is recorded and the change is deliberately marked APPROVED before starting group 2; planning-file confirmations and CLI artifact status are insufficient.
 
-Readiness follow-up: the scoped design/spec refinements define the logout and capacity rules and identify required external architecture-document updates. They do not record formal UX/ADR acceptance or satisfy task 1.4. Keep tasks 1.1–1.4 unchecked until their stated review/alignment/authorization evidence exists; do not advance groups 2–9 through this planning edit.
+Readiness review: [review evidence and consolidated approval summary](readiness-review.md), Codex, 2026-11-11. Tasks 1.1–1.3 cover actual architecture/UX reconciliation and advisory ADR/security/acceptance review. ADR-0001/ADR-0002 remain PROPOSED; formal owner UX/ADR acceptance and implementation authorization remain pending under task 1.4. This documentation work starts no task in groups 2–9 and authorizes no public authentication deployment.
 
 ## 2. Verify repository ownership and repair local integration wiring
 

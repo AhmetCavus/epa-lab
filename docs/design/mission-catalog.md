@@ -46,6 +46,20 @@ The owner's 2026-10-19 asset-integration request replaces that generated decorat
 
 Default, hovered, focused (keyboard), loading, available, planned, temporarily unavailable, and empty catalog. Avoid decorative clickable elements without an action. Initially omit searching, filters and sorting: two cards do not warrant them.
 
+## Proposed standard mission integration
+
+**Readiness review, 2026-11-11:** this section reconciles change `001-oidc-pkce`; it does not authorize runtime implementation. Current fixture behavior and the recorded visual/artwork refinements above remain the baseline.
+
+The existing OAuth card can expose a real mission only when a separately enabled runtime binding has passed the real acceptance checks. It opens the existing `/missions/oauth-oidc/workspace`; the mission-owned contextual action there starts browser navigation to `GET /api/oauth/login`. Catalog selection alone does not exchange codes or request protected data.
+
+Until that binding is available and verified, preserve the explicit Fixture preview and Planned states and their working preview routes. An absent or unavailable runtime must give a truthful, non-sensitive unavailable state, not a fake successful run. The current public deployment stays fixture-only; local/private integration approval would not authorize publishing authentication routes.
+
+The ePA card remains Planned with a conceptual preview and no runnable action. The existing auth-client's separate PAR demonstration does not change this card's availability. The first standard mission uses Authorization Code + PKCE without PAR; a comparison of the two flows is deferred.
+
+Retain the two-card layout, full-width responsive hero, existing JPEGs, status text independent of color, keyboard navigation and German-default/English copy. No filters, introduction overlay, additional mission card or artwork redesign is required for this integration. The open design questions below remain optional future review topics, not missing first-integration decisions.
+
+Component, API and deployment boundaries are recorded in [system-context.md](../architecture/system-context.md). The [integration design](../../openspec/changes/001-oidc-pkce/design.md), [mission-experience specification](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) and [consolidated readiness review](../../openspec/changes/001-oidc-pkce/readiness-review.md) govern runtime availability and approval.
+
 ## Layout guidance
 
 - Single responsive website; no mobile app. Two columns on large viewports, one column on narrow ones.

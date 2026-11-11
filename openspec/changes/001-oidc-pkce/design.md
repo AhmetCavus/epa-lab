@@ -175,7 +175,7 @@ Add matching German and English semantic resources for runtime actions, outcomes
 
 ## Required architecture-document alignment (readiness 1.2)
 
-This change's existing component/endpoint decisions remain the proposed integration baseline. The following edits are required in `docs/architecture/system-context.md`; this artifact-only readiness follow-up records them without modifying that external document or asserting task 1.2 is complete.
+This change's existing component/endpoint decisions remain the proposed integration baseline. The earlier artifact-only follow-up recorded the following required edits. On 2026-11-11, the scoped readiness application reconciled `docs/architecture/system-context.md` and both UX documents against this checklist; task 1.2 evidence is recorded in [readiness-review.md](readiness-review.md). This document alignment does not imply runtime implementation or owner acceptance.
 
 | Current documentation                                             | Required alignment                                                                                                                                                                                                                                          |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -190,7 +190,7 @@ This change's existing component/endpoint decisions remain the proposed integrat
 
 Keep the AS/IdP conceptual sequence and actual browser/back-channel traffic distinct. Preserve the current Mission Control design and generic renderer boundaries. Do not mark HAPI security as already implemented, accept ADR-0001/ADR-0002, or authorize public authentication through documentation wording.
 
-Readiness review must check the cancelled-before-exchange, logout-during-in-flight-callback, and event-storage-exhaustion scenarios in the capability deltas against this lifecycle. Formal document alignment, ADR/UX review, and owner implementation authorization remain open gates.
+Readiness review checks the cancelled-before-exchange, logout-during-in-flight-callback, and event-storage-exhaustion scenarios in the capability deltas against this lifecycle. The consolidated review distinguishes completed document/advisory review from pending formal owner acceptance of UX/ADRs and implementation authorization under task 1.4.
 
 ## Risks / Trade-offs
 
