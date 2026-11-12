@@ -8,14 +8,14 @@ Understand an OIDC Authorization Code + PKCE flow and why a protected API accept
 
 ## Actor map
 
-| Actor | Display group | Concept |
-|---|---|---|
-| Human user | User | Resource Owner |
-| Browser / React SPA | User device | Interface and user agent, **not the OAuth client** |
-| NestJS BFF | Our application | OAuth/OIDC **Client**; creates transaction and session |
-| Authorization Server role | Keycloak | `/authorize` and `/token`, PKCE challenge/verification |
-| Identity Provider role | Keycloak | User authentication |
-| Demo Resource Server | Demo backend | Validates Access Token and permission |
+| Actor                     | Display group   | Concept                                                |
+| ------------------------- | --------------- | ------------------------------------------------------ |
+| Human user                | User            | Resource Owner                                         |
+| Browser / React SPA       | User device     | Interface and user agent, **not the OAuth client**     |
+| NestJS BFF                | Our application | OAuth/OIDC **Client**; creates transaction and session |
+| Authorization Server role | Keycloak        | `/authorize` and `/token`, PKCE challenge/verification |
+| Identity Provider role    | Keycloak        | User authentication                                    |
+| Demo Resource Server      | Demo backend    | Validates Access Token and permission                  |
 
 ## User actions supplied to shell
 

@@ -2,9 +2,11 @@
 
 **Status:** DRAFT · **Date:** 2026-10-16
 
-**Owner-authorized exception:** UI Slice 001 may implement the fixture-only Catalog and mission-agnostic Workspace in isolated `apps/playground`, as recorded in `AGENTS.md` and the change's UI checklist. All OAuth/backend implementation and architecture approvals remain DRAFT. This exception takes precedence over the general design-only gate for this slice.
+**Owner-approved change (2026-11-11):** `001-oidc-pkce` is APPROVED for local/private implementation of tasks 2–9. The owner accepted ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications; readiness task 1.4 records the explicit decision. See the [owner approval record](changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). This step records approval only and starts no implementation. Broader draft scope and unrelated changes retain their own approval gates.
 
-**Owner-authorized static deployment (2026-10-19):** Publish the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and register it as a Yoster hosted project. This authorizes the dedicated static Nginx/Compose stack, Traefik routing and hosting metadata only. The deployment must serve the existing catalog and direct workspace routes, report container/HTTP health, and remain independent of the existing authorization/Keycloak stack. All real authentication and backend gates remain in force.
+The earlier UI Slice 001 authorization covers the existing fixture-only Catalog/Workspace in `apps/playground`; preserve that baseline.
+
+**Owner-authorized static deployment (2026-10-19):** Publish the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and register it as a Yoster hosted project. This authorizes the dedicated static Nginx/Compose stack, Traefik routing and hosting metadata only. The deployment must serve the existing catalog and direct workspace routes, report container/HTTP health, and remain independent of the existing authorization/Keycloak stack. Do not deploy real authentication publicly; keep the existing public Playground fixture-only. Local/private integration authorization above does not extend this static deployment grant.
 
 ## Purpose
 
@@ -29,7 +31,7 @@ A browser-based, developer-oriented Mission Control to teach authentication and 
 
 Documents must not silently contradict each other. Status cycle: `DRAFT → REVIEWED → APPROVED → IMPLEMENTED → VERIFIED`. Only `APPROVED` changes authorize coding.
 
-## Scope for first runnable vertical slice (candidate Change 001)
+## Scope for first runnable vertical slice (approved Change 001, local/private)
 
 Mission Catalog → OAuth/OIDC Workspace → Keycloak login through BFF → safe callback/session → inspect observed timeline → authorize synthetic protected API resource → logout. Designed as a generic shell with an ePA UX fixture used to demonstrate extensibility.
 

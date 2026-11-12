@@ -8,15 +8,15 @@ Test whether the shared Workspace can represent a **different set of actors and 
 
 ## Illustrative actor types only
 
-| Actor label | Logical responsibility (illustrative) |
-|---|---|
-| User / insured person | Initiates a protected ePA journey |
-| FdV browser/clients (scenario-dependent) | User-facing access channel (future scenario to specify) |
-| ePA Authorization Service | Authorization-related interactions for the selected ePA journey |
-| Sectoral Identity Provider | Authentication/identity role, when applicable to the selected flow |
-| ePA system boundary / VAU | Protected subsystem / secure communication topic to model separately |
+| Actor label                              | Logical responsibility (illustrative)                                |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| User / insured person                    | Initiates a protected ePA journey                                    |
+| FdV browser/clients (scenario-dependent) | User-facing access channel (future scenario to specify)              |
+| ePA Authorization Service                | Authorization-related interactions for the selected ePA journey      |
+| Sectoral Identity Provider               | Authentication/identity role, when applicable to the selected flow   |
+| ePA system boundary / VAU                | Protected subsystem / secure communication topic to model separately |
 
-**Do not assume these actors always all interact in one sequence.** This is a layout stress test only, *not* a runnable ePA mission and not a claim that ePA FdV is implemented as a browser SPA.
+**Do not assume these actors always all interact in one sequence.** This is a layout stress test only, _not_ a runnable ePA mission and not a claim that ePA FdV is implemented as a browser SPA.
 
 ## Conceptual learning checkpoints
 

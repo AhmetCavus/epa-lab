@@ -1,6 +1,6 @@
 # Mission Control Workspace — UX Design
 
-**Status:** DRAFT FOR REVIEW · **Screen:** `/missions/:missionId/workspace`
+**Status:** APPROVED BASELINE — LOCAL/PRIVATE `001-oidc-pkce` · **Screen:** `/missions/:missionId/workspace`
 
 ## Goal
 
@@ -66,6 +66,55 @@ Do not put OAuth-specific UI copy, `code_verifier` names, or authentication stat
 | Signed out                    | Local session ended; old run remains inspectable if safe | Start new run                                           |
 
 **Commands must not be conflated:** `Replay explanation` navigates existing recorded events; `Retry flow` creates new network operations; `Reset view` clears UI selection; `Sign out` invalidates the BFF session. Never imply these are synonyms.
+
+## Proposed standard runtime behavior
+
+**Owner acceptance, 2026-11-11:** the owner accepted this reconciled UX/visual baseline and approved the local/private integration in `001-oidc-pkce`. This step records the decision only; it does not change current fixture availability or start implementation. The accepted design uses the existing panels and contextual-action area; there is no visual redesign. The [system context](../architecture/system-context.md) and [integration design](../../openspec/changes/001-oidc-pkce/design.md) define the component, API and security contracts.
+
+### Navigation and restoration
+
+A separately enabled, verified OAuth runtime binding provides the mission-specific Start authentication action. It performs normal top-level navigation to `GET /api/oauth/login` in the existing NestJS auth-client/BFF, which redirects to Keycloak's UI. The SPA is the user agent/UI, the BFF is the confidential OAuth client, Keycloak hosts AS and IdP roles together, and existing HAPI FHIR is the independent Resource Server.
+
+The proposed standard callback is `GET /api/oauth/callback`. A correlated success, provider denial or exchange/validation failure returns by clean 303 to `/missions/oauth-oidc/workspace`, without codes, state, error text or arbitrary return URLs. The mission adapter restores via `GET /api/oauth/session` and browser-owned `GET /api/oauth/runs/:runId/events`. Refresh performs those reads only; it does not replay authentication or resource operations. While restoration is pending, show only known state and disable conflicting execution. Missing/expired/restarted context offers a fresh login rather than reconstructing a session or trace.
+
+Keep fixture previews separate from runtime records, with explicit sample loading and no fabricated observer or timestamp. No credentials or run/session state go into localStorage/sessionStorage; explicit locale choice remains the only existing persisted frontend preference.
+
+### Runtime states in the existing Workspace
+
+| State/action                      | Required presentation and effect                                                                                                                                     |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Start / navigating                | Explain the real redirect before leaving; no manual Next step control for Keycloak and no password form in Mission Control                                           |
+| Correlated return                 | Restore authentication, run identity and safe observations; success cannot be inferred merely from visiting the return route                                         |
+| Failed / cancelled / lost context | Safe localized outcome and Retry; a retry creates a new transaction rather than replaying a consumed callback                                                        |
+| Authenticated                     | Offer the mission-specific synthetic-resource action; authentication and resource outcome are separate                                                               |
+| Resource request                  | `GET /api/oauth/resource` calls the configured `GET /fhir/Basic/playground-demo` through the BFF with a server-held Access Token; no arbitrary URL/resource controls |
+| Resource denied / unavailable     | Distinguish missing/expired BFF authentication, HAPI 401/403 and unavailable upstream without inventing causes or discarding eligible safe history                   |
+| Local Sign out                    | `POST /api/oauth/logout` uses configured Origin and context-bound anti-CSRF checks; reflect authoritative unauthenticated state and remove resource capability       |
+| Replay explanation / Reset view   | Navigate retained explanation or clear selection/restore map scale only; do not create network operations or end authentication                                      |
+
+A successful standard logout invalidates the active application session, removes credentials and cancels all context-bound pending attempts, including an already consumed callback still awaiting exchange/validation. The callback must recheck original context/attempt eligibility after all asynchronous work and before a synchronous session commit. A stale completion cannot authenticate, issue an authenticated cookie or overwrite the replacement unauthenticated viewing context. A later fresh login can use existing Keycloak SSO; local sign-out does not claim provider-wide logout or bearer revocation. Other browsers and existing ePA/PAR behavior remain independent.
+
+The Workspace must show signed out even when trace storage is full or recording logout fails. Cleanup/cancellation must not depend on storing an event. Mark an unrecorded observation/trace completeness unavailable; never invent a logout event, timestamp or sequence or display a complete-trace claim.
+
+After logout, the rotated unauthenticated context may inspect only its existing owned, non-sensitive history under the original fifteen-minute lifetime. A run ID alone grants no access and history cannot restore resource permission. Collections remain bounded to 1000 entries and runs to 100 events. Ordinary execution may be rejected at capacity before external work; logout, cancellation and cleanup remain available.
+
+### Evidence, explanation and component ownership
+
+Version-1 observed events carry stable run/event IDs, per-run sequence, actual observer/time, kind, actor references, channel, outcome and per-kind typed allowlisted evidence. The mission adapter validates and projects the wire contract into neutral protocol-flow presentation. Unsupported versions/kinds/fields or unsafe evidence produce a safe unavailable/incomplete state with no raw JSON fallback.
+
+The BFF observes its own outcomes and received responses. HAPI decision/reason evidence is shown only from the configured upstream's bounded `X-Playground-Decision`/`X-Playground-Reason` report: the response event is `observedBy: auth-client` at the BFF's time, with a nested `reportedBy: res-server` decision. Absent, malformed or conflicting reports leave the reason unavailable. A BFF rejection before an upstream request is never a HAPI denial.
+
+The earlier fixture actor-local annotations remain **Not observable**. The proposed neutral observed variant can represent an actual BFF-local check without a network arrow. Keycloak's internal password/PKCE/token checks stay **Explained / Not observable**, with no invented observer/time or internal-check success list. Distinguish these from real front-channel and back-channel observations in the diagram, timeline and Inspector.
+
+Never expose passwords, tokens, codes, state/nonce, verifiers, secrets, cookies, raw callbacks/identity claim sets or full HTTP bodies in evidence or routine logs. Resource data is a bounded synthetic result, not an HTTP-body trace. The context-bound logout anti-CSRF value is for the request header only, never teaching evidence.
+
+Preserve mission/protocol-flow ownership and public imports under Accepted ADR-0003. Generic controls must not branch on OAuth/ePA IDs or validation details. The ePA preview remains conceptual with no operational telemetry; existing backend ePA `/login`, `/callback`, `/session` and required-PAR behavior remain separate.
+
+### Verification and approval boundary
+
+The [revised acceptance specs](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) cover restoration, owned evidence, lifecycle/recording failures and the unchanged visual contract. Verify keyboard/focus, actor/event/checkpoint selection, reduced motion, diagram text alternative, Fit/scrolling, German/English at narrow widths and actual 100%/200% browser zoom when runtime behavior is implemented. Language changes translate presentation only and retain navigation, run identity, event selection and map scale.
+
+The [consolidated readiness and owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) records the accepted baseline and local/private authorization. It does not replace future browser/security acceptance execution. The public static site remains fixture-only; no public authentication deployment is authorized.
 
 ## Event inspector: required content order
 

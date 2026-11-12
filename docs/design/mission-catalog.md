@@ -1,6 +1,6 @@
 # Mission Catalog — UX Design
 
-**Status:** DRAFT FOR REVIEW · **Screen:** `/missions`
+**Status:** APPROVED BASELINE — LOCAL/PRIVATE `001-oidc-pkce` · **Screen:** `/missions`
 
 ## Purpose
 
@@ -45,6 +45,20 @@ The 2026-10-18 visual refinement uses a compact globe/network hero and distinct 
 The owner's 2026-10-19 asset-integration request replaces that generated decorative artwork with the approved JPEGs documented in [visual-references.md](visual-references.md#approved-runtime-artwork). The existing card height, typography, availability and navigation remain. Following the owner's full-width correction, the hero background spans the viewport while copy and cards retain their centered column. Use the wide horizon for desktop and the alternative planet/network image at the existing narrow breakpoint, with cover fitting, focal-point positioning and a readability overlay. Current OAuth and ePA cards use their matching headers; OpenID credential and SAML artwork is copied for future matching missions without adding catalog entries.
 
 Default, hovered, focused (keyboard), loading, available, planned, temporarily unavailable, and empty catalog. Avoid decorative clickable elements without an action. Initially omit searching, filters and sorting: two cards do not warrant them.
+
+## Proposed standard mission integration
+
+**Owner acceptance, 2026-11-11:** the owner accepted this reconciled UX/visual baseline and approved `001-oidc-pkce` for local/private implementation. The [owner decision](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) completes readiness task 1.4; recording it starts no implementation or runtime availability. Current fixture behavior and the recorded visual/artwork refinements above remain the preservation baseline.
+
+The existing OAuth card can expose a real mission only when a separately enabled runtime binding has passed the real acceptance checks. It opens the existing `/missions/oauth-oidc/workspace`; the mission-owned contextual action there starts browser navigation to `GET /api/oauth/login`. Catalog selection alone does not exchange codes or request protected data.
+
+Until that binding is available and verified, preserve the explicit Fixture preview and Planned states and their working preview routes. An absent or unavailable runtime must give a truthful, non-sensitive unavailable state, not a fake successful run. The current public deployment stays fixture-only; local/private integration approval would not authorize publishing authentication routes.
+
+The ePA card remains Planned with a conceptual preview and no runnable action. The existing auth-client's separate PAR demonstration does not change this card's availability. The first standard mission uses Authorization Code + PKCE without PAR; a comparison of the two flows is deferred.
+
+Retain the two-card layout, full-width responsive hero, existing JPEGs, status text independent of color, keyboard navigation and German-default/English copy. No filters, introduction overlay, additional mission card or artwork redesign is required for this integration. The open design questions below remain optional future review topics, not missing first-integration decisions.
+
+Component, API and deployment boundaries are recorded in [system-context.md](../architecture/system-context.md). The [integration design](../../openspec/changes/001-oidc-pkce/design.md), [mission-experience specification](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) and [consolidated readiness review](../../openspec/changes/001-oidc-pkce/readiness-review.md) govern runtime availability and approval.
 
 ## Layout guidance
 

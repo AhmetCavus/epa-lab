@@ -1,0 +1,18 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "auth-client: build",
+      "type": "shell",
+      "command": "npm",
+      "windows": {
+        "command": "npm.cmd"
+      },
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/services/auth-client"
+      },
+      "problemMatcher": ["$tsc"]
+    }
+  ]
+}

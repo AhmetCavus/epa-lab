@@ -20,6 +20,8 @@ Primary: software developers and architects who need to understand protocols and
 
 ## First deliverable
 
+**Owner approval, 2026-11-11:** the first-mission scope in `001-oidc-pkce`, its reconciled UX/visual baseline, security architecture and revised specifications are accepted for local/private implementation of tasks 2–9. See the [owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). This recording step starts no implementation. The existing ePA/PAR demonstration is preserved; a comparison UI remains outside scope. Public real authentication is not authorized and the current public Playground remains fixture-only. Broader future product scope retains its draft status.
+
 The owner authorized **UI Slice 001** as a fixture-only precursor: Catalog and a shared Workspace with OAuth sample explanations and a conceptual ePA layout preview. It lives in isolated `apps/playground` alongside existing repository services. It offers no real protocol execution and does not fulfill or approve the end-to-end deliverable below.
 
 A polished catalog and reusable workspace hosting one genuine end-to-end OAuth/OIDC Authorization Code + PKCE journey. The flow covers Keycloak login, BFF session, safe event inspection, and authorization to access a synthetic protected API resource. A conceptual ePA fixture must also fit the **design** of the workspace, without implementing ePA integration.
@@ -52,4 +54,4 @@ A learner can explain: Resource Owner vs Browser vs OAuth Client; Authorization 
 - Static, fixture-only UI hosting at `auth-playground.yappai.de` and Yoster registration were authorized on 2026-10-19. Public hosting of real authentication and backend execution still requires separate review and authorization.
 - Initial catalog: OAuth/OIDC (availability pending verification) and ePA/gematik (planned). Other mission families are conceptual only.
 - One integrated learning workspace rather than a separate gamification engine.
-- Standalone repository vs coexistence with `epa-auth-lab` (unresolved).
+- Repository boundary for `001-oidc-pkce`: reuse this checkout's `apps/playground`, `services/auth-client`, `infrastructure/keycloak` and canonical `services/res-server`, per the accepted integration design; create no duplicate BFF or Resource Server.

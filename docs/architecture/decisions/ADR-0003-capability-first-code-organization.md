@@ -29,12 +29,12 @@ Protocol-specific capabilities such as `oauth` or `epa` may be added only when r
 
 Within each capability, use these responsibilities as appropriate:
 
-| Layer | Responsibility | Constraints |
-| --- | --- | --- |
-| `ui/` | React components, visual state and user interactions | No API calls or protocol-specific rules in generic components |
-| `application/` | Use-case coordination and meaningful state transitions; React hooks when useful | No business rules hidden inside rendering code |
-| `domain/` | Types, invariants and framework-independent domain logic | No React, browser APIs, HTTP clients or persistence imports |
-| `data/` | Static registries, fixtures and external adapters | No rendering logic; distinguish fixtures from real observations |
+| Layer          | Responsibility                                                                  | Constraints                                                     |
+| -------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `ui/`          | React components, visual state and user interactions                            | No API calls or protocol-specific rules in generic components   |
+| `application/` | Use-case coordination and meaningful state transitions; React hooks when useful | No business rules hidden inside rendering code                  |
+| `domain/`      | Types, invariants and framework-independent domain logic                        | No React, browser APIs, HTTP clients or persistence imports     |
+| `data/`        | Static registries, fixtures and external adapters                               | No rendering logic; distinguish fixtures from real observations |
 
 A capability does **not** need all four directories. Do not create empty directories, pass-through services, fake repositories or interfaces merely to match the layout. Do not add a separate `model/` directory: domain models belong in `domain/`, while transport-specific types stay next to their adapter when appropriate.
 
@@ -85,11 +85,13 @@ File names, hook names and the precise split are determined by the existing code
 ## Consequences
 
 **Benefits**
+
 - Clear ownership of mission selection versus protocol-flow visualization.
 - Easier addition of new missions without coupling generic UI to specific protocols.
 - More predictable code navigation and smaller, reviewable changes.
 
 **Trade-offs**
+
 - Some relative imports or small public exports are needed between capabilities.
 - Layer boundaries are guidelines, not compile-time isolation; enforce them through code review and focused checks before introducing tooling.
 
