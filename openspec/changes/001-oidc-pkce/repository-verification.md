@@ -1,8 +1,8 @@
 # Change 001 — Repository Baseline and Path Repair Verification
 
-**Scope:** Tasks 2.1–2.5 and the explicitly authorized dependency-only prerequisite from task 6.1; local/private work with existing deployments preserved
+**Scope:** Tasks 2.1–2.5 and explicitly authorized dependency/health prerequisites from tasks 6.1/6.4; local/private work with existing deployments preserved
 
-**Current status — 2026-11-12:** Tasks 2.1–2.4 are complete; overall progress remains 13/50. The dependency prerequisite is resolved. The subsequently authorized two-space YAML correction passes parsing and canonical image rebuilding; HAPI starts and connects to isolated PostgreSQL. Readiness is blocked by HTTP 401 from the existing default JWT security policy, and the test environment's configured loopback port was not effectively published. Private auth-client-to-HAPI transport is verified. Tasks 2.5 and 6.1 remain unchecked; existing containers, volumes and public routing are unchanged. Earlier results below are retained as history; no later implementation was attempted.
+**Current status — 2026-11-12:** Tasks 2.1–2.5 are complete; progress is 14/50. The owner authorized the narrow health prerequisite from task 6.4. Exact data-free GET/HEAD liveness/readiness probes now pass while other endpoints retain JWT authentication. All 46 focused tests, the canonical image build, internal/auth-client connectivity, loopback-only publication and two clean startup/shutdown cycles passed. All 45 original containers, existing volumes and public routing were preserved. Tasks 6.1 and 6.4 remain unchecked. Earlier results below are retained as history; stop after task 2.5.
 
 **Date / recorder:** 2026-11-11 / Codex
 
@@ -518,3 +518,95 @@ Only the two new integration containers were stopped and removed, after checking
 All **45 original containers** retained IDs, image IDs, state/start times, health/restart counts, mount configuration, network addresses/aliases, port bindings and labels. Docker network/volume inventories and all **20 captured environment/Compose/hosting/routing/build-configuration hashes** returned to their baseline. The existing Keycloak, resource database and fixture-only public Playground remain unchanged. No FHIR records were requested or seeded and no real patient data was used. Safe audit artifacts are under `/tmp/epa-001-task25-yaml/`.
 
 **Progress remains 13/50; tasks 2.5 and 6.1 remain unchecked.** YAML parsing, canonical rebuilding, application/database startup and private transport are verified. Healthy readiness and effective loopback publication are not verified, so task 2.5 is not complete and no successful integration startup procedure is claimed. This session changed only the YAML indentation and scoped evidence/status prose; task 2.6 and later implementation were not executed.
+
+## Task 2.5 completion — Authorized health prerequisite, private publication and lifecycle, 2026-11-12
+
+**Result: task 2.5 complete; 14/50 tasks complete.** The owner explicitly authorized only the health-endpoint prerequisite from task 6.4, focused security tests and isolated lifecycle/publication verification. Task 6.4 stays unchecked: this work does not implement its synthetic-resource permission/operation policy or establish complete Resource Server security acceptance.
+
+### Baseline and scoped security implementation
+
+Starting parent HEAD was `78df55672e8bb3d1750ffc4da1f4c403985518ff` on clean `main`, tracking `origin/main`. Canonical HAPI was clean on `feat/enable-oauth` at `d5c24b19ce38ca4e0faea2d20b81548f69814f64`, including the previously committed dependency/YAML corrections. OpenSpec confirmed the nearest root, `spec-driven`, `ready`, and starting progress 13/50. Previously reviewed product/UX/ADR/proposal/design/spec files remain unchanged.
+
+Inspection found no custom inbound JWT filter or `SecurityFilterChain`; the previous behavior was Spring Boot's default JWT chain requiring authentication for every request. The new `HealthProbeSecurityConfiguration` uses two ordered chains:
+
+- The first matches only exact GET/HEAD requests to `/actuator/health/liveness` and `/actuator/health/readiness`. It grants anonymous access and contains no bearer authentication filter. Malformed/stale bearer headers therefore do not cause JWT parsing or rejection on these data-free probes.
+- The second covers every remaining request and retains `authenticated()` with the existing JWT Resource Server support. `/actuator/health`, other Actuator endpoints, FHIR, MCP and application routes remain authenticated. CSRF defaults are retained; no security auto-configuration exclusion or broad wildcard exception was added.
+
+The [Spring Security 6.5 chain-scoping reference](https://docs.spring.io/spring-security/reference/6.5/servlet/configuration/java.html) supports this separation. The pinned matcher builder API was also inspected locally before coding. Existing JWT validation configuration remains unchanged; no token, audience, permission, standard-client or OAuth flow behavior was added.
+
+Health details and components are explicitly `never`, retaining status-only responses as described by the [Spring Boot 3.5 health-information reference](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.health). The existing standalone Java `HealthCheck` now probes `/actuator/health/readiness`, since the aggregate `/actuator/health` remains authenticated. Its existing URL-builder cases were updated without removing port/context/base-path coverage. The submodule README documents exact probe methods/paths and the remaining mission-security scope.
+
+### Focused positive/negative tests and canonical build
+
+The tests exercise the real production filter chains through Spring MVC and a test-only JWT decoder/controller. They cover anonymous GET/HEAD probes; malformed, invalid and empty bearer headers on probes without decoder invocation; authenticated protection of aggregate health, path variants, other Actuator/FHIR/MCP/application routes; anonymous write rejection; validation delegation for authenticated requests; and rejection of invalid/malformed tokens outside probes. Decoder stubbing tests chain behavior, not cryptographic/claim-policy acceptance.
+
+A separate Java 21 container reused the existing canonical build-stage toolchain. Current source was copied into that container, with no workspace/service/volume mounts. The existing formatter ran for the two touched production Java files, then focused tests ran using the existing test dependencies:
+
+```bash
+./gradlew --no-daemon --console=plain -I /tmp/format.init.gradle spotlessApply test --tests '*HealthProbeSecurityConfigurationTest' --tests 'HealthCheckTest*'
+```
+
+This ran through `docker create`/`docker cp`/`docker start --attach` against `epa-lab/res-server-build:verify-001-task25-prerequisite-20261112`. The temporary formatter init file scoped production formatting; no repository formatter configuration was changed. Formatted source and XML results were collected, and the test container was removed.
+
+**Actual result: 46 tests passed, zero failures/errors/skips.** These comprise 35 security cases and 11 readiness URL-builder cases; Gradle reported `BUILD SUCCESSFUL in 37s`. Full test-source compilation also passed. No dependency or version was added or changed. Safe XML/count summaries are under `/tmp/epa-001-task25-health/test-results/` and `focused-test-summary.json`.
+
+The canonical Dockerfile then built `epa-lab/res-server:integration` successfully from the formatted current source. Gradle production compilation/`bootWar` reported `BUILD SUCCESSFUL in 56s`, and standalone HealthCheck/distroless packaging passed. The only compiler warning remained the existing deprecated `JacksonMcpJsonMapper` use. Runtime image ID: `sha256:7be1093bf6c12f7cbd2dbc8a37e985ff241a31a540a318d4de925c0d45a52b4e`.
+
+### Reproducible isolated profile and publication repair
+
+The repository now contains [`infrastructure/docker-compose.integration.yml`](../../../infrastructure/docker-compose.integration.yml) and [its startup/shutdown guide](../../../infrastructure/README.md). The profile extends the existing host Compose HAPI/PostgreSQL services and canonical Docker/build assets, with a separate `epa-lab-integration` project, unique container names and image tag. No existing manifest or running service configuration changed.
+
+The database stays on an internal network and uses tmpfs instead of any existing persistent volume. HAPI also joins a second dedicated bridge with higher gateway priority, enabling effective Docker host publication. That bridge defaults published bindings to `127.0.0.1`; HAPI explicitly publishes only `127.0.0.1:18083:8080`. Neither service joins `dev-proxy`, both disable Traefik discovery, and PostgreSQL has no published port. The memory bounds match the prior isolated verification. The profile's test database is intentionally disposable, not another persistent store.
+
+Quiet resolved-configuration assertions verified the canonical build context, exact loopback binding, internal database isolation, absence of mounts/DB publication and matching test credentials. A temporary mode-0600 env file supplied a generated `RES_SERVER_DB_PASSWORD` only for this isolated database; the existing `.env` was unchanged. The standard guide also validates with the existing `.env` alone.
+
+Actual root commands for building and both lifecycle cycles were:
+
+```bash
+docker compose --env-file .env -f infrastructure/docker-compose.integration.yml --profile integration config --quiet
+docker compose --env-file .env --env-file /tmp/epa-001-task25-health/integration.env -f infrastructure/docker-compose.integration.yml --profile integration config --quiet
+docker compose --progress plain --env-file .env --env-file /tmp/epa-001-task25-health/integration.env -f infrastructure/docker-compose.integration.yml --profile integration build res-server
+docker compose --env-file .env --env-file /tmp/epa-001-task25-health/integration.env -f infrastructure/docker-compose.integration.yml --profile integration up --no-build --pull never -d --wait --wait-timeout 240 res-server
+docker compose --env-file .env --env-file /tmp/epa-001-task25-health/integration.env -f infrastructure/docker-compose.integration.yml --profile integration stop --timeout 15 res-server res-server-db
+docker compose --env-file .env --env-file /tmp/epa-001-task25-health/integration.env -f infrastructure/docker-compose.integration.yml --profile integration rm --force res-server res-server-db
+docker network rm epa-lab-integration_database epa-lab-integration_loopback
+```
+
+The `up`/verification/`stop`/`rm`/network-removal sequence completed **twice**. Both starts reported HAPI and PostgreSQL healthy. The second cycle used fresh container IDs, the same repository profile and the same image, verifying clean reproducibility. No Git commit was created; the new profile and nested HAPI edits remain working-tree changes for review, and the parent HAPI pointer is unchanged. No task 6.6 workflow was performed.
+
+### Real HTTP/security evidence
+
+Both cycles ran `/tmp/epa-001-task25-health/verify-runtime.mjs` from the existing host-networked auth-client through `http://127.0.0.1:18083` and from a temporary Node probe using the existing auth-client image on the internal database network through `http://res-server:8080`:
+
+```bash
+docker exec -i epa-lab-auth-client node --input-type=module - http://127.0.0.1:18083 --verify-loopback < /tmp/epa-001-task25-health/verify-runtime.mjs
+docker run --rm -i --name epa-health-internal-probe --network epa-lab-integration_database --label traefik.enable=false --entrypoint node epa-lab/auth-client:local --input-type=module - http://res-server:8080 < /tmp/epa-001-task25-health/verify-runtime.mjs
+docker exec epa-lab-integration-res-server java -cp /app HealthCheck
+docker exec epa-lab-integration-res-server-db pg_isready -U hapi -d hapi
+docker exec epa-lab-playground wget --quiet --spider http://127.0.0.1/health
+```
+
+| Check                                                                            | Actual result in both cycles                                                |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| GET/HEAD liveness/readiness, no credentials or malformed/stale bearer headers    | HTTP 200; GET body contains only `status: UP`, HEAD body empty              |
+| Internal network service DNS and auth-client loopback reachability               | Both reached the corrected canonical HAPI service and passed the same cases |
+| Aggregate health, health path variants, other Actuator/FHIR/MCP/application GETs | HTTP 401 with Bearer challenge                                              |
+| Malformed bearer on protected FHIR metadata                                      | HTTP 401                                                                    |
+| Anonymous POST to either probe                                                   | Rejected; packaged server returned HTTP 401                                 |
+| Java readiness HealthCheck / PostgreSQL readiness                                | Exit 0 / exit 0                                                             |
+| Effective Docker publication                                                     | Exactly `127.0.0.1:18083`; no IPv6/wildcard or PostgreSQL publication       |
+| Connection through the server's LAN address on port 18083                        | Refused, while loopback requests passed                                     |
+| Existing auth-client readiness / configured Keycloak discovery                   | HTTP 200; issuer still matched                                              |
+| Existing HAPI and public fixture Playground health                               | Exit 0                                                                      |
+
+Per origin and cycle, 12 public-probe cases and 11 protected/denied cases passed. Runtime summaries and container/network state are recorded in `/tmp/epa-001-task25-health/cycle{1,2}-{runtime,state}.json`. No token, password, full provider response, patient record or raw credential-bearing log was printed as evidence.
+
+The initial live test expected HTTP 403 for anonymous probe POSTs, matching the isolated MVC CSRF result, but the packaged application returned HTTP 401. The temporary runtime assertion was corrected to accept only the two valid denial statuses, 401/403, while recording the actual 401 responses. No application/security rule was changed to resolve that test expectation. All final runtime cases passed.
+
+### Preservation, acceptance and stop boundary
+
+Only the isolated containers and their verified empty project networks were stopped/removed. No existing stack was taken down, no existing container was replaced, and no volume was reset, removed or recreated. The integration image remains available; all test containers/networks were removed and port 18083 was no longer listening.
+
+The final audit confirmed all **45 original containers** retained IDs, image IDs, state/start times, health/restart counts, mounts, network addresses/aliases, ports and labels. Original network/volume inventories and all **20 captured environment/Compose/hosting/routing/build-configuration hashes** matched the baseline. The existing Keycloak and database volumes, public routing, static Playground/fixtures, auth-client source and UI/UX/architecture contracts were preserved. No FHIR record was seeded or requested past authentication, and no real patient data was used.
+
+Task 2.5's canonical assets/database wiring, private reachability, loopback-only publication, healthy checks, reproducible lifecycle and preservation requirements all have actual passing evidence. Its checkbox is now complete. **Progress: 14/50. Task 6.4 remains unchecked**, as do task 6.1 and the other later tasks. The health prerequisite does not satisfy the synthetic-resource permission, audience or operation policy. Stop after task 2.5; no task 2.6 or unrelated OAuth implementation was started.

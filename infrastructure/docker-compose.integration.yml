@@ -1,0 +1,47 @@
+name: epa-lab-integration
+
+services:
+  res-server:
+    extends:
+      file: docker-compose.host.yml
+      service: res-server
+    profiles: ['integration']
+    image: epa-lab/res-server:integration
+    container_name: epa-lab-integration-res-server
+    restart: 'no'
+    mem_limit: 4g
+    environment:
+      JAVA_TOOL_OPTIONS: '-Xms128m -Xmx2g'
+    ports: !override
+      - '127.0.0.1:${INTEGRATION_FHIR_PORT:-18083}:8080'
+    networks:
+      database:
+      loopback:
+        gw_priority: 1
+    labels:
+      traefik.enable: 'false'
+
+  res-server-db:
+    extends:
+      file: docker-compose.host.yml
+      service: res-server-db
+    profiles: ['integration']
+    container_name: epa-lab-integration-res-server-db
+    restart: 'no'
+    mem_limit: 1g
+    # This isolated verification database never mounts an existing data volume.
+    volumes: !reset []
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - database
+    labels:
+      traefik.enable: 'false'
+
+networks:
+  database:
+    internal: true
+  # A separate bridge permits host loopback publication; the DB stays internal.
+  loopback:
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: '127.0.0.1'
