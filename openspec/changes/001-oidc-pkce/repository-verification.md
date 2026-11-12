@@ -1,8 +1,8 @@
 # Change 001 — Repository Baseline and Path Repair Verification
 
-**Scope:** Tasks 2.1–2.5; approved local/private implementation, with task 2.5 blocked before runtime changes
+**Scope:** Tasks 2.1–2.5 and the explicitly authorized dependency-only prerequisite from task 6.1; local/private work with existing deployments preserved
 
-**Current status — 2026-11-12:** Tasks 2.1–2.4 are complete; overall progress remains 13/50. Task 2.5 preflight confirmed healthy existing services and private auth-client-to-HAPI connectivity, but the canonical Docker build reproduced the HAPI dependency-resolution failure assigned to task 6.1. Task 2.5 remains unchecked and runtime wiring is unchanged. The original environment/results below are retained as history; dated Linux sections record subsequent verification. Tasks 2.6 and later remain untouched.
+**Current status — 2026-11-12:** Tasks 2.1–2.4 are complete; overall progress remains 13/50. The owner subsequently authorized the dependency-resolution prerequisite from task 6.1 out of order. The corrected starter resolves at pinned Spring Boot 3.5.14, production Java compilation and the canonical Docker build pass. Task 2.5 resumed, but the packaged HAPI application exits unhealthy on an existing YAML syntax error at `application.yaml:69`. Tasks 2.5 and 6.1 remain unchecked; existing runtime wiring is unchanged. Earlier results below are retained as history. No other later task was started.
 
 **Date / recorder:** 2026-11-11 / Codex
 
@@ -336,3 +336,93 @@ No stack startup/shutdown, container replacement, volume recreation or public ro
 Task 2.5 cannot be marked complete: the canonical image build, reproducible integration startup/shutdown and resulting health/connectivity checks remain blocked by the task 6.1 dependency issue. No new integration profile or startup procedure is claimed as verified. Resolving that issue requires a later explicitly scoped request; this session did not start task 6.1, task 2.6 or any other later task.
 
 **Progress remains 13/50. No task was newly completed. Stop after recording this blocker.**
+
+## Task 2.5 resume — Authorized dependency prerequisite from task 6.1, 2026-11-12
+
+**Outcome:** The dependency-resolution/compilation prerequisite is fixed and verified. Task 2.5 remains blocked by an existing runtime YAML syntax error. Task 6.1 remains incomplete; this narrow prerequisite fix does not establish Resource Server security.
+
+### Authorization, baseline and minimal correction
+
+The owner explicitly authorized correcting only the Spring Boot 3.5 OAuth2 Resource Server starter dependency from task 6.1 before resuming task 2.5, with dependency resolution/compilation checks and preservation of all existing Docker containers/volumes. This is an authorized ordering exception; it does not authorize completing the remaining task 6.1 security work or bypassing its acceptance criteria.
+
+Starting parent HEAD was `18737ac6cb6d1b01b7506c73443652f27e073a68` on clean `main`, tracking `origin/main`. Canonical HAPI was clean at `253e15666f4a8640b2b13934524fe27f518e9b56` on `feat/enable-oauth`. OpenSpec confirmed the existing repository root, `spec-driven` schema, `ready` apply state and 13/50 progress. Reviewed product/UX/architecture/proposal/design/spec files remain unchanged.
+
+Only this line in `services/res-server/build.gradle.kts:141` changed:
+
+```diff
+-    implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
++    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server:$springBootVersion")
+```
+
+The [Spring Boot 3.5 managed dependency reference](https://docs.spring.io/spring-boot/3.5/appendix/dependency-versions/coordinates.html) confirms the corrected artifact name. The existing `springBootVersion=3.5.14` property is retained explicitly, consistent with the other pinned Boot starters. No HAPI/Java/Gradle version, application configuration, security activation, source implementation or test dependency changed. The HAPI submodule contains this single uncommitted edit; its parent gitlink remains at the original commit. No submodule commit/pointer update or task 6.6 work was performed.
+
+### Canonical build, dependency resolution and compilation
+
+The temporary `/tmp/epa-001-task25-prerequisite/build.compose.yaml` overrides only the build output image tag:
+
+```yaml
+services:
+  res-server:
+    image: epa-lab/res-server:verify-001-task25-prerequisite-20261112
+```
+
+Actual commands from the parent repository root, using elevated Docker execution permissions:
+
+```bash
+git -C services/res-server diff --check
+docker compose --env-file .env -f infrastructure/docker-compose.host.yml config --quiet
+docker compose --project-name epa-001-task25-prerequisite --env-file .env -f infrastructure/docker-compose.host.yml -f /tmp/epa-001-task25-prerequisite/build.compose.yaml config --quiet
+docker compose --progress plain --project-name epa-001-task25-prerequisite --env-file .env -f infrastructure/docker-compose.host.yml -f /tmp/epa-001-task25-prerequisite/build.compose.yaml build res-server
+docker build --progress=plain --target build-hapi --tag epa-lab/res-server-build:verify-001-task25-prerequisite-20261112 --file services/res-server/Dockerfile services/res-server
+docker run --rm --name epa-001-task25-gradle-check --network none --label traefik.enable=false --memory 4g --cpus 2 epa-lab/res-server-build:verify-001-task25-prerequisite-20261112 ./gradlew --offline --no-daemon --console=plain dependencyInsight --configuration compileClasspath --dependency org.springframework.boot:spring-boot-starter-oauth2-resource-server compileJava
+```
+
+| Check                                | Actual result                                                                                                                                                                                  |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Base/verification Compose validation | Both quiet checks passed                                                                                                                                                                       |
+| Canonical Docker build               | Passed using the existing Dockerfile and corrected canonical fork; no upstream HAPI replacement                                                                                                |
+| Production compilation/package       | `:compileJava`, `:processResources`, `:classes`, `:prepareWebapp`, `:resolveMainClassName` and `:bootWar` completed; Gradle reported `BUILD SUCCESSFUL in 57s`, five actionable tasks executed |
+| Existing compiler warning            | Deprecated `JacksonMcpJsonMapper` warning; no compile error, and no unrelated repair attempted                                                                                                 |
+| Runtime image construction           | Existing distroless packaging and `HealthCheck` compilation passed; runtime image ID `sha256:16557a35a28c0ffe87ac3fcc3e08eb717404fcd966854b2f4f297a58e710ebc5`                                 |
+| Offline dependency check             | `org.springframework.boot:spring-boot-starter-oauth2-resource-server:3.5.14 (selected by rule)` on `compileClasspath`; no unresolved starter                                                   |
+| Explicit follow-up compile task      | `:compileJava UP-TO-DATE`; offline verification `BUILD SUCCESSFUL in 7s`, following the actual production compilation above                                                                    |
+
+The verification build stage uses the Dockerfile's Java 21/Gradle 8.13 toolchain. The offline check ran with no network, ports or mounts and removed its temporary container afterward. No full HAPI test suite was claimed; this prerequisite verification covers dependency resolution, production compilation and image packaging.
+
+### Resumed task 2.5 — Isolated startup exposes a new blocker
+
+A host YAML parser check first rejected the unchanged `services/res-server/src/main/resources/application.yaml`, reporting `expected <block end>, but found '<block mapping start>'` at line 69, column 3, with mapping context at line 4, column 1. The `security` section's indentation and the following `ai` mapping were not altered in this dependency-only correction.
+
+After the dependency checks passed, the packaged application was tested without access to existing databases, host services or public networks. The temporary `/tmp/epa-001-task25-prerequisite/check-startup.py` invoked:
+
+```bash
+docker run --detach --name epa-001-task25-prerequisite-hapi --network none --restart no --label traefik.enable=false --memory 3g --cpus 2 --health-cmd 'java -cp /app HealthCheck' --health-interval 5s --health-timeout 5s --health-start-period 10s --health-retries 2 epa-lab/res-server:verify-001-task25-prerequisite-20261112
+```
+
+The helper waited for exit, inspected state and filtered logs in memory, then removed only its own test container. No full logs or generated credentials were printed or saved. The recorded result in `/tmp/epa-001-task25-prerequisite/startup-summary.json` is:
+
+| Field                   | Actual result                                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Image/runtime           | Corrected canonical image above; non-root user `65532:65532`                                                             |
+| Container status / exit | `exited`, exit code **1**                                                                                                |
+| Docker health           | **unhealthy**                                                                                                            |
+| Startup diagnostic      | YAML parser error: expected block end, found block mapping start; context line 4/column 1 and error line **69/column 3** |
+| Isolation               | `network_mode: none`, zero published ports, zero mounts, Traefik disabled                                                |
+
+This confirms a runtime configuration blocker in the built artifact. Healthy integration startup and connectivity to the corrected HAPI process could not be established. The YAML/property-binding repair is beyond the authorized dependency-only prerequisite, so it was left unchanged and implementation stopped. No security auto-configuration exclusion, permit-all policy, placeholder-toggle change, issuer substitution or alternate configuration was used to make startup pass. Task 6.1 still requires property binding, security activation, focused security-test support, documented issuer/audience configuration and its complete acceptance evidence.
+
+### Existing-service checks, preservation and final scope
+
+After removing the verification container, probes inside the existing `epa-lab-auth-client` returned HTTP 200 for its own configured readiness endpoint, the existing private HAPI `/actuator/health` at `192.168.178.131:8083`, and configured Keycloak discovery with matching issuer. These existing health commands also passed:
+
+```bash
+docker exec epa-lab-res-server java -cp /app HealthCheck
+docker exec epa-lab-res-server-db pg_isready -U hapi -d hapi
+docker exec epa-lab-playground wget --quiet --spider http://127.0.0.1/health
+```
+
+Those results describe the preserved running services, not the failing corrected image. Before/after audits under `/tmp/epa-001-task25-prerequisite/` confirmed all **45 original containers** retain IDs, image IDs, state/start times, health/restart counts, mounts, network addresses/aliases, port bindings and labels. Network and volume inventories and all **20 captured environment/Compose/hosting/routing/HAPI configuration file hashes** are unchanged. Both temporary verification containers were removed; the separately tagged runtime/build-stage images remain for inspection.
+
+No original container or volume was stopped, replaced, reset or recreated. The public fixture-only Playground, routing, Keycloak, existing HAPI/database and `.env` remain unchanged. No FHIR record was requested/seeded/changed and no real patient data was used. Only the one-line nested dependency edit, this record and task-status prose changed.
+
+**Progress remains 13/50. Tasks 2.5 and 6.1 remain unchecked.** Reproducible private integration startup/health/connectivity/shutdown acceptance is still blocked by the confirmed YAML error; no new integration profile or verified startup procedure is claimed. Stop here without implementing other task 6.1 obligations, task 2.6 or unrelated OAuth functionality.
