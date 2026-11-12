@@ -1,8 +1,8 @@
 # Change 001 — Repository Baseline and Path Repair Verification
 
-**Scope:** Tasks 2.1–2.4 only; approved local/private implementation
+**Scope:** Tasks 2.1–2.5; approved local/private implementation, with task 2.5 blocked before runtime changes
 
-**Current status — 2026-11-12:** Task 2.4's remaining Docker verification passed on the Linux Dev Server. Tasks 2.1–2.4 are complete; overall progress is 13/50. The original environment/results below are retained as history; the dated Linux verification at the end records the resumed work. Tasks 2.5 onward remain untouched.
+**Current status — 2026-11-12:** Tasks 2.1–2.4 are complete; overall progress remains 13/50. Task 2.5 preflight confirmed healthy existing services and private auth-client-to-HAPI connectivity, but the canonical Docker build reproduced the HAPI dependency-resolution failure assigned to task 6.1. Task 2.5 remains unchecked and runtime wiring is unchanged. The original environment/results below are retained as history; dated Linux sections record subsequent verification. Tasks 2.6 and later remain untouched.
 
 **Date / recorder:** 2026-11-11 / Codex
 
@@ -235,3 +235,104 @@ git diff --check
 ```
 
 **Remaining task 2.4 blockers: none. Progress: 13/50 complete.** Only task 2.4 is newly completed. The earlier HAPI dependency-resolution failure remains historical evidence for task 6.1 and was not investigated or repaired here. Tasks 2.5 and later remain unchecked and unexecuted. Stop at this boundary.
+
+## Task 2.5 — Local/private HAPI integration verification, 2026-11-12
+
+**Result: blocked; checkbox remains open.** The canonical HAPI Docker build fails at `:compileJava` resolving `org.springframework.boot:spring-boot-starter-security-oauth2-resource-server:`. This reproduces the known dependency issue assigned to task 6.1. Following the owner's explicit task 2.5 stop condition, no runtime wiring was changed and no dependency/security repair or later task was attempted.
+
+### Checkout, assets and existing topology
+
+The starting parent working tree was clean on `main`, tracking `origin/main`, at `4a3f6874a262b3dd99da6f728697ec264bd2df27`. Canonical `services/res-server` remained clean at `253e15666f4a8640b2b13934524fe27f518e9b56` on `feat/enable-oauth`. OpenSpec confirmed the nearest repository root, `spec-driven` schema, `ready` apply state and 13/50 progress; task 2.4 is complete and task 2.5 is pending. Previously reviewed product/UX/ADR/proposal/design/spec files were confirmed byte-identical to the task 2.4 review.
+
+Inspected `infrastructure/docker-compose{,.host,.playground}.yml`, `.env` binding settings without printing credentials, `yappai.host.json`, the canonical HAPI `Dockerfile`, `.dockerignore`, `docker-compose.yml`, Gradle declarations/properties, `application.yaml`, `HealthCheck.java`, and the existing Traefik lab route. Actual preflight commands included:
+
+```bash
+git status --short --branch
+git rev-parse HEAD
+git submodule status
+git -C services/res-server status --short --branch
+docker ps -a --format 'table {{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+docker network ls
+docker volume ls
+docker compose ls --all
+ss -ltn
+```
+
+Filtered `docker inspect`, `docker network inspect` and `docker volume inspect` results established:
+
+| Component                 | Existing local/private configuration                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| auth-client               | `epa-lab-auth-client`, host networking, listener `192.168.178.131:3000`                                                        |
+| HAPI                      | `epa-lab-res-server`, `epa-lab_default` address `172.24.0.4`, private host binding `192.168.178.131:8083` to container 8080    |
+| PostgreSQL                | `epa-lab-res-server-db`, `res-server-db:5432` on `epa-lab_default`, no published port                                          |
+| HAPI database             | `jdbc:postgresql://res-server-db:5432/hapi`, database/user `hapi`, existing configured password retained                       |
+| Resource database volume  | `epa-lab_res-server-data`, created 2026-10-28, mounted at `/var/lib/postgresql/data`                                           |
+| Keycloak                  | Existing realm issuer `http://192.168.178.131:5555/realms/epa-demo`; retained `epa-auth-lab_keycloak-data`, created 2026-10-11 |
+| Public fixture Playground | Existing `dev-proxy` attachment and Traefik route to `http://epa-lab-playground:80`                                            |
+
+HAPI and PostgreSQL have no `dev-proxy` attachment or Traefik labels; the inspected lab route contains only the fixture Playground. The HAPI listener uses a private LAN address. The host-networked auth-client reaches that private binding; no application resource API was added. Internet perimeter reachability was not externally tested.
+
+Port 8083 is already owned by the existing HAPI instance. Starting the submodule's standalone Compose would introduce a different database/container set and publish 8080 on all interfaces; it was not started. Changing the host stack's Compose project name would select a different default `res-server-data` volume. Consequently the separate verification project below was used only to build, never to start services. No database creation, migration, credential change or volume reset was performed.
+
+The existing HAPI Dockerfile builds the canonical fork with Temurin Java 21, Gradle 8.13 and `bootWar`, then packages its distroless Java 21 image and `HealthCheck` class. Pinned project settings remain HAPI 8.12.0 and Spring Boot 3.5.14. Its placeholder `security.oauth2.enable: false` and unrelated local issuer settings are unchanged; they do not establish a working Resource Server security boundary.
+
+### Validation and canonical image-build failure
+
+A temporary `/tmp/epa-001-task25/build.compose.yaml` changed only the build output tag:
+
+```yaml
+services:
+  res-server:
+    image: epa-lab/res-server:verify-001-task25-20261112
+```
+
+Actual commands, from the repository root:
+
+```bash
+docker compose --env-file .env -f infrastructure/docker-compose.host.yml config --quiet
+docker compose --project-name epa-001-task25 --env-file .env -f infrastructure/docker-compose.host.yml -f /tmp/epa-001-task25/build.compose.yaml config --quiet
+docker compose --progress plain --project-name epa-001-task25 --env-file .env -f infrastructure/docker-compose.host.yml -f /tmp/epa-001-task25/build.compose.yaml build res-server
+```
+
+Both quiet configuration validations passed. A filtered resolved-configuration check confirmed the build context is `/srv/yappai/hosting/epa-lab/services/res-server`, the separate verification image tag, private HAPI publication, internal PostgreSQL port and existing datasource settings.
+
+The Docker build reused the repository's existing assets without modification. Base images, the OpenTelemetry agent and Gradle downloaded successfully; Gradle `help` succeeded. The Dockerfile's next build command, `./gradlew --no-daemon bootWar -Djdk.lang.Process.launchMechanism=vfork`, failed with exit code 1:
+
+```text
+> Task :compileJava FAILED
+Execution failed for task ':compileJava'.
+> Could not resolve all files for configuration ':compileClasspath'.
+   > Could not find org.springframework.boot:spring-boot-starter-security-oauth2-resource-server:.
+```
+
+The declaration is at `services/res-server/build.gradle.kts:141`. No replacement upstream HAPI image, dependency edit, security toggle or build-check bypass was used. The verification image was not produced. A current canonical image is therefore unavailable for a reproducible task 2.5 startup/health/shutdown verification; the already running image is not evidence that this source revision builds.
+
+### Existing-service health and private connectivity
+
+While the build was pending, a read-only Node probe executed inside `epa-lab-auth-client` fetched these endpoints with a five-second timeout and printed only fixed labels/statuses:
+
+| Probe                                                   | Actual result                                   |
+| ------------------------------------------------------- | ----------------------------------------------- |
+| Its configured `/health/ready`                          | HTTP 200                                        |
+| `http://192.168.178.131:8083/actuator/health`           | HTTP 200 from the existing HAPI service         |
+| Configured Keycloak `/.well-known/openid-configuration` | HTTP 200; returned issuer matched configuration |
+
+The following existing health checks also passed with exit code 0:
+
+```bash
+docker exec epa-lab-res-server java -cp /app HealthCheck
+docker exec epa-lab-res-server-db pg_isready -U hapi -d hapi
+docker exec epa-lab-playground wget --quiet --spider http://127.0.0.1/health
+```
+
+These verify the current services and network path only. They do not complete canonical build/new integration-profile acceptance, establish protected FHIR access, or verify Resource Server security. No FHIR records were requested, seeded or changed; no real patient data was used.
+
+### Preservation and pending acceptance
+
+Before/after snapshots under `/tmp/epa-001-task25/` confirmed all **45 original containers** retained IDs, image IDs, status/start time, health/restart count, network addresses/aliases, ports, mounts and labels. Docker network and volume inventories were unchanged. All **21 captured environment/Compose/hosting/routing/HAPI configuration file hashes** were unchanged. The parent and HAPI worktrees remained clean before recording these results; HAPI stays clean afterward.
+
+No stack startup/shutdown, container replacement, volume recreation or public routing change occurred. Docker downloaded base images and populated build cache; no runtime cleanup was needed. The existing Keycloak, HAPI/database and fixture-only public Playground remain in place.
+
+Task 2.5 cannot be marked complete: the canonical image build, reproducible integration startup/shutdown and resulting health/connectivity checks remain blocked by the task 6.1 dependency issue. No new integration profile or startup procedure is claimed as verified. Resolving that issue requires a later explicitly scoped request; this session did not start task 6.1, task 2.6 or any other later task.
+
+**Progress remains 13/50. No task was newly completed. Stop after recording this blocker.**
