@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isIP } from 'node:net';
+import type { StandardClientProfile } from './client-profile';
 
 const loopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -81,6 +82,10 @@ const environmentSchema = z
     }, z.array(configuredUrl).min(1).max(20)),
     OIDC_HTTP_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
     OIDC_DISCOVERY_CACHE_TTL_MS: z.coerce.number().int().min(1000).max(3600000).default(300000),
+    PLAYGROUND_OIDC_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((flag) => flag === 'true'),
   })
   .refine(
     (environment) =>
@@ -107,14 +112,73 @@ const environmentSchema = z
     }
   });
 
+const standardEnvironmentSchema = z.object({
+  PLAYGROUND_OIDC_CLIENT_ID: z.literal('playground-oidc'),
+  PLAYGROUND_OIDC_CLIENT_SECRET: z.string().min(32).max(1024),
+  PLAYGROUND_OIDC_REDIRECT_URI: configuredUrl,
+  PLAYGROUND_APP_ORIGIN: configuredUrl.refine(
+    (value) => isSafeConfiguredUrl(value, true) && value === new URL(value).origin,
+  ),
+});
+
+function invalidConfiguration(fields: string[]): never {
+  throw new Error(`Invalid environment configuration: ${[...new Set(fields)].join(', ')}`);
+}
+
 export function validateEnvironment(environment: Record<string, unknown>) {
   const result = environmentSchema.safeParse(environment);
 
   if (!result.success) {
     const fields = [...new Set(result.error.issues.map((issue) => issue.path.join('.')))];
     // Validation messages must never include the rejected configuration values.
-    throw new Error(`Invalid environment configuration: ${fields.join(', ')}`);
+    return invalidConfiguration(fields);
   }
 
-  return result.data;
+  const base = result.data;
+
+  if (!base.PLAYGROUND_OIDC_ENABLED) {
+    return { ...base, standardProfile: undefined };
+  }
+
+  const standard = standardEnvironmentSchema.safeParse(environment);
+  if (!standard.success) {
+    return invalidConfiguration(standard.error.issues.map((issue) => issue.path.join('.')));
+  }
+
+  const settings = standard.data;
+  const invalidFields: string[] = [];
+  if (settings.PLAYGROUND_OIDC_CLIENT_ID === base.OIDC_CLIENT_ID) {
+    invalidFields.push('PLAYGROUND_OIDC_CLIENT_ID');
+  }
+  if (settings.PLAYGROUND_OIDC_CLIENT_SECRET === base.OIDC_CLIENT_SECRET) {
+    invalidFields.push('PLAYGROUND_OIDC_CLIENT_SECRET');
+  }
+  if (
+    settings.PLAYGROUND_OIDC_REDIRECT_URI !==
+      `${settings.PLAYGROUND_APP_ORIGIN}/api/oauth/callback` ||
+    base.OIDC_ALLOWED_REDIRECT_URIS.includes(settings.PLAYGROUND_OIDC_REDIRECT_URI)
+  ) {
+    invalidFields.push('PLAYGROUND_OIDC_REDIRECT_URI');
+  }
+  for (const key of ['PLAYGROUND_OIDC_REDIRECT_URI', 'PLAYGROUND_APP_ORIGIN'] as const) {
+    if (!isSafeConfiguredUrl(settings[key], base.OIDC_ALLOW_PRIVATE_NETWORK_HTTP)) {
+      invalidFields.push(key);
+    }
+  }
+  if (invalidFields.length > 0) {
+    return invalidConfiguration(invalidFields);
+  }
+
+  const standardProfile: StandardClientProfile = Object.freeze({
+    id: 'playground-standard',
+    authorizationMode: 'direct',
+    issuer: base.OIDC_ISSUER,
+    clientId: settings.PLAYGROUND_OIDC_CLIENT_ID,
+    clientSecret: settings.PLAYGROUND_OIDC_CLIENT_SECRET,
+    defaultRedirectUri: settings.PLAYGROUND_OIDC_REDIRECT_URI,
+    allowedRedirectUris: Object.freeze([settings.PLAYGROUND_OIDC_REDIRECT_URI]),
+    scope: 'openid demo.fhir.read',
+    applicationOrigin: settings.PLAYGROUND_APP_ORIGIN,
+  });
+  return { ...base, ...settings, standardProfile };
 }

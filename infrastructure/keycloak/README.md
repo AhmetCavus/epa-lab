@@ -7,8 +7,9 @@ The existing `epa-demo` realm contains two independent confidential clients:
 | `epa-auth-server` (existing `OIDC_CLIENT_ID`) | Required PAR and PKCE S256; existing ePA browser/header contracts | Existing `OIDC_DEFAULT_REDIRECT_URI` (`/callback`)           |
 | `playground-oidc`                             | Direct Authorization Code + PKCE S256, without PAR                | Exact `PLAYGROUND_OIDC_REDIRECT_URI` (`/api/oauth/callback`) |
 
-This registration does not implement the auth-client's standard profile/routes, connect the
-fixture Playground, or implement HAPI resource authorization. Those remain later tasks.
+The [auth-client profile internals](../../services/auth-client/README.md) are now verified.
+Standard browser routes/sessions, fixture Playground integration and HAPI authorization
+remain later tasks; client registration alone does not provide them.
 Use this registration only in the existing private lab. Test listeners publish only on
 loopback; public routing is unchanged.
 
@@ -30,7 +31,7 @@ PLAYGROUND_OIDC_REDIRECT_URI=http://localhost:3000/api/oauth/callback
 
 The blank example secret must be filled by `env:init`; do not paste credentials into command
 arguments, source files or frontend variables. Compose supplies the secret/callback only to
-Keycloak for fresh import. Auth-client profile integration is deliberately pending.
+Keycloak for fresh import. Auth-client profile settings are documented in its separate guide; mission browser integration is pending.
 
 The standard client has no `require-par` marker, no browser CORS origins, and no implicit,
 password, service-account, device, CIBA or standard token-exchange grant enabled. It has no

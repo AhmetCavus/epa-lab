@@ -1,8 +1,8 @@
 import { registerAs } from '@nestjs/config';
 import { validateEnvironment } from './configuration.validation';
 
-export const configuration = registerAs('lab', () => {
-  const environment = validateEnvironment(process.env);
+export function readConfiguration(values: Record<string, unknown>) {
+  const environment = validateEnvironment(values);
 
   return {
     port: environment.PORT,
@@ -15,5 +15,8 @@ export const configuration = registerAs('lab', () => {
     allowedRedirectUris: environment.OIDC_ALLOWED_REDIRECT_URIS,
     httpTimeoutMs: environment.OIDC_HTTP_TIMEOUT_MS,
     discoveryCacheTtlMs: environment.OIDC_DISCOVERY_CACHE_TTL_MS,
+    standardProfile: environment.standardProfile,
   };
-});
+}
+
+export const configuration = registerAs('lab', () => readConfiguration(process.env));

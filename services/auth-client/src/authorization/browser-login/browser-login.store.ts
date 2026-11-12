@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { AuthorizationError } from '../../common/errors/authorization-error';
-import type { AuthorizationTransaction } from '../../oidc/authorization-transaction';
+import type { BoundAuthorizationTransaction } from '../../oidc/authorization-transaction';
 import type { OidcMetadata } from '../../oidc/oidc-discovery.service';
 import type { VerifiedLogin } from '../../oidc/token.service';
 
@@ -10,10 +10,9 @@ const sessionLifetimeMs = 15 * 60 * 1000;
 const maximumEntries = 1000;
 
 export interface PendingLogin {
-  transaction: AuthorizationTransaction;
+  transaction: BoundAuthorizationTransaction;
   browserBinding: string;
   metadata: OidcMetadata;
-  redirectUri: string;
   expiresAt: number;
 }
 
@@ -62,6 +61,7 @@ export class BrowserLoginStore {
 
     if (
       !login ||
+      login.transaction.profile.id !== 'epa-par' ||
       !browserBinding ||
       suppliedBinding.length !== expectedBinding.length ||
       !timingSafeEqual(suppliedBinding, expectedBinding)

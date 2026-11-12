@@ -1,6 +1,8 @@
 import type { ConfigType } from '@nestjs/config';
 import type { configuration } from '../src/config/configuration';
 import type { OidcMetadata } from '../src/oidc/oidc-discovery.service';
+import type { StandardOidcMetadata } from '../src/oidc/oidc-discovery.service';
+import { readConfiguration } from '../src/config/configuration';
 
 export const testConfiguration: ConfigType<typeof configuration> = {
   port: 3000,
@@ -13,6 +15,7 @@ export const testConfiguration: ConfigType<typeof configuration> = {
   allowedRedirectUris: ['http://localhost:3000/callback', 'http://localhost:3000/registered'],
   httpTimeoutMs: 100,
   discoveryCacheTtlMs: 1000,
+  standardProfile: undefined,
 };
 
 export const testMetadata: OidcMetadata = {
@@ -24,6 +27,8 @@ export const testMetadata: OidcMetadata = {
   id_token_signing_alg_values_supported: ['RS256'],
   token_endpoint_auth_methods_supported: ['client_secret_basic'],
   code_challenge_methods_supported: ['S256'],
+  response_types_supported: ['code'],
+  grant_types_supported: ['authorization_code'],
 };
 
 export const testEnvironment = {
@@ -33,4 +38,30 @@ export const testEnvironment = {
   OIDC_CLIENT_SECRET: testConfiguration.clientSecret,
   OIDC_DEFAULT_REDIRECT_URI: testConfiguration.defaultRedirectUri,
   OIDC_ALLOWED_REDIRECT_URIS: JSON.stringify(testConfiguration.allowedRedirectUris),
+};
+
+export const standardTestEnvironment = {
+  ...testEnvironment,
+  PLAYGROUND_OIDC_ENABLED: 'true',
+  PLAYGROUND_OIDC_CLIENT_ID: 'playground-oidc',
+  PLAYGROUND_OIDC_CLIENT_SECRET: 'fictional-standard-client-secret-separate',
+  PLAYGROUND_OIDC_REDIRECT_URI: 'http://localhost:3000/api/oauth/callback',
+  PLAYGROUND_APP_ORIGIN: 'http://localhost:3000',
+};
+
+export const profileTestConfiguration = {
+  ...testConfiguration,
+  standardProfile: readConfiguration(standardTestEnvironment).standardProfile,
+};
+
+export const standardTestMetadata: StandardOidcMetadata = {
+  issuer: testMetadata.issuer,
+  authorization_endpoint: testMetadata.authorization_endpoint,
+  token_endpoint: testMetadata.token_endpoint,
+  jwks_uri: testMetadata.jwks_uri,
+  id_token_signing_alg_values_supported: ['RS256'],
+  token_endpoint_auth_methods_supported: ['client_secret_basic'],
+  code_challenge_methods_supported: ['S256'],
+  response_types_supported: ['code'],
+  grant_types_supported: ['authorization_code'],
 };

@@ -45,6 +45,10 @@ try {
 
   const values = parseEnv(updated);
   const standardDefaults = {
+    PLAYGROUND_OIDC_ENABLED: 'false',
+    PLAYGROUND_APP_ORIGIN: new URL(
+      values.OIDC_DEFAULT_REDIRECT_URI ?? 'http://localhost:3000/callback',
+    ).origin,
     PLAYGROUND_OIDC_CLIENT_ID: 'playground-oidc',
     PLAYGROUND_OIDC_REDIRECT_URI: new URL(
       '/api/oauth/callback',

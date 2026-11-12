@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { configuration } from '../config/configuration';
+import { clientProfile } from '../config/client-profile';
 import { AuthorizationError } from '../common/errors/authorization-error';
-import { createAuthorizationTransaction } from '../oidc/authorization-transaction';
+import { createBoundAuthorizationTransaction } from '../oidc/authorization-transaction';
 import { OidcDiscoveryService } from '../oidc/oidc-discovery.service';
 import { ParService } from '../oidc/par.service';
 import type { AuthorizationRequest } from './authorization-request';
@@ -44,7 +45,10 @@ export class AuthorizationService {
     });
     const metadata = await this.discovery.discover();
     // Browser logins retain their transaction; the header-only FdV smoke test remains stateless.
-    const transaction = createAuthorizationTransaction();
+    const transaction = createBoundAuthorizationTransaction(
+      clientProfile(this.config, 'epa-par'),
+      redirectUri,
+    );
     const pushedRequest = await this.par.push(
       metadata,
       transaction,
@@ -56,9 +60,29 @@ export class AuthorizationService {
     authorizationUrl.searchParams.set('request_uri', pushedRequest.request_uri);
 
     if (browserBinding) {
-      this.browserLogins.save({ transaction, browserBinding, metadata, redirectUri });
+      this.browserLogins.save({ transaction, browserBinding, metadata });
     }
 
     return authorizationUrl.toString();
+  }
+
+  async initiateStandard() {
+    const profile = clientProfile(this.config, 'playground-standard');
+    const metadata = await this.discovery.discover('playground-standard');
+    const transaction = createBoundAuthorizationTransaction(profile);
+    const authorizationUrl = new URL(metadata.authorization_endpoint);
+    authorizationUrl.search = new URLSearchParams({
+      client_id: profile.clientId,
+      response_type: 'code',
+      redirect_uri: transaction.profile.redirectUri,
+      scope: profile.scope,
+      state: transaction.state,
+      nonce: transaction.nonce,
+      code_challenge: transaction.codeChallenge,
+      code_challenge_method: 'S256',
+    }).toString();
+
+    // Future mission storage owns this server-only context; no standard route/session is added here.
+    return { authorizationUrl: authorizationUrl.toString(), transaction, metadata };
   }
 }

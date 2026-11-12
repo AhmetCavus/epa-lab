@@ -1,6 +1,6 @@
 # Auth Protocol Playground
 
-> **Project state:** `001-oidc-pkce` is **APPROVED for local/private implementation** as of 2026-11-11. Readiness tasks 1.1–1.4, repository tasks 2.1–2.6 and Keycloak tasks 3.1–3.3 are verified. The private HAPI infrastructure and separate standard Keycloak client pass their scoped checks; auth-client standard profile/routes, SPA integration and HAPI resource authorization remain unimplemented. The existing [`apps/playground`](apps/playground/README.md) remains fixture-only, including its public deployment; public real authentication is not authorized. See the [owner approval record](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary), [runtime verification](openspec/changes/001-oidc-pkce/repository-verification.md#task-25-completion--authorized-health-prerequisite-private-publication-and-lifecycle-2026-11-12), [documentation verification](openspec/changes/001-oidc-pkce/documentation-verification.md) and [Keycloak verification](openspec/changes/001-oidc-pkce/keycloak-verification.md).
+> **Project state:** `001-oidc-pkce` is **APPROVED for local/private implementation** as of 2026-11-11. Readiness tasks 1.1–1.4, repository tasks 2.1–2.6, Keycloak tasks 3.1–3.3 and auth-client profile tasks 4.1–4.4 are verified. Private infrastructure and both internal OAuth profiles pass their scoped checks; standard mission browser routes/sessions, SPA integration and HAPI resource authorization remain unimplemented. The existing [`apps/playground`](apps/playground/README.md) remains fixture-only, including its public deployment; public real authentication is not authorized. See the [owner approval record](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary), [runtime verification](openspec/changes/001-oidc-pkce/repository-verification.md#task-25-completion--authorized-health-prerequisite-private-publication-and-lifecycle-2026-11-12), [documentation verification](openspec/changes/001-oidc-pkce/documentation-verification.md) and [Keycloak verification](openspec/changes/001-oidc-pkce/keycloak-verification.md).
 
 Run the UI from this repository root with `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`, then open <http://127.0.0.1:5173/missions>. The `playground:*` root scripts manage the hosted UI; existing backend commands retain their behavior. See the [UI package guide](apps/playground/README.md) for build, deployment and browser checks.
 
@@ -115,7 +115,7 @@ Filesystem paths use `services/auth-client` and `services/res-server`. Existing 
 
 ## Existing auth-client tooling
 
-The existing backend package lives in `services/auth-client`; its package identity remains `@epa-auth-lab/authorization`. Run these commands from the repository root with Node 24 and pinned pnpm 10.34.6:
+The existing backend package lives in `services/auth-client`; its package identity remains `@epa-auth-lab/authorization`. The [profile guide](services/auth-client/README.md) documents validated opt-in settings, separate discovery/request handling and transaction-bound token validation; [verification evidence](openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md) records tasks 4.1–4.4. Run these commands from the repository root with Node 24 and pinned pnpm 10.34.6:
 
 ```bash
 corepack pnpm install --frozen-lockfile
@@ -156,7 +156,7 @@ Only exact GET/HEAD liveness/readiness probes are anonymous and return status on
 
 ### Private standard Keycloak client
 
-The existing `epa-demo` realm now also contains confidential client `playground-oidc`, with an exact `/api/oauth/callback`, required PKCE S256 and direct Authorization Code flow without PAR. Standard Access Tokens carry audience `playground-fhir`; the optional `demo.fhir.read` scope permits a separate valid narrower grant. The existing ePA client and required-PAR policy are preserved. See the [Keycloak guide](infrastructure/keycloak/README.md) for fresh setup, idempotent migration, rollback and isolated verification. Credentials remain server-side; the BFF profile and mission runtime are later work.
+The existing `epa-demo` realm now also contains confidential client `playground-oidc`, with an exact `/api/oauth/callback`, required PKCE S256 and direct Authorization Code flow without PAR. Standard Access Tokens carry audience `playground-fhir`; the optional `demo.fhir.read` scope permits a separate valid narrower grant. The existing ePA client and required-PAR policy are preserved. See the [Keycloak guide](infrastructure/keycloak/README.md) for fresh setup, idempotent migration, rollback and isolated verification. Credentials remain server-side. The [auth-client profile internals](services/auth-client/README.md) are verified; mission browser routes/sessions and runtime UI remain later work.
 
 ## Status and authority
 

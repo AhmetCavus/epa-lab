@@ -6,7 +6,11 @@ import { z } from 'zod';
 import { configuration } from '../config/configuration';
 import { AuthorizationError } from '../common/errors/authorization-error';
 import { OidcClientService, OidcUpstreamError } from './oidc-client.service';
-import type { OidcMetadata } from './oidc-discovery.service';
+import { validateProfileMetadata } from './oidc-discovery.service';
+import type { ProfileOidcMetadata } from './oidc-discovery.service';
+import type { BoundAuthorizationTransaction } from './authorization-transaction';
+import { transactionProfile } from './authorization-transaction';
+import type { ClientProfileId } from '../config/client-profile';
 
 const headerSchema = z.object({ alg: z.literal('RS256'), kid: z.string().min(1).max(200) });
 const keySchema = z.object({
@@ -58,7 +62,8 @@ function equalSecret(actual: string, expected: string): boolean {
 @Injectable()
 export class IdTokenService {
   private cachedKeys:
-    { uri: string; keys: z.infer<typeof keySchema>[]; expiresAt: number } | undefined;
+    | { issuer: string; uri: string; keys: z.infer<typeof keySchema>[]; expiresAt: number }
+    | undefined;
 
   constructor(
     @Inject(configuration.KEY) private readonly config: ConfigType<typeof configuration>,
@@ -66,11 +71,18 @@ export class IdTokenService {
   ) {}
 
   async validate(
-    metadata: OidcMetadata,
+    metadata: ProfileOidcMetadata,
     token: string,
-    expectedNonce: string,
+    transaction: BoundAuthorizationTransaction,
     accessToken: string,
+    expectedProfile: ClientProfileId,
   ): Promise<VerifiedIdToken> {
+    const profile = transactionProfile(this.config, transaction, expectedProfile);
+    const trustedMetadata = validateProfileMetadata(
+      metadata,
+      profile,
+      this.config.allowPrivateNetworkHttp,
+    );
     let header: z.infer<typeof headerSchema>;
 
     try {
@@ -79,7 +91,7 @@ export class IdTokenService {
       return rejectIdToken();
     }
 
-    const key = await this.signingKey(metadata.jwks_uri, header.kid);
+    const key = await this.signingKey(profile.issuer, trustedMetadata.jwks_uri, header.kid);
     let claims: z.infer<typeof claimsSchema>;
 
     try {
@@ -91,8 +103,8 @@ export class IdTokenService {
 
       const payload: unknown = verify(token, publicKey, {
         algorithms: ['RS256'],
-        issuer: this.config.issuer,
-        audience: this.config.clientId,
+        issuer: profile.issuer,
+        audience: profile.clientId,
         clockTolerance: 30,
       });
       claims = claimsSchema.parse(payload);
@@ -104,12 +116,12 @@ export class IdTokenService {
     const requiresAuthorizedParty = Array.isArray(claims.aud) && claims.aud.length > 1;
 
     if (
-      !equalSecret(claims.nonce, expectedNonce) ||
+      !equalSecret(claims.nonce, transaction.nonce) ||
       claims.iat > now + 30 ||
       claims.exp <= now ||
       claims.exp <= claims.iat ||
-      (requiresAuthorizedParty && claims.azp !== this.config.clientId) ||
-      (claims.azp !== undefined && claims.azp !== this.config.clientId)
+      (requiresAuthorizedParty && claims.azp !== profile.clientId) ||
+      (claims.azp !== undefined && claims.azp !== profile.clientId)
     ) {
       return rejectIdToken();
     }
@@ -137,8 +149,11 @@ export class IdTokenService {
     };
   }
 
-  private async signingKey(uri: string, kid: string) {
-    const cacheIsValid = this.cachedKeys?.uri === uri && this.cachedKeys.expiresAt > Date.now();
+  private async signingKey(issuer: string, uri: string, kid: string) {
+    const cacheIsValid =
+      this.cachedKeys?.issuer === issuer &&
+      this.cachedKeys.uri === uri &&
+      this.cachedKeys.expiresAt > Date.now();
     const cachedKey = cacheIsValid
       ? this.cachedKeys?.keys.find((key) => key.kid === kid)
       : undefined;
@@ -155,6 +170,7 @@ export class IdTokenService {
     }
 
     this.cachedKeys = {
+      issuer,
       uri,
       keys: parsed.data.keys,
       expiresAt: Date.now() + this.config.discoveryCacheTtlMs,

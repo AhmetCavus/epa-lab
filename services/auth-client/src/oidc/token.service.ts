@@ -2,8 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { z } from 'zod';
 import { configuration } from '../config/configuration';
-import type { AuthorizationTransaction } from './authorization-transaction';
-import type { OidcMetadata } from './oidc-discovery.service';
+import type { BoundAuthorizationTransaction } from './authorization-transaction';
+import { transactionProfile } from './authorization-transaction';
+import type { ClientProfileId } from '../config/client-profile';
+import { validateProfileMetadata } from './oidc-discovery.service';
+import type { ProfileOidcMetadata } from './oidc-discovery.service';
 import {
   createClientAuthorization,
   OidcClientService,
@@ -35,23 +38,29 @@ export class TokenService {
   ) {}
 
   async exchange(
-    metadata: OidcMetadata,
-    transaction: AuthorizationTransaction,
+    metadata: ProfileOidcMetadata,
+    transaction: BoundAuthorizationTransaction,
     code: string,
-    redirectUri: string,
+    expectedProfile: ClientProfileId,
   ): Promise<VerifiedLogin> {
+    const profile = transactionProfile(this.config, transaction, expectedProfile);
+    const trustedMetadata = validateProfileMetadata(
+      metadata,
+      profile,
+      this.config.allowPrivateNetworkHttp,
+    );
     const parsed = tokensSchema.safeParse(
-      await this.client.requestJson(metadata.token_endpoint, 200, {
+      await this.client.requestJson(trustedMetadata.token_endpoint, 200, {
         method: 'POST',
         headers: {
-          authorization: createClientAuthorization(this.config.clientId, this.config.clientSecret),
+          authorization: createClientAuthorization(profile.clientId, profile.clientSecret),
           'content-type': 'application/x-www-form-urlencoded',
           accept: 'application/json',
         },
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: redirectUri,
+          redirect_uri: transaction.profile.redirectUri,
           code_verifier: transaction.codeVerifier,
         }).toString(),
       }),
@@ -63,10 +72,11 @@ export class TokenService {
 
     const tokens = parsed.data;
     const idToken = await this.idTokens.validate(
-      metadata,
+      trustedMetadata,
       tokens.id_token,
-      transaction.nonce,
+      transaction,
       tokens.access_token,
+      expectedProfile,
     );
 
     return {
