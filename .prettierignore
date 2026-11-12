@@ -3,3 +3,15 @@ node_modules/
 dist/
 coverage/
 .env
+services/res-server/
+apps/playground/
+.local-backups/
+.agents/
+.claude/
+.github/agents/
+.github/prompts/
+.github/skills/
+.github/workflows/copilot-setup-steps.yml
+**/.cache/
+**/test-results/
+**/playwright-report/

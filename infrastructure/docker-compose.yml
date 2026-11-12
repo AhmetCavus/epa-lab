@@ -6,7 +6,7 @@ services:
     image: epa-auth-lab/authorization:local
     build:
       context: ..
-      dockerfile: services/epa-authorization/Dockerfile
+      dockerfile: services/auth-client/Dockerfile
     init: true
     # Host networking keeps the browser and backend on the same reachable issuer.
     # HOST and PORT control the host listener; docker ps shows no published ports.

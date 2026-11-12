@@ -1,13 +1,14 @@
 # ADR-0002 — Mission-Agnostic Shell, Explicit Mission Capabilities
 
-- **Status:** PROPOSED (principle agreed in discussion; contract still in review)
+- **Status:** Accepted
 - **Date:** 2026-10-16
+- **Accepted:** 2026-11-11 by the project owner for change `001-oidc-pkce` (local/private implementation)
 
 ## Context
 
 The user wants a catalog supporting OAuth, ePA and future protocol families without having to rebuild the learning UI. A fully dynamic plugin/runtime platform would add complexity before meaningful user value is verified.
 
-## Proposed decision
+## Decision
 
 Separate **Mission Control Shell** from **Mission Definitions** and **Mission Execution Capabilities**.
 
@@ -53,15 +54,21 @@ Future missions may add new protocol-specific server capabilities. Shell reuse d
 
 ## Approval checklist
 
-- [ ] Fixture-driven UX test demonstrates shell reuse.
-- [ ] Supported actions/events do not leak protocol secrets.
-- [ ] No speculative plugin framework or unnecessary service layers.
+- [x] Fixture-driven UX test demonstrates shell reuse.
+- [x] Supported actions/events do not leak protocol secrets.
+- [x] No speculative plugin framework or unnecessary service layers.
 
 ## Readiness review — 2026-11-11
 
 - **Reviewer:** Codex, documentation and repository review for change `001-oidc-pkce`, task 1.3.
 - **Review decision:** consistent with the existing capability architecture and proposed neutral runtime projection; recommended for owner acceptance.
-- **Owner decision:** PENDING. Status remains PROPOSED; the acceptance checklist above is not signed off by this advisory review.
+- **Owner decision at advisory review:** Pending at that stage; the owner's subsequent formal acceptance is recorded below.
 - **Evidence:** [consolidated readiness review and approval summary](../../../openspec/changes/001-oidc-pkce/readiness-review.md), including safe event provenance, fixture/runtime separation, UX and disclosure checks.
 
-The fixture-only implementation demonstrates the existing boundary without accepting future execution capabilities. No new generic framework, backend implementation, ADR acceptance or deployment permission follows from this review.
+The fixture-only implementation demonstrates the existing boundary. The advisory review alone did not accept future execution capabilities or authorize implementation; those decisions are recorded in the subsequent owner acceptance below. No public authentication deployment is authorized.
+
+## Owner acceptance — 2026-11-11
+
+The project owner explicitly accepted this ADR, the reconciled UX/visual baseline, security architecture and revised specifications, and approved `001-oidc-pkce` for local/private implementation of tasks 2–9. The approval checklist records design/readiness acceptance, not verification of future runtime behavior. The [consolidated owner approval record](../../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) is the decision source.
+
+This step records the decision only and starts no implementation. Real authentication must not be deployed publicly; the existing public Playground remains fixture-only.

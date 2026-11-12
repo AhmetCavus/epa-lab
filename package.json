@@ -23,7 +23,7 @@
     "typecheck": "pnpm --filter @epa-auth-lab/authorization typecheck",
     "test": "pnpm --filter @epa-auth-lab/authorization test",
     "test:integration": "pnpm --filter @epa-auth-lab/authorization test:integration",
-    "lint": "eslint services/epa-authorization --max-warnings 0 && prettier --check .",
+    "lint": "eslint services/auth-client --max-warnings 0 && prettier --check .",
     "format": "prettier --write ."
   },
   "devDependencies": {

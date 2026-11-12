@@ -1,12 +1,16 @@
 # Agent Guidelines — Auth Protocol Playground
 
-**Current authorization:** the owner has authorized **UI Slice 001 only** (Mission Catalog + mission-agnostic Workspace using clearly labeled fixture events). This is a narrow exception to the earlier design-only gate. The existing OIDC/PKCE OpenSpec change remains `DRAFT`: **do not implement real authentication, NestJS, Keycloak, protected APIs, or infrastructure** until those specs are approved.
+**Current authorization (2026-11-11):** the project owner approved OpenSpec change `001-oidc-pkce` for **local/private implementation of tasks 2–9**, accepted ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications, and completed readiness task 1.4. See the [consolidated owner approval record](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). The approval-recording step must not start implementation; tasks 2–9 remain unstarted. Subsequent implementation must follow the accepted scope and dependencies.
 
-The owner additionally authorized `capability-first-arch-refactoring` through an explicit apply request. This permits structural frontend changes that preserve the existing fixture-only behavior and visuals; it does not authorize Slice 002 or backend integration.
+**Public deployment boundary:** do not deploy real authentication publicly. Keep the existing public Playground fixture-only. Local/private implementation approval does not authorize public auth-client, Keycloak, HAPI or API routing.
 
-The owner authorized `localization-foundation` and adoption of ADR-0004 through an explicit apply request on 2026-10-19. This permits German-default/English frontend localization only; all backend/Slice 002 gates remain in force.
+The earlier **UI Slice 001** authorization covers the implemented fixture Catalog and mission-agnostic Workspace; its design and behavior remain the preservation baseline.
 
-The owner authorized deployment of the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and registration as a Yoster hosted project on 2026-10-19. This permits its static Nginx container, dedicated Compose stack and Traefik routing. It does not authorize backend/OAuth integration or exposure of the existing authorization service or Keycloak.
+The owner additionally authorized `capability-first-arch-refactoring` through an explicit apply request. That earlier authorization permits structural frontend changes preserving fixture behavior and visuals; local/private backend integration is authorized separately by `001-oidc-pkce` above.
+
+The owner authorized `localization-foundation` and adoption of ADR-0004 through an explicit apply request on 2026-10-19. That authorization covers German-default/English frontend localization; it does not extend the separate local/private integration or public-deployment scope recorded above.
+
+The owner authorized deployment of the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and registration as a Yoster hosted project on 2026-10-19. This permits its static Nginx container, dedicated Compose stack and Traefik routing. That static-hosting grant does not authorize public backend/OAuth integration or exposure of auth-client, Keycloak or HAPI.
 
 ## Project conventions
 
@@ -49,7 +53,7 @@ Follow Accepted [ADR-0004](docs/architecture/decisions/ADR-0004-localization-and
 1. Read `README.md`, `docs/product/vision-and-scope.md`, both UX documents, and architecture ADRs before proposing modifications.
 2. When details are unknown, write an **Open Decision** in the relevant file; do not silently invent the answer.
 3. Update architecture, UX, and OpenSpec consistently when a decision changes.
-4. Implement the currently authorized **UI Slice 001** from the design docs only. Any additional OpenSpec change requires explicit `APPROVED` status and acceptance conditions; UI approval is not authorization for OAuth integration.
+4. Implement only explicitly `APPROVED` OpenSpec changes with accepted conditions. `001-oidc-pkce` is approved for local/private tasks 2–9; preserve the existing UI baseline and public fixture-only deployment. Other changes still require their own authorization.
 5. Prefer a complete small vertical slice over creating infrastructure for many future missions.
 6. Never edit existing `epa-auth-lab` code or configuration based on assumptions; first verify the chosen repository boundary.
 
@@ -61,3 +65,5 @@ Follow Accepted [ADR-0004](docs/architecture/decisions/ADR-0004-localization-and
 - SPA/BFF/Keycloak boundaries, resource authorization and event provenance agreed.
 - Successful and negative Given/When/Then acceptance cases approved.
 - Owner explicitly authorizes implementation.
+
+For `001-oidc-pkce`, readiness review and the owner's explicit local/private approval are recorded in [readiness-review.md](openspec/changes/001-oidc-pkce/readiness-review.md). Runtime implementation and verification remain pending; authorization is not evidence of completed functionality.

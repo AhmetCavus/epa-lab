@@ -1,6 +1,6 @@
 # Mission Control Workspace — UX Design
 
-**Status:** DRAFT FOR REVIEW · **Screen:** `/missions/:missionId/workspace`
+**Status:** APPROVED BASELINE — LOCAL/PRIVATE `001-oidc-pkce` · **Screen:** `/missions/:missionId/workspace`
 
 ## Goal
 
@@ -69,7 +69,7 @@ Do not put OAuth-specific UI copy, `code_verifier` names, or authentication stat
 
 ## Proposed standard runtime behavior
 
-**Readiness review, 2026-11-11:** this section describes the proposed local/private integration in change `001-oidc-pkce`. It does not change current fixture availability or authorize backend implementation. It uses the existing panels and contextual-action area; there is no visual redesign. The [system context](../architecture/system-context.md) and [integration design](../../openspec/changes/001-oidc-pkce/design.md) define the component, API and security contracts.
+**Owner acceptance, 2026-11-11:** the owner accepted this reconciled UX/visual baseline and approved the local/private integration in `001-oidc-pkce`. This step records the decision only; it does not change current fixture availability or start implementation. The accepted design uses the existing panels and contextual-action area; there is no visual redesign. The [system context](../architecture/system-context.md) and [integration design](../../openspec/changes/001-oidc-pkce/design.md) define the component, API and security contracts.
 
 ### Navigation and restoration
 
@@ -114,7 +114,7 @@ Preserve mission/protocol-flow ownership and public imports under Accepted ADR-0
 
 The [revised acceptance specs](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) cover restoration, owned evidence, lifecycle/recording failures and the unchanged visual contract. Verify keyboard/focus, actor/event/checkpoint selection, reduced motion, diagram text alternative, Fit/scrolling, German/English at narrow widths and actual 100%/200% browser zoom when runtime behavior is implemented. Language changes translate presentation only and retain navigation, run identity, event selection and map scale.
 
-The [consolidated readiness review](../../openspec/changes/001-oidc-pkce/readiness-review.md) records the documentation review and pending owner approval. It does not replace future browser/security acceptance execution. The public static site remains fixture-only; no public authentication deployment is authorized.
+The [consolidated readiness and owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) records the accepted baseline and local/private authorization. It does not replace future browser/security acceptance execution. The public static site remains fixture-only; no public authentication deployment is authorized.
 
 ## Event inspector: required content order
 

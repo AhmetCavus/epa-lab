@@ -1,10 +1,10 @@
 # Change 001 — First Runnable OAuth/OIDC + PKCE Mission
 
-**Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
+**Status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
 **Planning revision:** 2026-11-11
 
-The owner requested reconciliation of this change with the existing repository. This is planning authorization only. The completed fixture-only UI Slice 001 remains authorized; this revision does not authorize OAuth/backend changes, submodule cleanup, infrastructure changes, or public authentication hosting.
+The project owner approved this complete change on 2026-11-11 and authorized tasks 2–9 for local/private implementation. ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications are accepted. See the [owner approval record](readiness-review.md#consolidated-owner-approval-summary). This step records approval only; implementation has not started. Real authentication must not be deployed publicly, and the existing public Playground remains fixture-only.
 
 ## Why
 
@@ -38,6 +38,6 @@ Future implementation affects the existing SPA, auth-client, Keycloak client con
 
 ## Review and Scope Boundaries
 
-Review the updated design, scenarios, route/session/event contracts, Resource Server policy, and ADR-0001/ADR-0002 alignment before marking the change APPROVED and explicitly authorizing implementation. Preserve Accepted ADR-0003 and ADR-0004. Public OAuth/backend deployment requires separate authorization; the existing static UI hosting authorization does not cover it.
+The owner accepted the reconciled design, scenarios, route/session/event contracts, Resource Server policy and ADR-0001/ADR-0002 on 2026-11-11. The change is APPROVED for local/private tasks 2–9; authorization does not constitute implementation or runtime verification. Preserve Accepted ADR-0003 and ADR-0004. Public OAuth/backend deployment requires separate authorization; the existing static UI hosting authorization does not cover it.
 
 Real ePA/TI integration, SMART on FHIR, patient data, certification claims, provider-wide SSO logout, refresh-token workflows, durable run storage, distributed sessions, and a standard-versus-PAR comparison UI remain outside this first integration.

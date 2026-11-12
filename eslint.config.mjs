@@ -18,7 +18,7 @@ export default tseslint.config(
     files: ['services/**/*.ts'],
     languageOptions: {
       parserOptions: {
-        project: './services/epa-authorization/tsconfig.json',
+        project: './services/auth-client/tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },

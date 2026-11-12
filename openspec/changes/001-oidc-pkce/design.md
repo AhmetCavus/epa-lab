@@ -1,10 +1,10 @@
 # Change 001 — Integration Design
 
-**Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
+**Status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
 **Planning revision:** 2026-11-11
 
-This document proposes future integration. Permission to revise planning artifacts does not approve the design or authorize implementation. See [proposal.md](proposal.md) for motivation and scope.
+The project owner accepted this design, the reconciled UX/visual baseline and revised specifications on 2026-11-11, authorizing local/private implementation of tasks 2–9. See the [owner approval record](readiness-review.md#consolidated-owner-approval-summary) and [proposal.md](proposal.md) for scope. Recording this decision starts no implementation; public authentication deployment remains excluded.
 
 ## Context
 
@@ -175,7 +175,7 @@ Add matching German and English semantic resources for runtime actions, outcomes
 
 ## Required architecture-document alignment (readiness 1.2)
 
-This change's existing component/endpoint decisions remain the proposed integration baseline. The earlier artifact-only follow-up recorded the following required edits. On 2026-11-11, the scoped readiness application reconciled `docs/architecture/system-context.md` and both UX documents against this checklist; task 1.2 evidence is recorded in [readiness-review.md](readiness-review.md). This document alignment does not imply runtime implementation or owner acceptance.
+This change's existing component/endpoint decisions are the owner-approved local/private integration baseline. The earlier artifact-only follow-up recorded the following required edits. On 2026-11-11, the scoped readiness application reconciled `docs/architecture/system-context.md` and both UX documents against this checklist; task 1.2 evidence is recorded in [readiness-review.md](readiness-review.md). Document alignment alone did not imply owner acceptance; the later explicit owner decision is recorded separately below.
 
 | Current documentation                                             | Required alignment                                                                                                                                                                                                                                          |
 | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -184,13 +184,13 @@ This change's existing component/endpoint decisions remain the proposed integrat
 | `GET /api/demo-resource` and BFF-to-API `GET /resource`           | Use `GET /api/oauth/resource` and the server-held Access Token call to `GET /fhir/Basic/playground-demo`; HAPI independently enforces token validity and `demo.fhir.read`                                                                                   |
 | Missing session/logout/run retrieval contracts                    | Add `GET /api/oauth/session`, `POST /api/oauth/logout`, and `GET /api/oauth/runs/:runId/events` with their existing minimal DTO, Origin/CSRF, and independent viewing-ownership boundaries                                                                  |
 | Incomplete logout lifecycle                                       | State context-bound pending/in-flight login cancellation, the final post-async eligibility check, rejection of stale session commits, and cleanup that never depends on event persistence or trace capacity                                                 |
-| Unresolved standalone repository or new Resource Server placement | Replace those obsolete alternatives with the proposed reuse of this repository and existing HAPI submodule; keep ADR review and implementation authorization explicitly pending                                                                             |
+| Unresolved standalone repository or new Resource Server placement | Replace those obsolete alternatives with reuse of this repository and existing HAPI submodule; record ADR acceptance and the explicit local/private implementation authorization                                                                            |
 | Blanket “PAR for later change” framing                            | Distinguish the new direct standard PKCE client from the preserved required-PAR ePA client, header smoke endpoint, and legacy `/login`, `/callback`, `/session` demonstration; defer only the comparison UI                                                 |
 | Generic trace claims and hosting description                      | Carry over BFF-observed versus explicitly HAPI-reported evidence, unobservable Keycloak internals, local/private integration, and unchanged static-only public hosting authorization                                                                        |
 
-Keep the AS/IdP conceptual sequence and actual browser/back-channel traffic distinct. Preserve the current Mission Control design and generic renderer boundaries. Do not mark HAPI security as already implemented, accept ADR-0001/ADR-0002, or authorize public authentication through documentation wording.
+Keep the AS/IdP conceptual sequence and actual browser/back-channel traffic distinct. Preserve the current Mission Control design and generic renderer boundaries. Do not mark HAPI security as already implemented. ADR-0001/ADR-0002 acceptance and local/private implementation authorization come from the explicit owner decision, not document alignment alone. Public authentication remains unauthorized.
 
-Readiness review checks the cancelled-before-exchange, logout-during-in-flight-callback, and event-storage-exhaustion scenarios in the capability deltas against this lifecycle. The consolidated review distinguishes completed document/advisory review from pending formal owner acceptance of UX/ADRs and implementation authorization under task 1.4.
+Readiness review checks the cancelled-before-exchange, logout-during-in-flight-callback, and event-storage-exhaustion scenarios in the capability deltas against this lifecycle. The consolidated record distinguishes completed document/advisory review, the owner's explicit acceptance of UX/ADRs and local/private implementation authorization under task 1.4, and still-pending runtime verification.
 
 ## Risks / Trade-offs
 
@@ -204,7 +204,7 @@ Readiness review checks the cancelled-before-exchange, logout-during-in-flight-c
 
 ## Migration Plan
 
-1. Review this draft, both capability scenarios, and the small task sequence. Align architecture/UX documents and ADR-0001/ADR-0002 for review; retain accepted ADR-0003/ADR-0004. Obtain explicit implementation authorization separately.
+1. Readiness review and owner approval are recorded: architecture/UX documents are reconciled, both capability specifications and ADR-0001/ADR-0002 are accepted, and local/private implementation is authorized. Retain accepted ADR-0003/ADR-0004. This approval-recording step starts no task in groups 2–9.
 2. After approval, repair source/build/lockfile/Compose references and canonicalize the duplicate HAPI gitlink after checking both worktrees. Keep the existing package/service/protocol identifiers unless a verified repair needs a rename. Land focused checks and documentation with each repair.
 3. Add the separate Keycloak client/audience/permission configuration and migrate an existing local realm without deleting its volume. Verify existing ePA PAR tests before and after.
 4. Extend auth-client incrementally: profile-aware authorization and validation; standard browser routes/session/logout; resource access; bounded safe runs/events. Attach relevant verification at each step.
@@ -218,7 +218,7 @@ Rollback disables the runtime binding and restores fixture-only operation; rever
 
 **Open Decision — later public hosting:** Public OAuth/backend ingress, TLS/cookie/proxy settings, and operational hardening require a separate deployment review and authorization. They do not block the explicitly local/private integration plan and are not implicit in the existing static UI hosting approval.
 
-The route namespace, standard client ID, resource audience/scope, synthetic resource, lifetimes, and event limits above are proposed concrete choices for this DRAFT. Permission to write this document records those choices for review; it does not mark the change APPROVED.
+The route namespace, standard client ID, resource audience/scope, synthetic resource, lifetimes and event limits above are accepted choices for this APPROVED local/private change. The owner's explicit 2026-11-11 decision, not earlier planning-file confirmations, authorizes implementation. All runtime verification remains pending.
 
 ## Technical References
 

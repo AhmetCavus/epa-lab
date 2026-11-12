@@ -1,19 +1,19 @@
 # Architecture — Context & Trust Boundaries
 
-**Status:** DRAFT FOR ARCHITECTURE REVIEW · **Version:** 0.2
+**Status:** APPROVED FOR LOCAL/PRIVATE IMPLEMENTATION · **Version:** 0.2
 
 **Readiness reconciliation:** 2026-11-11, change `001-oidc-pkce`, tasks 1.1–1.3 only
 
-This document aligns with the [integration design](../../openspec/changes/001-oidc-pkce/design.md) and its two capability specifications. The proposed OAuth integration remains **DRAFT — NOT IMPLEMENTATION-AUTHORIZED**. The [readiness review and consolidated approval summary](../../openspec/changes/001-oidc-pkce/readiness-review.md) records the review evidence and pending owner decisions.
+This document aligns with the [integration design](../../openspec/changes/001-oidc-pkce/design.md) and its two capability specifications. The owner accepted this architecture, ADR-0001/ADR-0002, the reconciled UX/visual baseline and revised specs on 2026-11-11, approving `001-oidc-pkce` tasks 2–9 for local/private implementation. The [readiness review and owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) records that explicit decision. This step starts no implementation; public real authentication remains unauthorized.
 
 ## Components and current implementation boundary
 
-| Component                 | Current repository state                                                                                                   | Proposed local integration responsibility                                                                                                     |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                       | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection after approval |
-| `services/auth-client`    | Existing NestJS confidential OAuth/OIDC client; ePA PAR header operation, browser login/callback and session demonstration | Reuse as the BFF; add the isolated standard mission routes, local session/logout, fixed resource access and owned event API                   |
-| `infrastructure/keycloak` | Existing Keycloak realm and ePA client with required PAR and S256                                                          | Same deployment fulfills Authorization Server and IdP roles; add a separate standard client without changing ePA policy                       |
-| `services/res-server`     | Canonical HAPI FHIR Git submodule; inbound security is not implemented/verified                                            | Independently validate bearer credentials and permission for one synthetic FHIR read; deny undeclared data operations                         |
+| Component                 | Current repository state                                                                                                   | Proposed local integration responsibility                                                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                       | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection under the approved change |
+| `services/auth-client`    | Existing NestJS confidential OAuth/OIDC client; ePA PAR header operation, browser login/callback and session demonstration | Reuse as the BFF; add the isolated standard mission routes, local session/logout, fixed resource access and owned event API                              |
+| `infrastructure/keycloak` | Existing Keycloak realm and ePA client with required PAR and S256                                                          | Same deployment fulfills Authorization Server and IdP roles; add a separate standard client without changing ePA policy                                  |
+| `services/res-server`     | Canonical HAPI FHIR Git submodule; inbound security is not implemented/verified                                            | Independently validate bearer credentials and permission for one synthetic FHIR read; deny undeclared data operations                                    |
 
 No new BFF, Resource Server, Keycloak deployment or realm is proposed. Existing dependency declarations and disabled placeholder HAPI security settings do not establish a protected API. Obsolete build/Compose paths and the duplicate HAPI gitlink are documented implementation work in groups 2–9, not repaired or accepted by this review.
 
@@ -158,11 +158,11 @@ UI Slice 001 is hosted in an isolated `apps/playground` package alongside the ex
 
 On 2026-10-19, the owner authorized static UI deployment at `auth-playground.yappai.de` and registration in Yoster. The dedicated `infrastructure/docker-compose.playground.yml` stack builds only `apps/playground`, serves its compiled assets with Nginx and joins the existing `dev-proxy` network. Traefik's watched host configuration `../infra/traefik/dynamic/epa-lab.yml` routes the hostname to `http://epa-lab-playground:80`; public HTTPS requires the hostname on the existing Cloudflare tunnel. The root `yappai.host.json` manages and monitors only this static stack. No backend, authentication provider, session or database is part of this deployment.
 
-Future same-origin API routing uses existing Vite/Nginx configuration for **local/private** testing after approval. No broad credentialed CORS policy or new gateway is needed. Public API/auth-client/Keycloak/HAPI exposure is outside this change's implementation scope and requires separate authorization. Static-hosting permission does not grant authentication deployment permission.
+Future same-origin API routing uses existing Vite/Nginx configuration for **local/private** testing under the approved change. No broad credentialed CORS policy or new gateway is needed. Public API/auth-client/Keycloak/HAPI exposure is outside this change's implementation scope and requires separate authorization. Static-hosting permission does not grant authentication deployment permission.
 
-## Pending acceptance
+## Accepted scope and pending runtime verification
 
-ADR-0001 and ADR-0002 remain PROPOSED. This reconciliation resolves obsolete component/route alternatives in the documentation; it does not accept those ADRs or complete task 1.4. The owner must review the consolidated UX/security/ADR summary and explicitly approve the complete change and local/private implementation before groups 2–9 start. Prior verification reports remain historical evidence.
+The owner accepted ADR-0001 and ADR-0002 and the reconciled UX/security/spec baseline on 2026-11-11, explicitly approving the complete change and local/private tasks 2–9. Readiness task 1.4 is complete. Tasks 2–9 remain unstarted in this approval-recording step; prior verification reports remain historical fixture evidence. Runtime acceptance is pending and public authentication deployment remains excluded.
 
 ## Reference specifications
 

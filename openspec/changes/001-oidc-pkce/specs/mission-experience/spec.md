@@ -1,12 +1,12 @@
 # Capability Spec — Mission Experience
 
-**Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
+**Status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
 ## Purpose
 
 Preserve the implemented fixture-based Mission Control experience and define how a verified real OAuth mission returns, restores browser-owned runs, and presents safe observations without changing the generic visual design.
 
-The existing fixture-only UI remains authorized. All runtime scenarios below remain DRAFT until reviewed and explicitly authorized for implementation.
+The project owner accepted these revised requirements/scenarios and the reconciled UX/visual baseline on 2026-11-11, authorizing local/private implementation of tasks 2–9. See the [owner approval record](../../readiness-review.md#consolidated-owner-approval-summary). Approval does not establish runtime verification; no implementation starts in this recording step. The existing public Playground remains fixture-only, with no public authentication deployment authorized.
 
 ## ADDED Requirements
 

@@ -1,20 +1,20 @@
 # Change 001 — Readiness Review and Consolidated Approval Summary
 
-**Change status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
+**Change status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
 **Review date:** 2026-11-11
 
 **Reviewer:** Codex, repository and documentation review
 
-**Owner acceptance:** PENDING
+**Owner acceptance:** APPROVED by the project owner on 2026-11-11; see the consolidated decision below
 
 ## Review scope and decision
 
 This review covers tasks 1.1–1.3 only. It checks planning consistency, compatibility with the inspected repository, UX/security boundaries, and whether the acceptance scenarios have observable assertions. It does not execute runtime acceptance, accept ADRs on the owner's behalf, or authorize implementation or deployment.
 
-Task 1.1 review decision: the proposal, design and both capability specs are consistent with the existing visual contract and the separate standard/ePA boundary. No further product or architecture choice is needed to perform the documented local integration. Owner acceptance remains a separate decision under task 1.4.
+Task 1.1 review decision: the proposal, design and both capability specs are consistent with the existing visual contract and the separate standard/ePA boundary. No further product or architecture choice is needed to perform the documented local integration. The owner's subsequent explicit acceptance is recorded under task 1.4 below.
 
-Tasks 1.1–1.3 are complete as documentation/advisory review. The actual architecture and both UX documents are reconciled; ADR/security review is recorded below. The reviewed plan is ready for the owner's consolidated decision, while implementation remains blocked at task 1.4 and the change remains DRAFT.
+Tasks 1.1–1.3 are complete as documentation/advisory review. The actual architecture and both UX documents are reconciled; ADR/security review is recorded below. The owner's subsequent consolidated approval completes task 1.4 and marks the change APPROVED for local/private implementation. This step records that decision without starting tasks 2–9.
 
 ## Owner-directed planning decisions
 
@@ -83,14 +83,14 @@ Document checks confirmed all eight route/return/resource paths in both system c
 
 ## Task 1.3 — ADR and security review
 
-**Reviewer:** Codex. **Date:** 2026-11-11. **Advisory decision:** no unresolved technical planning conflict; recommend the reconciled UX/security design and ADR-0001/ADR-0002 for owner acceptance. Formal owner acceptance remains pending.
+**Reviewer:** Codex. **Date:** 2026-11-11. **Advisory decision:** no unresolved technical planning conflict; recommend the reconciled UX/security design and ADR-0001/ADR-0002 for owner acceptance. At the advisory-review stage, formal owner acceptance was pending; the subsequent explicit owner decision is recorded below.
 
-| Decision document                                                                               | Review result                                                                                                                                                                                                                         | Acceptance state                                                                |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| [ADR-0001](../../../docs/architecture/decisions/ADR-0001-spa-bff-keycloak.md)                   | Reuses the actual SPA, NestJS confidential client, Keycloak and independent HAPI boundary. Exact routes, isolated standard/ePA profiles, server-held credentials, Origin/CSRF logout, cancellation and cleanup align with the design. | PROPOSED; owner decision PENDING; original approval checklist remains unchecked |
-| [ADR-0002](../../../docs/architecture/decisions/ADR-0002-mission-boundaries.md)                 | Keeps static registration and mission-owned execution/projection. Clarifies the concrete typed event contract and fixture/runtime distinction without adding a plugin framework or layers.                                            | PROPOSED; owner decision PENDING; original approval checklist remains unchecked |
-| [ADR-0003](../../../docs/architecture/decisions/ADR-0003-capability-first-code-organization.md) | Existing capability boundaries/public entries remain applicable. Current fixture event types are not falsely claimed to support runtime observations already.                                                                         | Accepted status and file contents unchanged                                     |
-| [ADR-0004](../../../docs/architecture/decisions/ADR-0004-localization-and-i18n.md)              | German default/English, neutral contracts and presentation-only translation remain applicable. Locale change must not change execution state or literal evidence.                                                                     | Accepted status and file contents unchanged                                     |
+| Decision document                                                                               | Review result                                                                                                                                                                                                                         | Acceptance state                                                                   |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [ADR-0001](../../../docs/architecture/decisions/ADR-0001-spa-bff-keycloak.md)                   | Reuses the actual SPA, NestJS confidential client, Keycloak and independent HAPI boundary. Exact routes, isolated standard/ePA profiles, server-held credentials, Origin/CSRF logout, cancellation and cleanup align with the design. | Accepted by the owner on 2026-11-11; approval checklist signed off for this design |
+| [ADR-0002](../../../docs/architecture/decisions/ADR-0002-mission-boundaries.md)                 | Keeps static registration and mission-owned execution/projection. Clarifies the concrete typed event contract and fixture/runtime distinction without adding a plugin framework or layers.                                            | Accepted by the owner on 2026-11-11; approval checklist signed off for this design |
+| [ADR-0003](../../../docs/architecture/decisions/ADR-0003-capability-first-code-organization.md) | Existing capability boundaries/public entries remain applicable. Current fixture event types are not falsely claimed to support runtime observations already.                                                                         | Accepted status and file contents unchanged                                        |
+| [ADR-0004](../../../docs/architecture/decisions/ADR-0004-localization-and-i18n.md)              | German default/English, neutral contracts and presentation-only translation remain applicable. Locale change must not change execution state or literal evidence.                                                                     | Accepted status and file contents unchanged                                        |
 
 ### Security policy assessment
 
@@ -151,7 +151,7 @@ The assertion summaries below group the existing scenarios under every requireme
 
 ## Remaining conflicts and implementation work
 
-No unresolved technical planning conflict remains within tasks 1.1–1.3. Advisory review is complete; **implementation remains BLOCKED by task 1.4**.
+No unresolved technical planning conflict remains within tasks 1.1–1.3. Readiness review and the owner's explicit task 1.4 approval are complete. Tasks 2–9 are authorized for local/private implementation; none was started in this approval-recording step.
 
 The standard routes, profile configuration, HAPI enforcement, event contract, SPA adapter and runtime tests are planned work, not existing functionality verified by this review. Known obsolete paths/Compose/tooling references, duplicate HAPI gitlink, dependency/configuration checks and existing-realm migration also remain in groups 2–9. They must be handled with the baseline and verification steps already listed there; none was repaired or waived here.
 
@@ -159,17 +159,34 @@ Prior UX/browser verification remains historical fixture evidence. Runtime accep
 
 ## Consolidated owner approval summary
 
-**Owner decision: PENDING.** One review decision is requested for the complete reconciled plan, rather than additional per-artifact planning confirmations:
+**Owner decision: APPROVED for local/private implementation.**
 
-1. Accept the proposed existing-component architecture and ADR-0001/ADR-0002, with their documented trust and capability boundaries. Their status stays PROPOSED until the owner explicitly accepts them.
-2. Accept the Catalog/Workspace runtime UX and positive/negative security scenarios, including pending/in-flight logout cancellation, final post-async session-commit eligibility, and cleanup independent of event storage.
-3. Approve the complete `001-oidc-pkce` change and explicitly authorize its local/private implementation. Only then deliberately mark the change APPROVED and complete task 1.4.
+**Decision date:** 2026-11-11
 
-The scope presented for that future decision preserves ePA/PAR, fixture mode, visual/localization boundaries and bounded safe evidence; adds no duplicate architecture; and excludes public authentication deployment. A planning-file approval, this advisory review, or CLI `ready`/`isComplete` metadata is not implementation authorization.
+**Approver:** Project owner, by explicit instruction in this conversation
 
-After that decision, the recommended first implementation slice is the already planned group 2 repository/baseline and local-wiring work, starting at task 2.1. It has not begun.
+**Recorded by:** Codex, readiness task 1.4
 
-## Verification record
+The owner stated:
+
+> I approve OpenSpec change `001-oidc-pkce` for local/private implementation.
+
+Formal decisions:
+
+- **ADR-0001 and ADR-0002:** Accepted.
+- **Reconciled UX and visual design baseline:** Accepted.
+- **Security architecture and revised specifications:** Accepted, including pending/in-flight logout cancellation, the final post-async session-commit check, and authentication cleanup independent of event storage.
+- **Tasks 2–9:** Authorized for local/private implementation within the accepted plan. Task 1.4 is complete and the change is deliberately marked APPROVED.
+- **Public boundary:** Do not deploy real authentication publicly. Keep the existing public Playground fixture-only.
+- **This step:** Record the approval only. Do not start implementation.
+
+The accepted scope preserves ePA/PAR, fixture mode, Mission Control visuals/localization and bounded safe evidence, and adds no duplicate architecture. Acceptance of the specifications is not a claim that runtime acceptance tests have passed. Existing deferred localization copy review and unrelated change statuses are unaffected.
+
+The approval is the owner's explicit decision, rather than a planning-file confirmation, advisory recommendation or CLI `ready`/`isComplete` flag. Public authentication deployment requires separate authorization.
+
+The next implementation task remains 2.1, under the dependencies already defined in the accepted plan. No task in groups 2–9 was started or marked complete by this step.
+
+## Verification record — tasks 1.1–1.3 snapshot before owner approval
 
 - `openspec.cmd validate 001-oidc-pkce --strict --json`: passed, zero issues. This checks OpenSpec structure, not runtime correctness or owner approval.
 - Prettier check: passed for all eight changed Markdown documents.
@@ -180,3 +197,13 @@ After that decision, the recommended first implementation slice is the already p
 - OpenSpec apply progress: **8/50 complete**; tasks 1.1–1.3 completed, task 1.4 unchecked. The change remains DRAFT. Modified files are documentation/task tracking only.
 
 No application, Keycloak, HAPI, infrastructure or browser acceptance tests were executed for this documentation-only task. Those results remain pending with implementation; no code, configuration, submodule pointer or public deployment was changed.
+
+## Approval recording verification — task 1.4
+
+- Owner approval is recorded above with date, approver, formal decisions, local/private scope and the explicit instruction not to start implementation in this step.
+- Proposal, design, both capability specs and tasks are marked APPROVED for local/private implementation. ADR-0001/ADR-0002 are Accepted; repository authorization notices and UX/architecture acceptance records match the decision.
+- OpenSpec apply progress is **9/50 complete**: readiness tasks 1.1–1.4 are complete. All 41 tasks in groups 2–9 retain their original unchecked state and wording; none was started.
+- All 32 requirements and 74 scenarios are unchanged. Five completed UI history tasks, ADR-0003/ADR-0004 and the static-hosting contract are unchanged. Runtime Gate E remains unchecked; separate deferred localization copy review is unaffected.
+- `openspec.cmd validate 001-oidc-pkce --strict --json`: passed, zero issues.
+- Prettier check and `git diff --check`: passed. All 16 changed files are Markdown documentation/task records; 67 local link targets resolve and the whitespace check passes.
+- No application/configuration/submodule/deployment change or runtime test execution occurred. The existing public Playground stays fixture-only; public real authentication remains unauthorized.

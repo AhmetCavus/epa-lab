@@ -1,13 +1,14 @@
 # ADR-0001 — Browser SPA with NestJS BFF and Keycloak
 
-- **Status:** PROPOSED (architecture agreed in discussion; formal review pending)
+- **Status:** Accepted
 - **Date:** 2026-10-16
+- **Accepted:** 2026-11-11 by the project owner for change `001-oidc-pkce` (local/private implementation)
 
 ## Context
 
 The user wants a browser-only learning product. A public JavaScript OAuth client is possible, but makes token exposure and inspection boundaries harder to control. A BFF separates the UI and the confidential OAuth client without introducing a separate login mask.
 
-## Proposed decision
+## Decision
 
 Use React/TypeScript SPA in the browser, NestJS BFF as confidential OAuth/OIDC client, and Keycloak as Authorization Server and Identity Provider for the first mission. The browser starts authentication by navigating to a BFF endpoint; **the BFF redirects to Keycloak's login UX**. The browser receives only a session cookie after successful callback handling; the BFF holds OAuth tokens server-side. The demo Resource Server remains a separate logical security boundary.
 
@@ -21,7 +22,7 @@ The proposed standard browser API is `/api/oauth`, with login/callback/session/l
 
 Standard session credentials remain server-side; cookies are isolated from ePA, HttpOnly, SameSite=Lax and Secure under HTTPS. POST logout requires configured Origin plus context-bound anti-CSRF checks. Logout cancels context-bound pending/in-flight attempts as well as invalidating authentication. After asynchronous exchange/validation, the original context/attempt must still be eligible immediately before session commit. Cleanup cannot depend on event persistence, and retained safe viewing history grants no resource permission.
 
-Only a separately authorized local/private implementation is proposed. The existing public static site remains fixture-only. This alignment adds no second BFF, authentication UI, persistent session infrastructure or public authentication deployment.
+The owner has authorized local/private implementation under change `001-oidc-pkce`. The existing public static site remains fixture-only. This alignment adds no second BFF, authentication UI, persistent session infrastructure or public authentication deployment.
 
 ## Consequences
 
@@ -37,15 +38,21 @@ Pure SPA public OAuth client with browser-side token processing. May be interest
 
 ## Approval checklist
 
-- [ ] Browser redirect and login responsibility verified in the sequence.
-- [ ] Cookie/session/CSRF/security obligations accepted.
-- [ ] Decision integrated into mission UX and OpenSpec scenarios.
+- [x] Browser redirect and login responsibility verified in the sequence.
+- [x] Cookie/session/CSRF/security obligations accepted.
+- [x] Decision integrated into mission UX and OpenSpec scenarios.
 
 ## Readiness review — 2026-11-11
 
 - **Reviewer:** Codex, documentation and repository review for change `001-oidc-pkce`, task 1.3.
 - **Review decision:** consistent with the proposed integration and existing implementation boundaries; recommended for owner acceptance.
-- **Owner decision:** PENDING. Status remains PROPOSED; the acceptance checklist above is not signed off by this advisory review.
+- **Owner decision at advisory review:** Pending at that stage; the owner's subsequent formal acceptance is recorded below.
 - **Evidence:** [consolidated readiness review and approval summary](../../../openspec/changes/001-oidc-pkce/readiness-review.md), including cookie/CSRF, resource authorization, cancellation races, event failure and negative acceptance checks.
 
-Accepted ADR-0003 and ADR-0004 remain authoritative for frontend organization and localization. Completing documentation review does not authorize backend implementation; change task 1.4 remains the owner approval gate.
+Accepted ADR-0003 and ADR-0004 remain authoritative for frontend organization and localization. The advisory review alone did not authorize implementation; the owner's subsequent explicit approval satisfies change task 1.4.
+
+## Owner acceptance — 2026-11-11
+
+The project owner explicitly accepted this ADR, the reconciled UX/visual baseline, security architecture and revised specifications, and approved `001-oidc-pkce` for local/private implementation of tasks 2–9. The approval checklist records design/readiness acceptance, not verification of future runtime behavior. The [consolidated owner approval record](../../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) is the decision source.
+
+This step records the decision only and starts no implementation. Real authentication must not be deployed publicly; the existing public Playground remains fixture-only.

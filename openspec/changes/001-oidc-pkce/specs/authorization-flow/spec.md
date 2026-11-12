@@ -1,12 +1,12 @@
 # Capability Spec — OAuth/OIDC Authorization and Resource Access
 
-**Status:** DRAFT — NOT IMPLEMENTATION-AUTHORIZED
+**Status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
 ## Purpose
 
 Define the standard OAuth/OIDC mission's browser login, application session, and independently authorized synthetic resource access while preserving the existing ePA/PAR demonstration.
 
-The fixture-only UI authorization remains separate. These runtime requirements are planning artifacts and require review and explicit implementation authorization.
+The project owner accepted these revised requirements and scenarios on 2026-11-11 and authorized local/private implementation of tasks 2–9. See the [owner approval record](../../readiness-review.md#consolidated-owner-approval-summary). Approval does not establish runtime verification; no implementation starts in this recording step. Public authentication deployment is excluded and the existing public Playground remains fixture-only.
 
 ## ADDED Requirements
 

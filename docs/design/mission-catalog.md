@@ -1,6 +1,6 @@
 # Mission Catalog — UX Design
 
-**Status:** DRAFT FOR REVIEW · **Screen:** `/missions`
+**Status:** APPROVED BASELINE — LOCAL/PRIVATE `001-oidc-pkce` · **Screen:** `/missions`
 
 ## Purpose
 
@@ -48,7 +48,7 @@ Default, hovered, focused (keyboard), loading, available, planned, temporarily u
 
 ## Proposed standard mission integration
 
-**Readiness review, 2026-11-11:** this section reconciles change `001-oidc-pkce`; it does not authorize runtime implementation. Current fixture behavior and the recorded visual/artwork refinements above remain the baseline.
+**Owner acceptance, 2026-11-11:** the owner accepted this reconciled UX/visual baseline and approved `001-oidc-pkce` for local/private implementation. The [owner decision](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) completes readiness task 1.4; recording it starts no implementation or runtime availability. Current fixture behavior and the recorded visual/artwork refinements above remain the preservation baseline.
 
 The existing OAuth card can expose a real mission only when a separately enabled runtime binding has passed the real acceptance checks. It opens the existing `/missions/oauth-oidc/workspace`; the mission-owned contextual action there starts browser navigation to `GET /api/oauth/login`. Catalog selection alone does not exchange codes or request protected data.
 
