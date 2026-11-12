@@ -11,6 +11,10 @@ in [EPA.md](../EPA.md). This isolated profile starts only HAPI and its own Postg
 Keycloak and auth-client must already be configured/running for provider/BFF checks. The
 auth-client's reachability to HAPI is verified transport, not an implemented mission resource route.
 
+For the separate standard client in the existing Keycloak realm, see the
+[Keycloak registration/migration guide](keycloak/README.md). Its configuration does not yet
+enable auth-client's standard mission profile or HAPI permission enforcement.
+
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an
 independent test password, pass a second private `--env-file` containing that
 variable; do not overwrite the existing environment file.

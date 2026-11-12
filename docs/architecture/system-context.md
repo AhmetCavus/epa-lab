@@ -8,13 +8,19 @@ This document aligns with the [integration design](../../openspec/changes/001-oi
 
 **Implementation alignment, 2026-11-12 (task 2.6):** Repository/integration tasks 2.1–2.5 are verified. The current-state notes below reflect their results; the accepted first-mission API, session, resource policy and event contracts remain planned. See [runtime evidence](../../openspec/changes/001-oidc-pkce/repository-verification.md#task-25-completion--authorized-health-prerequisite-private-publication-and-lifecycle-2026-11-12) and the [private run guide](../../infrastructure/README.md).
 
+**Keycloak alignment, 2026-11-12 (tasks 3.1–3.3):** The separate standard client, audience and
+optional permission scope are configured and verified in the existing private realm, with
+fresh setup, idempotent migration and rollback evidence. See the [Keycloak guide](../../infrastructure/keycloak/README.md)
+and [verification record](../../openspec/changes/001-oidc-pkce/keycloak-verification.md).
+The auth-client standard profile/routes and HAPI authorization policy remain planned.
+
 ## Components and current implementation boundary
 
 | Component                 | Current repository state                                                                                                          | Proposed local integration responsibility                                                                                                                |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                              | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection under the approved change |
 | `services/auth-client`    | Existing NestJS confidential OAuth/OIDC client; ePA PAR header operation, browser login/callback and session demonstration        | Reuse as the BFF; add the isolated standard mission routes, local session/logout, fixed resource access and owned event API                              |
-| `infrastructure/keycloak` | Existing Keycloak realm and ePA client with required PAR and S256                                                                 | Same deployment fulfills Authorization Server and IdP roles; add a separate standard client without changing ePA policy                                  |
+| `infrastructure/keycloak` | Existing realm/ePA required-PAR client; separate standard S256 client, audience and optional scope verified                       | Reuse the registered standard client for BFF integration; preserve ePA client and policy                                                                 |
 | `services/res-server`     | Canonical HAPI FHIR Git submodule; build/private connectivity verified; JWT authentication with exact data-free health exceptions | Independently validate mission bearer credentials and permission for one synthetic FHIR read; deny undeclared data operations                            |
 
 No new BFF, Resource Server, Keycloak deployment or realm is proposed. Tasks 2.1–2.5 repaired the obsolete tooling/build/Compose paths, preserved unique work while removing the duplicate HAPI gitlink, and verified the canonical private integration. The narrow dependency and health prerequisites do not establish the accepted mission's audience/permission/operation policy; tasks 6.1 and 6.4 remain incomplete. Stable package `@epa-auth-lab/authorization`, Keycloak client `epa-auth-server`, API-client folder `epa-authorization` and existing ePA endpoint identifiers remain valid.
@@ -44,7 +50,7 @@ IdP is not one of the four OAuth 2.0 roles. Browser redirects and direct BFF-to-
 
 ## Separate standard and existing ePA profiles
 
-The proposed `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. It starts Authorization Code + PKCE S256 directly, requests `openid demo.fhir.read`, and makes **no PAR call**. Standard discovery does not require PAR metadata. The resource Access Token audience is `playground-fhir`; the ID Token audience remains the OAuth client.
+The planned auth-client `playground-standard` profile will use the now-configured confidential Keycloak client `playground-oidc` in the existing realm. The Keycloak side verifies direct Authorization Code + PKCE S256, `openid demo.fhir.read` and **no PAR requirement**. Standard discovery must not require PAR metadata when the BFF profile is implemented. The verified Access Token audience is `playground-fhir`; ID Tokens retain only the OAuth client audience. An `openid`-only grant retains the resource audience without `demo.fhir.read`, ready for later permission-denial tests.
 
 The existing `epa-par` profile retains its current client configuration, PAR discovery requirement, `require-par` marker and required-PAR policy. Standard configuration must not weaken or bypass that policy.
 

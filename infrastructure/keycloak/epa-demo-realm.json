@@ -8,7 +8,12 @@
   "loginWithEmailAllowed": false,
   "roles": {
     "client": {
-      "${OIDC_CLIENT_ID}": [{ "name": "require-par", "description": "PAR client policy marker" }]
+      "${OIDC_CLIENT_ID}": [
+        {
+          "name": "require-par",
+          "description": "PAR client policy marker"
+        }
+      ]
     }
   },
   "clients": [
@@ -31,6 +36,33 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }
+    },
+    {
+      "clientId": "playground-oidc",
+      "name": "Playground standard OIDC mission",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${PLAYGROUND_OIDC_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": false,
+      "consentRequired": false,
+      "redirectUris": ["${PLAYGROUND_OIDC_REDIRECT_URI}"],
+      "webOrigins": [],
+      "defaultClientScopes": ["playground-fhir-audience"],
+      "optionalClientScopes": ["demo.fhir.read"],
+      "attributes": {
+        "playground.managed-by": "001-oidc-pkce",
+        "pkce.code.challenge.method": "S256",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "standard.token.exchange.enabled": "false"
+      }
     }
   ],
   "clientProfiles": {
@@ -38,7 +70,12 @@
       {
         "name": "epa-par-required",
         "description": "Require a PAR-issued request_uri without enabling a full FAPI profile",
-        "executors": [{ "executor": "secure-par-content", "configuration": {} }]
+        "executors": [
+          {
+            "executor": "secure-par-content",
+            "configuration": {}
+          }
+        ]
       }
     ]
   },
@@ -48,7 +85,12 @@
         "name": "epa-auth-server-par",
         "enabled": true,
         "conditions": [
-          { "condition": "client-roles", "configuration": { "roles": ["require-par"] } }
+          {
+            "condition": "client-roles",
+            "configuration": {
+              "roles": ["require-par"]
+            }
+          }
         ],
         "profiles": ["epa-par-required"]
       }
@@ -61,7 +103,50 @@
       "lastName": "Demoperson",
       "enabled": true,
       "requiredActions": [],
-      "credentials": [{ "type": "password", "value": "${TEST_USER_PASSWORD}", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "playground-fhir-audience",
+      "description": "Standard mission Access Token audience only",
+      "protocol": "openid-connect",
+      "attributes": {
+        "playground.managed-by": "001-oidc-pkce",
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "playground-fhir",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "playground-fhir",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "name": "demo.fhir.read",
+      "description": "Permission for the synthetic Playground FHIR read",
+      "protocol": "openid-connect",
+      "attributes": {
+        "playground.managed-by": "001-oidc-pkce",
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": []
     }
   ]
 }

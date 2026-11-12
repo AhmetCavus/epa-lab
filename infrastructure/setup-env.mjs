@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { URL } from 'node:url';
+import { parseEnv } from 'node:util';
 
 const template = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
 const secretNames = [
@@ -8,6 +9,7 @@ const secretNames = [
   'OIDC_CLIENT_SECRET',
   'TEST_USER_PASSWORD',
   'RES_SERVER_DB_PASSWORD',
+  'PLAYGROUND_OIDC_CLIENT_SECRET',
 ];
 const configuration = template.replace(
   new RegExp(`^(${secretNames.join('|')})=$`, 'gm'),
@@ -35,6 +37,27 @@ try {
     }
 
     const entry = `${name}=${randomBytes(32).toString('base64url')}`;
+    const blankEntry = new RegExp(`^${name}=$`, 'm');
+    updated = blankEntry.test(updated)
+      ? updated.replace(blankEntry, entry)
+      : `${updated.trimEnd()}\n${entry}\n`;
+  }
+
+  const values = parseEnv(updated);
+  const standardDefaults = {
+    PLAYGROUND_OIDC_CLIENT_ID: 'playground-oidc',
+    PLAYGROUND_OIDC_REDIRECT_URI: new URL(
+      '/api/oauth/callback',
+      values.OIDC_DEFAULT_REDIRECT_URI ?? 'http://localhost:3000/callback',
+    ).href,
+  };
+
+  for (const [name, value] of Object.entries(standardDefaults)) {
+    if (values[name]) {
+      continue;
+    }
+
+    const entry = `${name}=${value}`;
     const blankEntry = new RegExp(`^${name}=$`, 'm');
     updated = blankEntry.test(updated)
       ? updated.replace(blankEntry, entry)

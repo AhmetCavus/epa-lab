@@ -8,6 +8,10 @@
   },
   "scripts": {
     "env:init": "node infrastructure/setup-env.mjs",
+    "keycloak:test": "node --test infrastructure/keycloak/standard-client.test.mjs",
+    "keycloak:verify": "node infrastructure/keycloak/run-verification.mjs",
+    "keycloak:migrate": "node --env-file=.env infrastructure/keycloak/migrate-standard-client.mjs apply",
+    "keycloak:rollback": "node --env-file=.env infrastructure/keycloak/migrate-standard-client.mjs rollback",
     "host:up": "docker compose --env-file .env -f infrastructure/docker-compose.host.yml up -d --build --wait --wait-timeout 600",
     "host:down": "docker compose --env-file .env -f infrastructure/docker-compose.host.yml down",
     "host:logs": "docker compose --env-file .env -f infrastructure/docker-compose.host.yml logs --follow",
