@@ -26,6 +26,9 @@ every Compose command. Its origin must match the issuer. Private IPv4 HTTP requi
 existing explicit `OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true` opt-in. Missing/unsafe trust fails
 startup; there is no unrelated issuer fallback. These source settings do not update deployed
 containers until a separately intended rebuild/recreation.
+Use URLs reachable from the HAPI container: `localhost` inside it refers to HAPI itself.
+Reuse the configured private LAN issuer for this Dev Server; do not change token issuer
+validation to work around connectivity.
 
 ```bash
 docker compose --env-file .env -f infrastructure/docker-compose.integration.yml --profile integration config --quiet

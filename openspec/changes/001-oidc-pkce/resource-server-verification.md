@@ -1,8 +1,8 @@
 # Tasks 6.1–6.6 — Private HAPI Resource Server boundary
 
 **Date:** 2026-11-12. **Scope:** the canonical HAPI fork, its private integration wiring and
-verification. Tasks 6.1–6.5 acceptance passes. Task 6.6 commit/recursive-checkout verification
-is recorded below when completed. No task 7 work is authorized in this session.
+verification. **Result: tasks 6.1–6.6 pass; 33/50 complete.** Stop after task 6.6.
+No task 7 work was started.
 
 ## Baseline and preservation boundary
 
@@ -198,15 +198,71 @@ on the existing `feat/enable-oauth` branch. Its tree is clean. The prior commit 
 `d609c23ae82cbd4f9cd5da26e09306b24029d131`. Production starter/version pins are retained;
 changes are the focused security/fixture implementation, tests, safe logging and documentation.
 
-The parent gitlink update and fresh recursive-checkout build/test verification follow this
-reviewed commit. Commits remain local; no push, remote configuration change or deployment is
-authorized by this verification. A local source rollback uses a reviewed revert of the parent
-integration commit, restoring the earlier gitlink/configuration without touching data volumes
-or the existing deployment. Do not treat the earlier health-only revision as the new mission
-authorization policy.
+The parent integration commit **`596ac9605610f83011b0b7ddc23cb745bceeb218`** pins that exact
+reviewed commit. A fresh independent parent checkout under the temporary verification
+directory recursively initializes the same HAPI commit with clean trees and no prior build
+outputs. Local repositories supply the Git objects for these new local commits; the source
+repositories' remotes and tracked `.gitmodules` are unchanged. No push or deployment was
+performed, and remote publication is not claimed.
+
+Actual fresh-checkout commands:
+
+```bash
+git clone --no-local --no-checkout /srv/yappai/hosting/epa-lab /tmp/epa-001-hapi-security/fresh
+git -C /tmp/epa-001-hapi-security/fresh checkout --detach 596ac9605610f83011b0b7ddc23cb745bceeb218
+git -C /tmp/epa-001-hapi-security/fresh config submodule.res-server.url file:///srv/yappai/hosting/epa-lab/services/res-server
+git -C /tmp/epa-001-hapi-security/fresh -c protocol.file.allow=always submodule update --init --recursive
+docker exec --workdir /verification/fresh/services/res-server epa-001-task6-build sh ./gradlew --offline --no-daemon --no-build-cache --rerun-tasks --max-workers=2 --console=plain -Dorg.gradle.jvmargs=-Xmx1536m -I /verification/format.init.gradle spotlessCheck test --tests '*security.*Test' --tests '*demo.*Test' --tests 'HealthCheckTest*' integrationTest --tests '*PlaygroundResourceSecurityIT' bootWar
+```
+
+**Result:** `BUILD SUCCESSFUL in 1m 3s`; all **122 focused tests** and **62 full-server
+integration cases** execute and pass, with zero failures/errors/skips. Scoped Spotless,
+fresh compilation and WAR packaging pass. Dependency downloads are offline and task/build
+cache results are disabled for this final run. Both Git trees remain clean. An earlier
+fresh run reused Gradle task results; the final forced run above is the execution evidence.
+
+The final parent completion record changes only documentation/task tracking, retaining the
+same HAPI pin and implementation. A local source rollback uses a reviewed revert of the
+integration commit above, restoring the earlier gitlink/configuration without touching data
+volumes or the existing deployment. Do not treat the earlier health-only revision as the
+new mission authorization policy.
+
+## Final preservation and repository validation
+
+After runtime and fresh-checkout verification, the task-owned build container is removed.
+Read-only snapshot comparisons then confirm all **45 original containers** retain IDs,
+images, creation/start times, mounts, network IDs and port bindings. The exact volume and
+network inventories match. All **127 protected file hashes** match, including auth-client,
+fixture UI/assets, ADRs, historical verification/readiness reports, `.env`, host manifest
+and public Traefik routing. HAPI is clean at the reviewed commit. No configured credential
+value appears in changed/new source or documentation.
+
+Keycloak's pre/post digest matches existing realm/client secrets, policies/profiles, users
+and role/group mappings. Standard client/scope IDs, definitions, secret and assignments
+are unchanged; temporary HAPI verifier identities are removed. Only the task-owned
+containers/networks are stopped/removed; no volume operation or original-stack shutdown runs.
+
+```bash
+KEYCLOAK_ADMIN_URL=http://127.0.0.1:5555 node --env-file=.env /tmp/epa-001-hapi-security/verify-keycloak.mjs
+python3 /tmp/epa-001-hapi-security/verify-preservation.py
+python3 /tmp/epa-001-hapi-security/check-links.py --report /tmp/epa-001-hapi-security/links-final.json
+python3 /tmp/epa-001-hapi-security/check-commands.py
+corepack pnpm lint
+git diff --check
+OPENSPEC_TELEMETRY=0 npm exec --offline --yes --cache /tmp/epa-001-task24-npm-cache --package @fission-ai/openspec@1.14.1 -- openspec validate 001-oidc-pkce --strict
+OPENSPEC_TELEMETRY=0 npm exec --offline --yes --cache /tmp/epa-001-task24-npm-cache --package @fission-ai/openspec@1.14.1 -- openspec instructions apply --change 001-oidc-pkce --json
+```
+
+All checks pass. The adapted temporary documentation validators include this evidence and
+the HAPI policy/README: **196 local links across 30 documents**, **31 shell blocks**,
+**70 package-command references** and **18 Compose references** pass. Resolved backend/host/Playground/integration Compose configurations
+are refreshed into mode-0600 files without printing expanded settings. Existing tests/source
+and public routing are preserved. OpenSpec locations are refreshed and each checkbox checked
+individually only after acceptance; progress advances 27 → 28 → 29 → 30 → 31 → 32 → **33/50**.
+Task 7 onward is byte-identical to the starting task document.
 
 ## Remaining scope
 
-Tasks 7 onward remain unchanged and unstarted. Existing historical reports remain intact.
+No blocker remains within tasks 6.1–6.6. Tasks 7 onward remain unchanged and unstarted. Existing historical reports remain intact.
 The current deployed containers are intentionally not updated; new HAPI builds require
 the documented trusted JWKS setting. Public Mission Control remains fixture-only.
