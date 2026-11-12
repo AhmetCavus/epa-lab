@@ -2,7 +2,7 @@
 
 **Scope:** Tasks 2.1–2.5 and the explicitly authorized dependency-only prerequisite from task 6.1; local/private work with existing deployments preserved
 
-**Current status — 2026-11-12:** Tasks 2.1–2.4 are complete; overall progress remains 13/50. The owner subsequently authorized the dependency-resolution prerequisite from task 6.1 out of order. The corrected starter resolves at pinned Spring Boot 3.5.14, production Java compilation and the canonical Docker build pass. Task 2.5 resumed, but the packaged HAPI application exits unhealthy on an existing YAML syntax error at `application.yaml:69`. Tasks 2.5 and 6.1 remain unchecked; existing runtime wiring is unchanged. Earlier results below are retained as history. No other later task was started.
+**Current status — 2026-11-12:** Tasks 2.1–2.4 are complete; overall progress remains 13/50. The dependency prerequisite is resolved. The subsequently authorized two-space YAML correction passes parsing and canonical image rebuilding; HAPI starts and connects to isolated PostgreSQL. Readiness is blocked by HTTP 401 from the existing default JWT security policy, and the test environment's configured loopback port was not effectively published. Private auth-client-to-HAPI transport is verified. Tasks 2.5 and 6.1 remain unchecked; existing containers, volumes and public routing are unchanged. Earlier results below are retained as history; no later implementation was attempted.
 
 **Date / recorder:** 2026-11-11 / Codex
 
@@ -426,3 +426,95 @@ Those results describe the preserved running services, not the failing corrected
 No original container or volume was stopped, replaced, reset or recreated. The public fixture-only Playground, routing, Keycloak, existing HAPI/database and `.env` remain unchanged. No FHIR record was requested/seeded/changed and no real patient data was used. Only the one-line nested dependency edit, this record and task-status prose changed.
 
 **Progress remains 13/50. Tasks 2.5 and 6.1 remain unchecked.** Reproducible private integration startup/health/connectivity/shutdown acceptance is still blocked by the confirmed YAML error; no new integration profile or verified startup procedure is claimed. Stop here without implementing other task 6.1 obligations, task 2.6 or unrelated OAuth functionality.
+
+## Task 2.5 resume — Minimal YAML correction and isolated integration verification, 2026-11-12
+
+**Outcome:** The YAML syntax error is fixed and verified. The canonical image builds and HAPI starts against isolated PostgreSQL, but health/readiness return HTTP 401 under the existing JWT policy. Task 2.5 therefore remains incomplete. No security policy was relaxed and task 6.1 was not completed.
+
+### Actual checkout, precise error and minimal correction
+
+The starting parent tree was clean on `main`, tracking `origin/main`, at `44e5405462168cf6b9288e85288f3d4c22d49432`. The canonical HAPI submodule was clean on `feat/enable-oauth` at `99594708b96ee3f9ba5bdd6ad277ffe7ce92be22`, which already contains the owner's committed dependency correction. OpenSpec reported the established repository root, `spec-driven`, `ready`, 13/50 complete, with tasks 2.5 and 6.1 unchecked. Previously reviewed product/UX/architecture and change proposal/design/spec files were confirmed unchanged.
+
+The actual Dev Server `application.yaml` had `security:` at column 1 on line 53, prematurely ending the `spring:` mapping. Its `oauth2` child used four spaces, while the subsequent `ai:` entry at line 69 used two. That indentation did not match an open mapping, producing `expected <block end>, but found '<block mapping start>'` at line 69, column 3.
+
+Only two leading spaces on line 53 were added:
+
+```diff
+-security:
++  security:
+     oauth2:
+```
+
+The existing `security` block now belongs to `spring`, alongside `application`, `ai`, `main`, `autoconfigure`, `flyway`, `datasource` and `jpa`. No value was edited: the placeholder `enable: false`, issuer/JWKS URLs and all other security settings remain byte-for-byte unchanged. The nested worktree diff contains only this one-line indentation correction; no dependency, Java implementation or parent submodule pointer was changed in this session.
+
+Before rebuilding, the already installed Python YAML parser successfully loaded the corrected entire file. Assertions verified that the new text differs only by those two spaces, that the parsed security block equals the original block parsed in isolation, and that the intended Spring sections exist. The validation result is stored in `/tmp/epa-001-task25-yaml/yaml-validation.json`; no new parser dependency was installed.
+
+### Isolated configuration and canonical rebuild
+
+The temporary `/tmp/epa-001-task25-yaml/integration.compose.yaml` defines only `res-server` and `res-server-db`, both in profile `integration`. It extends the existing services in `infrastructure/docker-compose.host.yml`, retaining the canonical HAPI build, JDBC settings and health checks. Isolation overrides are:
+
+| Setting                     | Test configuration                                                                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Project/container names     | `epa-001-task25-yaml`; unique `epa-001-task25-yaml-res-server` and `epa-001-task25-yaml-res-server-db`                                             |
+| HAPI image                  | `epa-lab/res-server:verify-001-task25-yaml-20261112`                                                                                               |
+| Network                     | Dedicated bridge `epa-001-task25-yaml_private`, `internal: true`; no `dev-proxy` attachment                                                        |
+| Configured HAPI publication | Only `127.0.0.1:18083:8080`; the port was free before startup                                                                                      |
+| Database                    | Existing `postgres:16-alpine` definition; `/var/lib/postgresql/data` on tmpfs, inherited volume mounts reset only in the temporary test definition |
+| Credentials                 | Matching generated test-only password in a mode-0600 temporary env file; no existing password changed or printed                                   |
+| Resource bounds             | HAPI 4 GiB container limit with 2 GiB Java heap; PostgreSQL 1 GiB limit                                                                            |
+| Proxy/restart behavior      | `traefik.enable=false`; `restart: no`                                                                                                              |
+
+The original persistent PostgreSQL and Keycloak volumes were never mounted by a test container. The inherited database service/driver/dialect were reused; no upstream HAPI replacement or additional dependency was introduced. Filtered resolved-configuration assertions and quiet Compose validation passed before building.
+
+Actual commands from the repository root:
+
+```bash
+git status --short --branch
+git rev-parse HEAD
+git submodule status
+git -C services/res-server status --short --branch
+git -C services/res-server rev-parse HEAD
+git -C services/res-server diff --check
+docker compose --project-name epa-001-task25-yaml --env-file .env --env-file /tmp/epa-001-task25-yaml/test.env -f /tmp/epa-001-task25-yaml/integration.compose.yaml --profile integration config --quiet
+docker compose --progress plain --project-name epa-001-task25-yaml --env-file .env --env-file /tmp/epa-001-task25-yaml/test.env -f /tmp/epa-001-task25-yaml/integration.compose.yaml --profile integration build res-server
+docker compose --project-name epa-001-task25-yaml --env-file .env --env-file /tmp/epa-001-task25-yaml/test.env -f /tmp/epa-001-task25-yaml/integration.compose.yaml --profile integration up --no-build --pull never -d --wait --wait-timeout 240 res-server
+```
+
+The canonical build passed: production compilation and `bootWar` completed, Gradle reported `BUILD SUCCESSFUL in 55s`, and the existing distroless image/HealthCheck packaging succeeded. The existing deprecated `JacksonMcpJsonMapper` warning remained a warning. The verification image ID is `sha256:9a3706373efae4e7cbd43b02e93f229c835634d5bbf81223f78d2a9b7117b6a6`.
+
+### Observed startup, readiness and transport results
+
+The isolated database became healthy. Filtered HAPI logs recorded `HikariPool-1 - Start completed`, Tomcat listening on port 8080, and `Started Application in 21.034 seconds`. No YAML parsing error recurred and the application process remained running. The startup/root-cause evidence is in `/tmp/epa-001-task25-yaml/startup-diagnostics.json`.
+
+| Verification                                                             | Actual result                                                                                        |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Isolated PostgreSQL `pg_isready -U hapi -d hapi`                         | Exit 0; database healthy                                                                             |
+| HAPI JVM/Tomcat and datasource startup                                   | Passed; application started and JDBC pool initialized                                                |
+| HAPI `java -cp /app HealthCheck`                                         | **Exit 1: HTTP 401** from `/actuator/health`                                                         |
+| Private-network DNS/HTTP to `res-server:8080/actuator/health`            | Reachable; **HTTP 401**, Bearer challenge                                                            |
+| Private-network `/actuator/health/readiness`                             | Reachable; **HTTP 401**, Bearer challenge                                                            |
+| Existing host-networked auth-client to HAPI private IP `172.25.0.3:8080` | Both health/readiness reached the corrected HAPI service and returned **HTTP 401**, Bearer challenge |
+| Configured loopback `127.0.0.1:18083` from auth-client                   | **ECONNREFUSED**; Docker's effective port mapping was absent                                         |
+| Compose `up --wait`                                                      | Exit 1: `application not healthy after 4m0s`                                                         |
+| Existing auth-client readiness and Keycloak discovery                    | HTTP 200; issuer matched the existing configuration                                                  |
+| Existing HAPI and fixture Playground health checks                       | Exit 0                                                                                               |
+
+The first loopback probe failed before reaching the service, so its subsequent commands were assessed separately with explicit exit-code capture. The private-network and direct-private-IP probes establish transport reachability, not readiness success. Final individual probe results are in `/tmp/epa-001-task25-yaml/probe-summary.json`.
+
+The temporary internal network also limited the loopback publication: Docker inspect contained the configured `127.0.0.1:18083` binding but reported effective `8080/tcp: null`, and `ss -ltn 'sport = :18083'` showed no listener. The private address remained reachable from the host-networked auth-client. A working host publication is therefore not claimed; no speculative networking changes were applied after the health-policy blocker was confirmed. Network observations are in `/tmp/epa-001-task25-yaml/runtime-network.json`.
+
+### Confirmed remaining readiness-policy blocker
+
+The indentation repair makes the existing JWT properties available under `spring.security.oauth2.resourceserver.jwt`. The pinned Spring Boot 3.5.14 class `OAuth2ResourceServerJwtConfiguration$OAuth2SecurityFilterChainConfiguration` was inspected offline with `javap -c -p` from the existing verification build-stage image. Its `jwtSecurityFilterChain` configures JWT Resource Server support and `anyRequest().authenticated()`; it supplies no health-endpoint exception. Repository inspection found no custom `SecurityFilterChain` to override that behavior.
+
+This accounts for the observed Bearer challenges and 401 responses from both health endpoints. The existing `HealthCheck` sends an unauthenticated request and accepts only HTTP 200, so it cannot pass that policy. The retained placeholder `enable: false` does not disable the observed framework filter chain. This is a health/readiness authorization mismatch after successful application startup, rather than another YAML or compilation error.
+
+No auto-configuration exclusion, permit-all policy, credential workaround, alternate issuer or health-status bypass was added. The default JWT behavior is not evidence that the accepted mission's Resource Server authorization policy is implemented. Resolving the health/security contract requires separately scoped work; task 6.1 remains incomplete, and this task 2.5 session stops at the confirmed blocker.
+
+### Cleanup, preservation and task status
+
+Only the two new integration containers were stopped and removed, after checking their project labels and absence of volume mounts. The helper used `docker stop --timeout 15 <verified-test-container-id>` and `docker rm <verified-test-container-id>`, then removed only the empty verified test network. No `compose down`, existing-stack stop, volume reset or volume removal was run. Temporary network probe/inspection containers used `--rm` and were also gone at the final audit. The verification image remains available.
+
+All **45 original containers** retained IDs, image IDs, state/start times, health/restart counts, mount configuration, network addresses/aliases, port bindings and labels. Docker network/volume inventories and all **20 captured environment/Compose/hosting/routing/build-configuration hashes** returned to their baseline. The existing Keycloak, resource database and fixture-only public Playground remain unchanged. No FHIR records were requested or seeded and no real patient data was used. Safe audit artifacts are under `/tmp/epa-001-task25-yaml/`.
+
+**Progress remains 13/50; tasks 2.5 and 6.1 remain unchecked.** YAML parsing, canonical rebuilding, application/database startup and private transport are verified. Healthy readiness and effective loopback publication are not verified, so task 2.5 is not complete and no successful integration startup procedure is claimed. This session changed only the YAML indentation and scoped evidence/status prose; task 2.6 and later implementation were not executed.
