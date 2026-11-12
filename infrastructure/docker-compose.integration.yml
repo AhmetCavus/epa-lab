@@ -12,6 +12,8 @@ services:
     mem_limit: 4g
     environment:
       JAVA_TOOL_OPTIONS: '-Xms128m -Xmx2g'
+      # Explicit local setup only; the shared host stack never enables seeding.
+      PLAYGROUND_DEMO_SEED: 'true'
     ports: !override
       - '127.0.0.1:${INTEGRATION_FHIR_PORT:-18083}:8080'
     networks:

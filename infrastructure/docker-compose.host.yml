@@ -25,6 +25,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${RES_SERVER_DB_PASSWORD:?Run npm run env:init to set RES_SERVER_DB_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+      FHIR_OIDC_ISSUER: ${OIDC_ISSUER:?Set OIDC_ISSUER to the trusted Keycloak realm}
+      FHIR_OIDC_JWKS_URI: ${RES_SERVER_JWKS_URI:-}
+      PLAYGROUND_SECURITY_ALLOW_PRIVATE_HTTP: ${OIDC_ALLOW_PRIVATE_NETWORK_HTTP:-false}
     ports:
       - '${RES_SERVER_BIND_ADDRESS:-127.0.0.1}:${RES_SERVER_PORT:-8083}:8080'
     depends_on:
