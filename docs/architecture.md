@@ -169,7 +169,7 @@ Ein Neustart erhält lokale Daten; Änderungen am Import greifen erst nach einem
 HTTP ohne TLS und die Entwicklungsdatenbank bleiben auf das isolierte lokale Lab begrenzt.
 
 Die Bind-Adressen und der veröffentlichte Keycloak-Port sind konfigurierbar. Loopback bleibt
-der Standard; für ein isoliertes Entwicklungs-LAN erlauben `HOST`, `KEYCLOAK_BIND_ADDRESS`,
+der Standard; für ein isoliertes Entwicklungs-LAN erlauben `AUTH_CLIENT_HOST`, `KEYCLOAK_BIND_ADDRESS`,
 `KEYCLOAK_PORT` und `KEYCLOAK_HOSTNAME` den Remote-Zugriff. Der Container lauscht weiter auf
 8080, auch wenn der Host-Port 5555 ist. Eine LAN-Adresse muss zugleich im Keycloak-Hostname,
 konfigurierten Issuer und FdV-Header stehen. HTTP auf privaten IPv4-Adressen benötigt die
@@ -179,8 +179,10 @@ Endpoint-Origin gelten weiterhin. Diese Netzwerkänderung setzt keinen Realm-Res
 Optional startet das Compose-Profil `backend` auch NestJS im Container. Ein mehrstufiger
 Build erzeugt ein Node.js-24-Runtime-Image mit Produktionsabhängigkeiten und kompiliertem
 Backend; der Prozess läuft als Benutzer `node`. Mit Host Networking auf Linux verwendet
-der Backend-Container dasselbe Netzwerk wie der Host. `HOST` und `PORT` steuern den Listener
-direkt, und die bestehenden lokalen beziehungsweise LAN-Issuer-URLs bleiben erreichbar. Der Start wartet
+der Backend-Container dasselbe Netzwerk wie der Host. Compose bildet `AUTH_CLIENT_HOST` und
+`AUTH_CLIENT_PORT` auf die internen Variablen `HOST` und `PORT` ab. Dadurch überschreibt Yosters
+eigener `PORT` nicht den Backend-Listener. Beim direkten Node-Start gelten weiterhin `HOST` und
+`PORT`. Die bestehenden lokalen beziehungsweise LAN-Issuer-URLs bleiben erreichbar. Der Start wartet
 auf Keycloaks Healthcheck; die Backend-Readiness prüft die OIDC-Discovery. Secrets gelangen
 ausschließlich über die Runtime-Konfiguration in den Backend-Container, nicht in das Image.
 Browser und Backend verwenden weiterhin dieselbe erreichbare Issuer-Adresse, für Remote-Zugriff

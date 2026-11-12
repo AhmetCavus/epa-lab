@@ -32,7 +32,7 @@ Traefik's watched file `../infra/traefik/dynamic/epa-lab.yml` (relative to the r
 
 Public HTTPS follows the host's existing Cloudflare setup: add `auth-playground.yappai.de` as a published application route on the YappAI tunnel with HTTP service `http://shared-traefik:80`. Use the incoming hostname, or set the HTTP Host Header to `auth-playground.yappai.de` if an override is required. The hostname also needs the proxied DNS record for that tunnel; the Cloudflare dashboard can create it with the route. TLS terminates at Cloudflare, so this stack does not add a separate certificate resolver or an HTTPS redirect at the HTTP origin.
 
-Yoster discovers the root `yappai.host.json` manifest on its next project request. It manages only the playground stack and checks its container plus internal HTTP endpoint. After source changes, use **Start → Build images before starting** in Yoster or rerun `npm run playground:up`.
+Yoster discovers the root `yappai.host.json` manifest on its next project request. Since 2026-10-28, it manages the full lab through `infrastructure/docker-compose.host.yml`: this same playground container, Keycloak, the auth client, and the FHIR server with PostgreSQL. See the root [Yoster setup](../../README.md#yoster-setup) for environment and submodule preparation. The dedicated `playground:*` scripts still operate the UI alone. After source changes, use **Start → Build images before starting** in Yoster or rerun `npm run playground:up`.
 
 Verify host routing even before public DNS is configured:
 

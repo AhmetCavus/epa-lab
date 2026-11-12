@@ -4,10 +4,27 @@
   "slug": "epa-lab",
   "type": "app",
   "category": "hosted-app",
-  "composeFile": "infrastructure/docker-compose.playground.yml",
+  "composeFile": "infrastructure/docker-compose.host.yml",
+  "composeEnvFile": ".env",
   "publicUrl": "https://auth-playground.yappai.de",
-  "description": "Fixture-only authentication protocol playground with a mission catalog and conceptual workspaces.",
+  "description": "Authentication lab with Keycloak, an OAuth client, a FHIR resource server and a fixture-only playground.",
   "services": [
+    {
+      "name": "keycloak",
+      "containerName": "epa-lab-keycloak"
+    },
+    {
+      "name": "auth-client",
+      "containerName": "epa-lab-auth-client"
+    },
+    {
+      "name": "res-server",
+      "containerName": "epa-lab-res-server"
+    },
+    {
+      "name": "res-server-db",
+      "containerName": "epa-lab-res-server-db"
+    },
     {
       "name": "playground",
       "containerName": "epa-lab-playground",
@@ -15,6 +32,26 @@
     }
   ],
   "healthChecks": [
+    {
+      "label": "Keycloak readiness",
+      "type": "container",
+      "containerName": "epa-lab-keycloak"
+    },
+    {
+      "label": "Auth client and OIDC discovery",
+      "type": "container",
+      "containerName": "epa-lab-auth-client"
+    },
+    {
+      "label": "FHIR resource server",
+      "type": "container",
+      "containerName": "epa-lab-res-server"
+    },
+    {
+      "label": "FHIR PostgreSQL",
+      "type": "container",
+      "containerName": "epa-lab-res-server-db"
+    },
     {
       "label": "Playground HTTP",
       "type": "http",
@@ -35,5 +72,5 @@
     "logs": true,
     "delete": false
   },
-  "tags": ["playground", "static-spa", "fixture-preview", "traefik"]
+  "tags": ["playground", "keycloak", "oidc", "fhir", "postgresql", "traefik"]
 }

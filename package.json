@@ -8,6 +8,9 @@
   },
   "scripts": {
     "env:init": "node infrastructure/setup-env.mjs",
+    "host:up": "docker compose --env-file .env -f infrastructure/docker-compose.host.yml up -d --build --wait --wait-timeout 600",
+    "host:down": "docker compose --env-file .env -f infrastructure/docker-compose.host.yml down",
+    "host:logs": "docker compose --env-file .env -f infrastructure/docker-compose.host.yml logs --follow",
     "playground:up": "docker compose -f infrastructure/docker-compose.playground.yml up -d --build --wait --wait-timeout 180",
     "playground:down": "docker compose -f infrastructure/docker-compose.playground.yml down",
     "playground:logs": "docker compose -f infrastructure/docker-compose.playground.yml logs --follow playground",
@@ -16,14 +19,14 @@
     "infra:reset": "docker compose --env-file .env -f infrastructure/docker-compose.yml down --volumes",
     "docker:up": "docker compose --env-file .env -f infrastructure/docker-compose.yml --profile backend up -d --build --wait --wait-timeout 180",
     "docker:down": "docker compose --env-file .env -f infrastructure/docker-compose.yml --profile backend down",
-    "docker:logs": "docker compose --env-file .env -f infrastructure/docker-compose.yml --profile backend logs --follow epa-authorization",
+    "docker:logs": "docker compose --env-file .env -f infrastructure/docker-compose.yml --profile backend logs --follow auth-client",
     "dev": "pnpm --filter @epa-auth-lab/authorization dev",
     "start": "pnpm --filter @epa-auth-lab/authorization start",
     "build": "pnpm --filter @epa-auth-lab/authorization build",
     "typecheck": "pnpm --filter @epa-auth-lab/authorization typecheck",
     "test": "pnpm --filter @epa-auth-lab/authorization test",
     "test:integration": "pnpm --filter @epa-auth-lab/authorization test:integration",
-    "lint": "eslint services/epa-authorization --max-warnings 0 && prettier --check .",
+    "lint": "eslint services/auth-client --max-warnings 0 && prettier --check .",
     "format": "prettier --write ."
   },
   "devDependencies": {

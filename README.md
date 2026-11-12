@@ -1,12 +1,64 @@
 # Auth Protocol Playground
 
-> **Project state:** **UI Slice 001 authorized**; authentication/backend changes remain DRAFT. The fixture-only browser app is isolated in [`apps/playground`](apps/playground/README.md), alongside the existing `epa-auth-lab` backend and infrastructure.
+> **Project state:** **UI Slice 001 authorized**; frontend/backend OAuth integration remains DRAFT. Yoster launch configuration for the existing lab containers was authorized on 2026-10-28. The fixture-only browser app is isolated in [`apps/playground`](apps/playground/README.md), alongside the existing lab services and infrastructure.
 
 Run the UI from this repository root with `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`, then open <http://127.0.0.1:5173/missions>. The `playground:*` root scripts manage the hosted UI; existing backend commands retain their behavior. See the [UI package guide](apps/playground/README.md) for build, deployment and browser checks.
 
 **Explore protocols. Execute flows. Understand security.**
 
 A browser-only learning playground with a **Mission Catalog** and reusable **Mission Control Workspace**. Each mission explains a protocol through its actors, actions, safe observations, and contextual explanations. The first intended runnable mission is **OAuth 2.0 / OIDC Authorization Code + PKCE**; ePA/gematik and other families are future modules, not implemented capabilities.
+
+## Yoster setup
+
+The root [`yappai.host.json`](yappai.host.json) registers the complete lab through [`infrastructure/docker-compose.host.yml`](infrastructure/docker-compose.host.yml). It reuses the local Keycloak/auth-client and standalone playground Compose definitions, with the optional backend profile cleared so Yoster's ordinary Start action starts every service.
+
+| Service         | Container               | Purpose / default access                              |
+| --------------- | ----------------------- | ----------------------------------------------------- |
+| `keycloak`      | `epa-lab-keycloak`      | Authorization Server and IdP; `http://localhost:8080` |
+| `auth-client`   | `epa-lab-auth-client`   | Existing NestJS OAuth client; `http://localhost:3000` |
+| `res-server`    | `epa-lab-res-server`    | HAPI FHIR server; `http://localhost:8083/fhir`        |
+| `res-server-db` | `epa-lab-res-server-db` | Persistent PostgreSQL for FHIR; Docker network only   |
+| `playground`    | `epa-lab-playground`    | Fixture-only SPA; `https://auth-playground.yappai.de` |
+
+Prepare the resource-server submodule and environment from the repository root:
+
+```sh
+git submodule update --init --recursive services/res-server
+npm run env:init
+docker compose --env-file .env -f infrastructure/docker-compose.host.yml config --quiet
+```
+
+`env:init` generates missing or blank local credentials, including `RES_SERVER_DB_PASSWORD`, while retaining existing values. The manifest explicitly supplies `.env` to Compose. The host needs the existing external `dev-proxy` network; the Compose CLI must support `!reset` overrides. Keycloak's original `epa-auth-lab_keycloak-data` volume is retained, and FHIR uses a separate persistent PostgreSQL volume. Database credentials must match the credentials used when their volume was initialized.
+
+In Yoster, open **Auth Protocol Playground → Start → Build images before starting** for the first launch or after source changes. All five containers have Docker health checks; Yoster also checks the playground's internal HTTP endpoint. Build output for the resource server comes from its own Gradle-based submodule. The equivalent CLI commands are:
+
+```sh
+npm run host:up
+npm run host:logs
+npm run host:down
+```
+
+`host:down` preserves named data volumes. The existing `playground:*` commands manage only the static UI, `infra:*` manages Keycloak, and `docker:*` manages Keycloak plus the auth client. They share the `epa-lab` Compose project and stable container names; use `host:*` or Yoster to operate the complete stack. `infra:reset` remains a destructive Keycloak data reset.
+
+Backend listeners default to loopback. `AUTH_CLIENT_HOST`/`AUTH_CLIENT_PORT`, `KEYCLOAK_BIND_ADDRESS`/`KEYCLOAK_PORT`, and `RES_SERVER_BIND_ADDRESS`/`RES_SERVER_PORT` control Docker access. The namespaced auth-client inputs prevent Yoster's own `PORT` from overriding this service; Compose maps them to `HOST`/`PORT` inside the container. Direct Node development still uses `HOST`/`PORT`. The auth client retains Linux host networking so its configured issuer is reachable from both the backend and browser.
+
+For this host's LAN access, set the following in `.env` alongside the existing credentials:
+
+```dotenv
+AUTH_CLIENT_HOST=192.168.178.131
+AUTH_CLIENT_PORT=3000
+KEYCLOAK_BIND_ADDRESS=192.168.178.131
+KEYCLOAK_PORT=5555
+KEYCLOAK_HOSTNAME=http://192.168.178.131:5555
+RES_SERVER_BIND_ADDRESS=192.168.178.131
+RES_SERVER_PORT=8083
+OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true
+OIDC_ISSUER=http://192.168.178.131:5555/realms/epa-demo
+OIDC_DEFAULT_REDIRECT_URI=http://192.168.178.131:3000/callback
+OIDC_ALLOWED_REDIRECT_URIS=["http://192.168.178.131:3000/callback"]
+```
+
+Apply binding or environment changes with `docker compose --env-file .env -f infrastructure/docker-compose.host.yml up -d --wait`; recreating the affected containers applies these settings. A plain restart retains their old configuration. Keycloak is then at `http://192.168.178.131:5555/`, auth-client readiness at `http://192.168.178.131:3000/health/ready`, and FHIR health at `http://192.168.178.131:8083/actuator/health`. Keep `KEYCLOAK_HOSTNAME`, `OIDC_ISSUER` and redirect URLs consistent as described in [the architecture guide](docs/architecture.md#lokale-infrastruktur). Only the playground uses the existing public Traefik route. Launching these services does not connect the fixture UI to the backend or establish a protected FHIR mission; resource-server security remains the submodule's responsibility.
 
 ## Decisions already made in discussion
 
@@ -65,7 +117,7 @@ auth-protocol-playground/
                 └── authorization-flow/spec.md
 ```
 
-The tree above describes the design handoff. This checkout also contains existing `services/epa-authorization`, `infrastructure/`, root tooling, an Android placeholder, and the isolated `apps/playground` UI. Slice 001 uses no backend integration and preserves those existing components.
+The tree above describes the design handoff. This checkout also contains existing `services/auth-client`, the `services/res-server` submodule, `infrastructure/`, root tooling, an Android placeholder, and the isolated `apps/playground` UI. Slice 001 uses no backend integration and preserves those existing components.
 
 ## Status and authority
 

@@ -8,6 +8,8 @@ The owner authorized `localization-foundation` and adoption of ADR-0004 through 
 
 The owner authorized deployment of the existing fixture-only `apps/playground` at `auth-playground.yappai.de` and registration as a Yoster hosted project on 2026-10-19. This permits its static Nginx container, dedicated Compose stack and Traefik routing. It does not authorize backend/OAuth integration or exposure of the existing authorization service or Keycloak.
 
+On 2026-10-28, the owner authorized Yoster launch configuration for the existing Keycloak AS/IdP, `services/auth-client`, `services/res-server` and `apps/playground`. This permits Compose, container builds, environment setup and manifest changes, including the resource server's PostgreSQL dependency. The playground remains fixture-only; this does not authorize frontend/backend OAuth integration or public backend routing. The resource server submodule remains independently maintained.
+
 ## Project conventions
 
 - All Codex prompts and technical documentation are in English. Current frontend copy supports German (default/fallback) and English per ADR-0004.

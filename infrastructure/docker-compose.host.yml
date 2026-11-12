@@ -1,0 +1,70 @@
+name: epa-lab
+
+services:
+  keycloak:
+    extends:
+      file: docker-compose.yml
+      service: keycloak
+
+  auth-client:
+    extends:
+      file: docker-compose.yml
+      service: auth-client
+    # Yoster invokes `compose up` without activating optional profiles.
+    profiles: !reset []
+
+  res-server:
+    image: epa-lab/res-server:local
+    container_name: epa-lab-res-server
+    build:
+      context: ../services/res-server
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://res-server-db:5432/hapi
+      SPRING_DATASOURCE_USERNAME: hapi
+      SPRING_DATASOURCE_PASSWORD: ${RES_SERVER_DB_PASSWORD:?Run npm run env:init to set RES_SERVER_DB_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+    ports:
+      - '${RES_SERVER_BIND_ADDRESS:-127.0.0.1}:${RES_SERVER_PORT:-8083}:8080'
+    depends_on:
+      res-server-db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'java', '-cp', '/app', 'HealthCheck']
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 10
+
+  res-server-db:
+    image: postgres:16-alpine
+    container_name: epa-lab-res-server-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hapi
+      POSTGRES_USER: hapi
+      POSTGRES_PASSWORD: ${RES_SERVER_DB_PASSWORD:?Run npm run env:init to set RES_SERVER_DB_PASSWORD}
+    volumes:
+      - res-server-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'hapi', '-d', 'hapi']
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
+
+  playground:
+    extends:
+      file: docker-compose.playground.yml
+      service: playground
+
+volumes:
+  keycloak-data:
+    # Retain realms created with the original local infrastructure stack.
+    name: epa-auth-lab_keycloak-data
+  res-server-data:
+
+networks:
+  dev-proxy:
+    external: true

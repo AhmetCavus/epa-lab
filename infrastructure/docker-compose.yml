@@ -1,19 +1,22 @@
-name: epa-auth-lab
+name: epa-lab
 
 services:
-  epa-authorization:
+  auth-client:
     profiles: ['backend']
-    image: epa-auth-lab/authorization:local
+    image: epa-lab/auth-client:local
+    container_name: epa-lab-auth-client
     build:
       context: ..
-      dockerfile: services/epa-authorization/Dockerfile
+      dockerfile: services/auth-client/Dockerfile
     init: true
+    restart: unless-stopped
     # Host networking keeps the browser and backend on the same reachable issuer.
-    # HOST and PORT control the host listener; docker ps shows no published ports.
+    # Namespaced Compose inputs avoid inheriting Yoster's own HOST/PORT values.
+    # docker ps shows no published ports for this host-networked service.
     network_mode: host
     environment:
-      HOST: ${HOST:-127.0.0.1}
-      PORT: ${PORT:-3000}
+      HOST: ${AUTH_CLIENT_HOST:-127.0.0.1}
+      PORT: ${AUTH_CLIENT_PORT:-3000}
       OIDC_ALLOW_PRIVATE_NETWORK_HTTP: ${OIDC_ALLOW_PRIVATE_NETWORK_HTTP:-false}
       OIDC_ISSUER: ${OIDC_ISSUER:?Set OIDC_ISSUER to a URL reachable from the backend container and browser}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?Set OIDC_CLIENT_ID}
@@ -44,6 +47,8 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.0
+    container_name: epa-lab-keycloak
+    restart: unless-stopped
     command: ['start-dev', '--import-realm']
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:?Set KEYCLOAK_ADMIN_USERNAME}
@@ -77,3 +82,4 @@ services:
 
 volumes:
   keycloak-data:
+    name: epa-auth-lab_keycloak-data
