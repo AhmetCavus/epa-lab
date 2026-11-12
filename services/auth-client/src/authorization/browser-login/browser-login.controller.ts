@@ -7,19 +7,10 @@ import { AuthorizationError } from '../../common/errors/authorization-error';
 import { AuthorizationService } from '../authorization.service';
 import { BrowserLoginService } from './browser-login.service';
 import { loginLifetimeMs } from './browser-login.store';
+import { readOpaqueCookie as readCookie } from './opaque-cookie';
 
 const bindingCookie = 'epa_login';
 const sessionCookie = 'epa_session';
-
-function readCookie(request: Request, name: string): string | undefined {
-  const matches = (request.headers.cookie ?? '')
-    .split(';')
-    .map((cookie) => cookie.trim())
-    .filter((cookie) => cookie.startsWith(`${name}=`));
-  const cookie = matches[0]?.slice(name.length + 1);
-
-  return matches.length === 1 && cookie && /^[A-Za-z0-9_-]{43}$/.test(cookie) ? cookie : undefined;
-}
 
 @Controller()
 export class BrowserLoginController {

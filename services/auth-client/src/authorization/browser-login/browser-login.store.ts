@@ -4,6 +4,7 @@ import { AuthorizationError } from '../../common/errors/authorization-error';
 import type { BoundAuthorizationTransaction } from '../../oidc/authorization-transaction';
 import type { OidcMetadata } from '../../oidc/oidc-discovery.service';
 import type { VerifiedLogin } from '../../oidc/token.service';
+import { StandardBrowserState } from '../standard-login/standard-browser-state';
 
 export const loginLifetimeMs = 10 * 60 * 1000;
 const sessionLifetimeMs = 15 * 60 * 1000;
@@ -42,6 +43,7 @@ function ensureCapacity(entries: Map<string, { expiresAt: number }>): void {
 
 @Injectable()
 export class BrowserLoginStore {
+  readonly standard = new StandardBrowserState();
   private readonly pendingLogins = new Map<string, PendingLogin>();
   private readonly sessions = new Map<string, BrowserSession>();
 

@@ -12,16 +12,16 @@ This document aligns with the [integration design](../../openspec/changes/001-oi
 optional permission scope are configured and verified in the existing private realm, with
 fresh setup, idempotent migration and rollback evidence. See the [Keycloak guide](../../infrastructure/keycloak/README.md)
 and [verification record](../../openspec/changes/001-oidc-pkce/keycloak-verification.md).
-The auth-client standard profile internals are now verified under tasks 4.1–4.4; standard browser routes/sessions and HAPI authorization remain planned. See the [profile boundary](../../services/auth-client/README.md) and [profile verification](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md).
+The auth-client profiles and backend standard browser lifecycle are now verified under tasks 4.1–5.5. See the [backend contract](../../services/auth-client/README.md), [profile verification](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md) and [browser lifecycle evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md). SPA integration, HAPI authorization/resource access and teaching-event APIs remain planned; the deployed fixture UI and backend containers are unchanged.
 
 ## Components and current implementation boundary
 
-| Component                 | Current repository state                                                                                                                         | Proposed local integration responsibility                                                                                                                |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                                             | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection under the approved change |
-| `services/auth-client`    | Existing ePA PAR/browser demo plus verified fixed standard/ePA profile configuration, discovery, request construction and bound token validation | Add standard mission browser/session/logout, fixed resource access and owned events without changing ePA contracts                                       |
-| `infrastructure/keycloak` | Existing realm/ePA required-PAR client; separate standard S256 client, audience and optional scope verified                                      | Reuse the registered standard client for BFF integration; preserve ePA client and policy                                                                 |
-| `services/res-server`     | Canonical HAPI FHIR Git submodule; build/private connectivity verified; JWT authentication with exact data-free health exceptions                | Independently validate mission bearer credentials and permission for one synthetic FHIR read; deny undeclared data operations                            |
+| Component                 | Current repository state                                                                                                          | Proposed local integration responsibility                                                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                              | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection under the approved change |
+| `services/auth-client`    | Existing ePA PAR/browser demo plus verified standard/ePA profiles and standard login/callback/session/local logout                | Add fixed resource access and owned teaching events without changing ePA contracts                                                                       |
+| `infrastructure/keycloak` | Existing realm/ePA required-PAR client; separate standard S256 client, audience and optional scope verified                       | Reuse the registered standard client for BFF integration; preserve ePA client and policy                                                                 |
+| `services/res-server`     | Canonical HAPI FHIR Git submodule; build/private connectivity verified; JWT authentication with exact data-free health exceptions | Independently validate mission bearer credentials and permission for one synthetic FHIR read; deny undeclared data operations                            |
 
 No new BFF, Resource Server, Keycloak deployment or realm is proposed. Tasks 2.1–2.5 repaired the obsolete tooling/build/Compose paths, preserved unique work while removing the duplicate HAPI gitlink, and verified the canonical private integration. The narrow dependency and health prerequisites do not establish the accepted mission's audience/permission/operation policy; tasks 6.1 and 6.4 remain incomplete. Stable package `@epa-auth-lab/authorization`, Keycloak client `epa-auth-server`, API-client folder `epa-authorization` and existing ePA endpoint identifiers remain valid.
 
@@ -50,7 +50,7 @@ IdP is not one of the four OAuth 2.0 roles. Browser redirects and direct BFF-to-
 
 ## Separate standard and existing ePA profiles
 
-The implemented internal auth-client `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. The Keycloak side verifies direct Authorization Code + PKCE S256, `openid demo.fhir.read` and **no PAR requirement**. Standard discovery is verified without PAR metadata; the existing ePA path still requires it. Both paths reuse the current transaction/transport/token services, with credentials and ID Token checks bound to captured server-selected profile context. This adds no standard browser route or session. The verified Access Token audience is `playground-fhir`; ID Tokens retain only the OAuth client audience. An `openid`-only grant retains the resource audience without `demo.fhir.read`, ready for later permission-denial tests.
+The implemented auth-client `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. The Keycloak side verifies direct Authorization Code + PKCE S256, `openid demo.fhir.read` and **no PAR requirement**. Standard discovery is verified without PAR metadata; the existing ePA path still requires it. Both paths reuse the current transaction/transport/token services, with credentials and ID Token checks bound to captured server-selected profile context. Standard browser handlers use an isolated namespace in the existing process-local store. The verified Access Token audience is `playground-fhir`; ID Tokens retain only the OAuth client audience. An `openid`-only grant retains the resource audience without `demo.fhir.read`, ready for later permission-denial tests.
 
 The existing `epa-par` profile retains its current client configuration, PAR discovery requirement, `require-par` marker and required-PAR policy. Standard configuration must not weaken or bypass that policy.
 
@@ -65,9 +65,13 @@ Existing implemented routes remain separate:
 
 Preserve existing ePA cookies, response contracts and tests. A smoke redirect or successful Keycloak authentication alone does not establish an application session; the originating browser binding and tracked callback transaction must also be valid. Mission Control's ePA entry stays conceptual, despite this separate existing backend demonstration. Comparing both flows in the UI is deferred.
 
-## Proposed standard browser API and redirects
+## Standard browser API and redirects
 
-These routes belong to the existing auth-client and are **not implemented by this documentation work**:
+These routes belong to the existing auth-client. Login, callback, session and local logout
+are implemented and verified in private test processes when the standard profile is enabled.
+Resource access and owned teaching-event reads below remain planned and return 404.
+The [backend guide](../../services/auth-client/README.md#session-dto) documents the implemented
+minimal DTO; `observationsAvailable` remains false until teaching observations exist.
 
 | Method and route                    | Contract                                                                                                                                                                               |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -80,7 +84,7 @@ These routes belong to the existing auth-client and are **not implemented by thi
 
 The fixed return is `/missions/oauth-oidc/workspace`. Correlated success, provider denial and exchange/validation failure return there with safe server-side outcome state, without callback parameters. An uncorrelated callback grants no run access. Do not accept caller-selected clients, issuers, callback settings, upstream URLs or `returnTo` destinations.
 
-Login and callback use the same application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. Refresh restores via session and owned-event reads; it does not repeat protocol actions.
+Login and callback use the same canonical application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. A fresh session request with the same cookie restores authentication/current-run state without repeating protocol actions. SPA reload handling and owned-event reads remain later work.
 
 ## Sequence (illustrative, not an observed trace)
 

@@ -12,8 +12,9 @@ Keycloak and auth-client must already be configured/running for provider/BFF che
 auth-client's reachability to HAPI is verified transport, not an implemented mission resource route.
 
 For the separate standard client in the existing Keycloak realm, see the
-[Keycloak registration/migration guide](keycloak/README.md). The [internal auth-client profile boundary](../services/auth-client/README.md) is verified
-separately; mission browser integration and HAPI permission enforcement remain pending.
+[Keycloak registration/migration guide](keycloak/README.md). The [auth-client profiles and backend browser lifecycle](../services/auth-client/README.md) are verified
+separately in temporary loopback test processes; SPA integration and HAPI permission enforcement remain pending.
+No existing container is replaced by those checks and the public Playground stays fixture-only.
 
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an
 independent test password, pass a second private `--env-file` containing that

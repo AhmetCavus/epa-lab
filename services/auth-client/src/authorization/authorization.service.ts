@@ -82,7 +82,7 @@ export class AuthorizationService {
       code_challenge_method: 'S256',
     }).toString();
 
-    // Future mission storage owns this server-only context; no standard route/session is added here.
+    // The browser coordinator owns this server-only context; credentials never enter the URL.
     return { authorizationUrl: authorizationUrl.toString(), transaction, metadata };
   }
 }
