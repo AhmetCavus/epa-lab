@@ -1,9 +1,15 @@
 # Private HAPI integration verification
 
-Run these commands from the repository root. `docker-compose.integration.yml`
+Run these commands from the repository root. [`docker-compose.integration.yml`](docker-compose.integration.yml)
 extends the existing canonical HAPI and PostgreSQL definitions. Its separate
 `epa-lab-integration` project, container names and image tag preserve the running
 `epa-lab` services, Keycloak data and public fixture-only Playground.
+
+For the component inventory and shared host-stack lifecycle, see the
+[root guide](../README.md#yoster-setup). The existing ePA/PAR and browser-demo commands are
+in [EPA.md](../EPA.md). This isolated profile starts only HAPI and its own PostgreSQL;
+Keycloak and auth-client must already be configured/running for provider/BFF checks. The
+auth-client's reachability to HAPI is verified transport, not an implemented mission resource route.
 
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an
 independent test password, pass a second private `--env-file` containing that

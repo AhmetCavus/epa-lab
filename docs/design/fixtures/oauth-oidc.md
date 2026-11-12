@@ -19,7 +19,7 @@ Understand an OIDC Authorization Code + PKCE flow and why a protected API accept
 
 ## User actions supplied to shell
 
-- Start authentication (initiates browser navigation to BFF `/auth/login`).
+- Start authentication (planned browser navigation to BFF `GET /api/oauth/login`; this fixture does not execute it).
 - Request synthetic protected document (via BFF after session established).
 - Inspect safe event evidence.
 - End application session.

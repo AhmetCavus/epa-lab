@@ -5,7 +5,18 @@ Gegenüber Keycloak ist dasselbe Backend ein **confidential OAuth/OIDC Client** 
 Party. Keycloak ist der **OAuth Authorization Server und OpenID Provider**. Die Browser-Demo
 validiert eine lokale OIDC-Identität; sie bestätigt keine sektorale Versichertenidentität.
 
+**Repository alignment (2026-11-12):** This guide describes the implemented legacy demo in
+[`services/auth-client`](../services/auth-client), package `@epa-auth-lab/authorization`.
+The accepted first-mission contracts are in [system-context.md](architecture/system-context.md);
+its standard `/api/oauth/*` routes and resource permission policy are still planned. The
+canonical HAPI submodule is [`services/res-server`](../services/res-server), and the existing
+[`apps/playground`](../apps/playground/README.md) stays fixture-only. See the
+[ePA run guide](../EPA.md) and [private integration lifecycle](../infrastructure/README.md).
+
 ## Ablauf und Vertrauensgrenzen
+
+This sequence is illustrative. The header smoke test ends at the login form; the separate
+browser integration test covers callback, code exchange and the local session.
 
 ```mermaid
 sequenceDiagram
@@ -38,7 +49,7 @@ sequenceDiagram
     PAR-->>Service: Provider-generierte PAR-Referenz
     Service-->>Controller: Entdeckter Authorization Endpoint + client_id + request_uri
     Controller-->>FdV: HTTP 302, Location, kein authentisierter Nutzer
-    Note over FdV,Authenticator: Zukünftiger Frontchannel; Integrationstest öffnet nur das Loginformular
+    Note over FdV,Authenticator: Header smoke test ends at the login form; Android integration is planned
     FdV->>Authenticator: Authorization URL übergeben (später)
     Authenticator->>IDP: Frontchannel GET Authorization URL (später)
     IDP-->>Authenticator: Nutzerauthentisierung beim IDP (später)
@@ -165,8 +176,9 @@ nachvollziehbar und durch einen echten Non-PAR-Test überprüft. Die Discovery-M
 `require_pushed_authorization_requests=false` gilt auf Realm-Ebene und widerlegt diese
 Client-spezifische Policy nicht.
 
-Ein Neustart erhält lokale Daten; Änderungen am Import greifen erst nach einem Reset.
-HTTP ohne TLS und die Entwicklungsdatenbank bleiben auf das isolierte lokale Lab begrenzt.
+Restarting retains local data and does not overwrite an existing realm from the import file.
+Use the Keycloak Admin Console/API to update an existing realm's client settings; no data-volume
+reset is required. HTTP without TLS and the development database are restricted to the private lab.
 
 Die Bind-Adressen und der veröffentlichte Keycloak-Port sind konfigurierbar. Loopback bleibt
 der Standard; für ein isoliertes Entwicklungs-LAN erlauben `AUTH_CLIENT_HOST`, `KEYCLOAK_BIND_ADDRESS`,
@@ -188,3 +200,22 @@ ausschließlich über die Runtime-Konfiguration in den Backend-Container, nicht 
 Browser und Backend verwenden weiterhin dieselbe erreichbare Issuer-Adresse, für Remote-Zugriff
 die LAN-Adresse des Servers. Eine Container-interne Issuer-URL würde den
 Frontchannel für externe Browser unbrauchbar machen.
+
+## Verified private HAPI setup
+
+[`infrastructure/docker-compose.integration.yml`](../infrastructure/docker-compose.integration.yml)
+reuses the canonical HAPI build and PostgreSQL definitions in a separate `epa-lab-integration`
+project. HAPI publishes only `127.0.0.1:18083`; the database has no published port and uses
+disposable tmpfs storage on an internal network. A dedicated second bridge supports loopback
+publication without joining the public proxy network. Existing host-networked auth-client
+connectivity and internal service-DNS connectivity passed verification.
+
+Exact GET/HEAD requests to `/actuator/health/liveness` and `/actuator/health/readiness` are
+anonymous, status-only probes. Other endpoints retain JWT authentication, including FHIR,
+MCP and `/actuator/health`. This verified baseline does not implement the accepted mission's
+audience, permission or operation policy; tasks 6.1 and 6.4 remain incomplete.
+
+Use the [integration run guide](../infrastructure/README.md) for reproducible startup/shutdown
+and the [task 2.5 record](../openspec/changes/001-oidc-pkce/repository-verification.md#task-25-completion--authorized-health-prerequisite-private-publication-and-lifecycle-2026-11-12)
+for actual runtime evidence. The isolated profile does not start or replace the existing
+Keycloak, auth-client or public fixture Playground, and mounts no existing database volume.
