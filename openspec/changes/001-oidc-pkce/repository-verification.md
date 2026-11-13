@@ -610,3 +610,15 @@ Only the isolated containers and their verified empty project networks were stop
 The final audit confirmed all **45 original containers** retained IDs, image IDs, state/start times, health/restart counts, mounts, network addresses/aliases, ports and labels. Original network/volume inventories and all **20 captured environment/Compose/hosting/routing/build-configuration hashes** matched the baseline. The existing Keycloak and database volumes, public routing, static Playground/fixtures, auth-client source and UI/UX/architecture contracts were preserved. No FHIR record was seeded or requested past authentication, and no real patient data was used.
 
 Task 2.5's canonical assets/database wiring, private reachability, loopback-only publication, healthy checks, reproducible lifecycle and preservation requirements all have actual passing evidence. Its checkbox is now complete. **Progress: 14/50. Task 6.4 remains unchecked**, as do task 6.1 and the other later tasks. The health prerequisite does not satisfy the synthetic-resource permission, audience or operation policy. Stop after task 2.5; no task 2.6 or unrelated OAuth implementation was started.
+
+## Task 9.5 deployment follow-up — 2026-11-13
+
+The historical task 2 evidence above is unchanged. Current progress is **49/50** after
+the intervening verified tasks. The owner-approved persistent private deployment was
+executed, but actual browser/HAPI acceptance failed due to Docker bridge requests to the
+configured host BFF/JWKS timing out. The required targeted rollback completed; the private
+SPA is removed and the standard mission disabled. Reviewed patched backends and corrected
+JWKS remain, while Keycloak/PostgreSQL/public containers, volumes and routing are preserved.
+The [dated deployment/rollback report](private-deployment-verification.md) records commands,
+image identities, backups, preservation and the remaining connectivity blocker. Task 9.5
+is unchecked; no archive and no network/security workaround.

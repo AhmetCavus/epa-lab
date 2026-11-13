@@ -1,9 +1,11 @@
 # Task 9.5 — Consolidated private deployment plan
 
-**Date:** 2026-11-13. **Decision:** proposed; awaiting one owner approval. **Progress:**
-49/50; task 9.5 stays unchecked. The current request authorizes remote verification,
-inspection and this plan. It does not authorize deployment, container recreation or public
-routing changes. No deployment command below has run.
+**Date:** 2026-11-13. **Decision:** owner-approved for the exact private deployment packet.
+The owner explicitly approved this plan and authorized its execution, targeted container
+recreation, backups, verification and rollback on 2026-11-13. This approval is recorded
+before implementation/deployment in this turn. Public routing/deployment, unrelated features
+and dependency changes remain excluded. Approval is authorization, not acceptance evidence;
+task 9.5 stays unchecked at **49/50** until every required check passes.
 
 ## Git reproducibility blocker resolved
 
@@ -300,9 +302,9 @@ clean HAPI pointer are unchanged. Keycloak before/after inspection confirms all 
 policies, users and mappings remain intact, including the old standard callback and empty
 web origins. Every task checkbox/description is unchanged.
 
-## One consolidated approval requested
+## Consolidated owner approval recorded
 
-Approve this **private-only** packet: the optional SPA packaging/Compose entry on
+The owner approved this **private-only** packet: the optional SPA packaging/Compose entry on
 `192.168.178.131:5173`; five server settings; the standard client's one exact callback-field
 change; promotion of the two specified reviewed images; targeted recreation of auth-client
 and HAPI; creation of the private frontend; and the guarded creation of only fictional
@@ -310,5 +312,25 @@ and HAPI; creation of the private frontend; and the guarded creation of only fic
 
 This approval excludes public ingress/routing/deployment, Keycloak/PostgreSQL/public-SPA
 container recreation, volume resets, security-policy changes, new dependencies and unrelated
-features. Task 9.5 remains unchecked at **49/50**; no archive. The current request explicitly
-requires owner approval before these deployment mutations, so this turn stops at the plan.
+features. The owner requires backups, exact-image verification, actual persistent-browser
+acceptance and the targeted rollback if deployment fails. Task 9.5 remains unchecked at
+**49/50** until actual acceptance passes; no archive. The original proposed commands and
+scope above remain the reviewed execution packet.
+
+## Execution outcome — acceptance blocked and targeted rollback completed
+
+This approved packet was executed on 2026-11-13. Both reviewed backend images and the
+private frontend passed process health checks, but the actual persistent browser runtime
+failed acceptance. From `epa-lab_default`, requests to the configured host BFF and JWKS
+timed out; the private Keycloak peer remained reachable. HAPI consequently rejected the
+real test Access Token when trusted-key retrieval timed out. No network/security workaround
+was applied.
+
+The required targeted rollback completed after each of two attempts using the same packet.
+The private frontend is removed, the standard callback restored and the mission disabled.
+Patched backend images and the corrected trusted JWKS remain; seeding is disabled. Existing
+Keycloak, PostgreSQL, public fixtures, volumes and routing are preserved. Task 9.5 stays
+unchecked at **49/50**, and the change is not archived. See the
+[dated deployment and rollback evidence](private-deployment-verification.md) for actual
+commands, verification limits and the remaining private-network prerequisite. The reviewed
+packet above is retained as history; it is not a claim that the runtime is available.

@@ -192,6 +192,21 @@ acceptance remains future work. No application/packaging file, root environment,
 container, image tag, database, Keycloak configuration or public route is changed here.
 Task 9.5 remains unchecked pending owner deployment approval and actual acceptance; no archive.
 
+### Task 9.5 execution — Owner-approved rollout failed acceptance; rollback verified
+
+**2026-11-13; 49/50 unchanged.** Approval was recorded in the existing plan before
+implementation. The two reviewed backend images and approved private SPA packaging were
+deployed and passed process health checks. Actual persistent-browser and protected-read
+acceptance failed: the Docker bridge cannot reach the configured host BFF/JWKS endpoints.
+The [deployment/rollback evidence](private-deployment-verification.md) records both attempts,
+exact image identities, backups, the network failure and successful targeted rollbacks.
+The private frontend is removed, the mission disabled and the standard callback restored;
+the patched backend images/corrected JWKS remain, with seeding disabled. All other
+43 containers, Keycloak users/ePA PAR policy, volumes/networks and public fixtures/routing
+are preserved. Existing six ePA integration tests, the public fixture browser check and
+deployed production dependency audit pass. No new network/security fix is included.
+Task 9.5 remains unchecked pending resolution and actual persistent acceptance; no archive.
+
 ## Workflow follow-up
 
 - After review explicitly authorizes implementation, use `$openspec-apply-change 001-oidc-pkce` to carry the approved plan into code.

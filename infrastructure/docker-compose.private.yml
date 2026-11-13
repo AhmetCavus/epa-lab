@@ -1,0 +1,39 @@
+services:
+  res-server:
+    mem_limit: 4g
+    environment:
+      PLAYGROUND_DEMO_SEED: 'true'
+      JAVA_TOOL_OPTIONS: '-Xms128m -Xmx2g'
+  playground-private:
+    profiles: ['private-runtime']
+    image: epa-lab/playground-private:001-20261113
+    container_name: epa-lab-playground-private
+    build:
+      context: ../apps/playground
+      dockerfile: Dockerfile
+      target: private-runtime
+    init: true
+    restart: unless-stopped
+    mem_limit: 1g
+    ports:
+      - '192.168.178.131:5173:5173'
+    environment:
+      PLAYGROUND_PRIVATE_ORIGIN: http://192.168.178.131:5173
+      PLAYGROUND_BFF_TARGET: http://192.168.178.131:3000
+    depends_on:
+      auth-client:
+        condition: service_healthy
+    labels:
+      traefik.enable: 'false'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          'fetch("http://127.0.0.1:5173/missions", {signal: AbortSignal.timeout(5000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))',
+        ]
+      interval: 10s
+      timeout: 6s
+      start_period: 15s
+      retries: 12
