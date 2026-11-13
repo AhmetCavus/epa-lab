@@ -121,8 +121,11 @@ requires a full Chromium executable through `PLAYGROUND_NATIVE_CHROMIUM`; withou
 two tests report an explicit skip. They use Chrome's own Settings zoom API in disposable
 regular profiles, verify readback/DPR/reflow, and clean up the profiles. Viewport scaling
 and CSS zoom are not substitutes. See the dated [task 8 evidence](../../openspec/changes/001-oidc-pkce/spa-runtime-verification.md)
-for actual checks, screenshots and limitations. Full group-9 acceptance and runnable
-availability remain pending; the public deployment stays fixture-only.
+for actual checks, screenshots and limitations. Tasks 9.1–9.4 now pass, including the real
+private browser journey. Task 9.5 remains blocked on remote HAPI publication and the
+persistent private runtime handoff; see the [dated runbook and blockers](../../openspec/changes/001-oidc-pkce/private-runtime-verification.md).
+The existing integration-test link is not a persistent operator runtime. The public deployment
+stays fixture-only.
 
 ## Hosted deployment
 

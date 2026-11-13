@@ -157,6 +157,24 @@ initial public-check retry and the deployed HAPI's unchanged missing-JWKS config
 automatic lifecycle difference. Task **9.5 remains unchecked and unstarted**; no existing
 deployment or public route is changed.
 
+### Task 9.5 — Private runtime verification, 2026-11-13
+
+**Blocked; 49/50 unchanged.** The [dated runbook and evidence](private-runtime-verification.md)
+records a passing real private browser journey and public fixture/no-API boundary check.
+The configured HAPI remote rejects exact commit `e65bafc279f02f44b19b47ca7326015886047a63`;
+its feature branch ends at the exact parent `d609c23ae82cbd4f9cd5da26e09306b24029d131`.
+The required one-commit fast-forward push is prepared and awaits owner approval.
+The existing deployed HAPI has an empty JWKS URI and continues failing closed; its repair
+requires explicit environment/container-recreation authorization. The approved canonical
+application address is occupied by the existing auth-client with the standard profile
+disabled; the passing temporary test binding is not a persistent operator handoff.
+Runnable availability is not promoted. The checkout's production audit is clean, while the
+unchanged deployed auth-client still has two high/one moderate production findings in its
+old transitive versions; four moderate/one low development-tool findings are separate.
+No existing deployment,
+volume, policy, dependency, application source or public route is changed. Task 9.5 stays
+unchecked; no archive.
+
 ## Workflow follow-up
 
 - After review explicitly authorizes implementation, use `$openspec-apply-change 001-oidc-pkce` to carry the approved plan into code.
