@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { configuration } from '../config/configuration';
+import { BoundedJsonError, readBoundedJson } from '../common/http/response-json';
 
 export type OidcFailureReason =
   | 'network_error'
@@ -31,8 +32,6 @@ export class OidcUpstreamError extends Error {
     super(`OIDC provider failure: ${reason}`);
   }
 }
-
-const maximumResponseBytes = 65536;
 
 @Injectable()
 export class OidcClientService {
@@ -100,34 +99,13 @@ export class OidcClientService {
   }
 
   private async readJson(response: Response): Promise<unknown> {
-    const reader = response.body?.getReader();
-    const chunks: Uint8Array[] = [];
-    let receivedBytes = 0;
-
-    if (reader) {
-      while (true) {
-        const chunk = await reader.read();
-
-        if (chunk.done) {
-          break;
-        }
-
-        receivedBytes += chunk.value.byteLength;
-
-        if (receivedBytes > maximumResponseBytes) {
-          await reader.cancel();
-          throw new OidcUpstreamError('response_too_large');
-        }
-
-        chunks.push(chunk.value);
-      }
-    }
-
     try {
-      const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-      return parsed;
-    } catch {
-      throw new OidcUpstreamError('invalid_json');
+      return await readBoundedJson(response);
+    } catch (error) {
+      if (error instanceof BoundedJsonError) {
+        throw new OidcUpstreamError(error.reason);
+      }
+      throw error;
     }
   }
 }

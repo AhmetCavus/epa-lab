@@ -1,4 +1,5 @@
-import { Controller, Get, Inject, NotFoundException, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Inject, NotFoundException, Param, Post, Req, Res } from '@nestjs/common';
+import { z } from 'zod';
 import type { ConfigType } from '@nestjs/config';
 import type { CookieOptions, Request, Response } from 'express';
 import { configuration } from '../../config/configuration';
@@ -24,25 +25,74 @@ export class StandardBrowserController {
     this.requireHost(request, response);
     this.noQuery(request);
     const started = await this.browser.start(readOpaqueCookie(request, standardContextCookie));
-    this.contextCookie(response, started.context);
-    response.cookie(standardBindingCookie, started.binding, {
-      ...this.cookieOptions('/api/oauth/callback'),
-      maxAge: Math.max(0, started.expiresAt - Date.now()),
-    });
-    response.status(302).setHeader('Location', started.authorization.authorizationUrl).end();
+    try {
+      this.contextCookie(response, started.context);
+      response.cookie(standardBindingCookie, started.binding, {
+        ...this.cookieOptions('/api/oauth/callback'),
+        maxAge: Math.max(0, started.expiresAt - Date.now()),
+      });
+      response.status(302).setHeader('Location', started.authorization.authorizationUrl).end();
+      this.browser.redirectIssued(started);
+    } finally {
+      this.browser.release(started.trace);
+    }
   }
 
   @Get('callback')
   async callback(@Req() request: Request, @Res() response: Response): Promise<void> {
     this.requireHost(request, response);
-    const context = await this.browser.complete(
+    const completed = await this.browser.complete(
       request.query,
       readOpaqueCookie(request, standardContextCookie),
       readOpaqueCookie(request, standardBindingCookie),
     );
-    this.contextCookie(response, context);
-    response.clearCookie(standardBindingCookie, this.cookieOptions('/api/oauth/callback'));
-    response.status(303).setHeader('Location', standardWorkspaceReturn).end();
+    try {
+      this.contextCookie(response, completed.context);
+      response.clearCookie(standardBindingCookie, this.cookieOptions('/api/oauth/callback'));
+      response.status(303).setHeader('Location', standardWorkspaceReturn).end();
+      this.browser.workspaceReturned(completed);
+    } finally {
+      this.browser.release(completed.trace);
+    }
+  }
+
+  @Get('resource')
+  async resource(@Req() request: Request, @Res() response: Response): Promise<void> {
+    this.requireHost(request, response);
+    this.noQuery(request);
+    if (request.method !== 'GET') {
+      throw new AuthorizationError(
+        { status: 405, code: 'malformedRequest' },
+        'Use GET for this operation.',
+      );
+    }
+    if (
+      request.get('authorization') !== undefined ||
+      request.headers['transfer-encoding'] !== undefined ||
+      Number(request.headers['content-length'] ?? 0) !== 0
+    ) {
+      throw new AuthorizationError(
+        { status: 400, code: 'malformedRequest' },
+        'This operation accepts no caller credentials or body.',
+      );
+    }
+    const result = await this.browser.resource(readOpaqueCookie(request, standardContextCookie));
+    response.status(result.status).json(result.body);
+  }
+
+  @Get('runs/:runId/events')
+  events(@Param('runId') runId: string, @Req() request: Request, @Res() response: Response): void {
+    this.requireHost(request, response);
+    this.noQuery(request);
+    if (!z.uuid().safeParse(runId).success) {
+      throw new AuthorizationError(
+        { status: 404, code: 'noResource' },
+        'Run observations are unavailable.',
+      );
+    }
+    response
+      .status(200)
+      .json(this.browser.events(readOpaqueCookie(request, standardContextCookie), runId));
   }
 
   @Get('session')

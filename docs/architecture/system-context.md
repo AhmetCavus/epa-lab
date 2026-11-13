@@ -12,16 +12,16 @@ This document aligns with the [integration design](../../openspec/changes/001-oi
 optional permission scope are configured and verified in the existing private realm, with
 fresh setup, idempotent migration and rollback evidence. See the [Keycloak guide](../../infrastructure/keycloak/README.md)
 and [verification record](../../openspec/changes/001-oidc-pkce/keycloak-verification.md).
-The auth-client profiles and backend standard browser lifecycle are verified under tasks 4.1–5.5. See the [backend contract](../../services/auth-client/README.md), [profile verification](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md) and [browser lifecycle evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md). The [HAPI policy](../../services/res-server/SECURITY.md) now verifies independent Access Token/permission enforcement for the synthetic read; see [Resource Server evidence](../../openspec/changes/001-oidc-pkce/resource-server-verification.md). SPA integration, BFF resource access and teaching-event APIs remain planned; the deployed fixture UI and backend containers are unchanged.
+The auth-client profiles and backend standard browser lifecycle are verified under tasks 4.1–5.5. See the [backend contract](../../services/auth-client/README.md), [profile verification](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md) and [browser lifecycle evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md). The [HAPI policy](../../services/res-server/SECURITY.md) now verifies independent Access Token/permission enforcement for the synthetic read; see [Resource Server evidence](../../openspec/changes/001-oidc-pkce/resource-server-verification.md). Tasks 7.1–7.6 connect the fixed BFF resource operation and owned safe event API with [private integration evidence](../../openspec/changes/001-oidc-pkce/resource-observability-verification.md). SPA integration remains planned; the deployed fixture UI and backend containers are unchanged.
 
 ## Components and current implementation boundary
 
 | Component                 | Current repository state                                                                                                                 | Proposed local integration responsibility                                                                                                                |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                                     | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection under the approved change |
-| `services/auth-client`    | Existing ePA PAR/browser demo plus verified standard/ePA profiles and standard login/callback/session/local logout                       | Add fixed resource access and owned teaching events without changing ePA contracts                                                                       |
+| `services/auth-client`    | Existing ePA PAR/browser demo plus verified standard profiles, browser lifecycle, fixed resource read and owned version-1 observations   | Preserve the backend security/ownership boundaries during later SPA integration                                                                          |
 | `infrastructure/keycloak` | Existing realm/ePA required-PAR client; separate standard S256 client, audience and optional scope verified                              | Reuse the registered standard client for BFF integration; preserve ePA client and policy                                                                 |
-| `services/res-server`     | Canonical HAPI fork; explicit trust, Access Token validation, exact synthetic read permission and default-deny operation policy verified | Preserve this independent boundary during later BFF resource integration                                                                                 |
+| `services/res-server`     | Canonical HAPI fork; explicit trust, Access Token validation, exact synthetic read permission and default-deny operation policy verified | Preserve this independent boundary and explicit safe reports                                                                                             |
 
 No new BFF, Resource Server, Keycloak deployment or realm is introduced. Tasks 2.1–2.5 repaired tooling/build/Compose paths, preserved unique work while removing the duplicate HAPI gitlink, and verified private integration. Group 6 extends the same HAPI fork with the accepted mission policy; the earlier dependency/health prerequisite reports remain historical. Stable package `@epa-auth-lab/authorization`, Keycloak client `epa-auth-server`, API-client folder `epa-authorization` and existing ePA endpoint identifiers remain valid.
 
@@ -50,7 +50,7 @@ IdP is not one of the four OAuth 2.0 roles. Browser redirects and direct BFF-to-
 
 ## Separate standard and existing ePA profiles
 
-The implemented auth-client `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. The Keycloak side verifies direct Authorization Code + PKCE S256, `openid demo.fhir.read` and **no PAR requirement**. Standard discovery is verified without PAR metadata; the existing ePA path still requires it. Both paths reuse the current transaction/transport/token services, with credentials and ID Token checks bound to captured server-selected profile context. Standard browser handlers use an isolated namespace in the existing process-local store. The verified Access Token audience is `playground-fhir`; ID Tokens retain only the OAuth client audience. An `openid`-only grant retains the resource audience without `demo.fhir.read`, ready for later permission-denial tests.
+The implemented auth-client `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. The Keycloak side verifies direct Authorization Code + PKCE S256, `openid demo.fhir.read` and **no PAR requirement**. Standard discovery is verified without PAR metadata; the existing ePA path still requires it. Both paths reuse the current transaction/transport/token services, with credentials and ID Token checks bound to captured server-selected profile context. Standard browser handlers use an isolated namespace in the existing process-local store. The verified Access Token audience is `playground-fhir`; ID Tokens retain only the OAuth client audience. An `openid`-only grant retains the resource audience without `demo.fhir.read` and produces a verified HAPI permission denial through the BFF.
 
 The existing `epa-par` profile retains its current client configuration, PAR discovery requirement, `require-par` marker and required-PAR policy. Standard configuration must not weaken or bypass that policy.
 
@@ -67,11 +67,10 @@ Preserve existing ePA cookies, response contracts and tests. A smoke redirect or
 
 ## Standard browser API and redirects
 
-These routes belong to the existing auth-client. Login, callback, session and local logout
-are implemented and verified in private test processes when the standard profile is enabled.
-Resource access and owned teaching-event reads below remain planned and return 404.
-The [backend guide](../../services/auth-client/README.md#session-dto) documents the implemented
-minimal DTO; `observationsAvailable` remains false until teaching observations exist.
+These routes belong to the existing auth-client. Login, callback, session, local logout,
+fixed resource access and owned event reads are implemented and verified in private test
+processes when the standard profile is enabled. The [backend guide](../../services/auth-client/README.md#session-dto)
+documents the minimal DTO; `observationsAvailable` reflects safe history completeness.
 
 | Method and route                    | Contract                                                                                                                                                                               |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -84,7 +83,7 @@ minimal DTO; `observationsAvailable` remains false until teaching observations e
 
 The fixed return is `/missions/oauth-oidc/workspace`. Correlated success, provider denial and exchange/validation failure return there with safe server-side outcome state, without callback parameters. An uncorrelated callback grants no run access. Do not accept caller-selected clients, issuers, callback settings, upstream URLs or `returnTo` destinations.
 
-Login and callback use the same canonical application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. A fresh session request with the same cookie restores authentication/current-run state without repeating protocol actions. SPA reload handling and owned-event reads remain later work.
+Login and callback use the same canonical application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. A fresh session request with the same cookie restores authentication/current-run state without repeating protocol actions. Owned-event reads preserve event identities and do not repeat protocol actions. SPA reload handling remains later work.
 
 ## Sequence (illustrative, not an observed trace)
 
@@ -151,11 +150,16 @@ The sole allowed exercise is exact `GET /fhir/Basic/playground-demo` without a q
 
 Return 401 for missing/invalid bearer credentials and 403 for valid credentials without permission or for undeclared data operations. Default-deny other FHIR reads, writes, searches, history, batch/transaction and data-bearing alternate endpoints, including MCP/CDS/test paths. Only explicitly reviewed data-free health/readiness exceptions are allowed. Acceptance must exercise direct HAPI requests as well as the BFF path.
 
-The planned BFF resource operation will forward only its server-held Access Token to the single configured read, with time/size limits, returning a small safe synthetic view or stable failure code. It remains unimplemented after group 6. A BFF 401 before an upstream request must not be shown as a HAPI denial.
+The implemented BFF resource operation forwards only its server-held standard Access Token to the single configured read, with time/size limits, returning a small safe synthetic view or stable failure code. It rechecks authentication after asynchronous work before returning data. A BFF 401 before an upstream request is recorded only as a local rejection, never a HAPI denial. See the [resource DTO and event contract](../../services/auth-client/README.md#protected-synthetic-resource).
 
 ## Safe event provenance
 
 The version-1 discriminated event contract has stable `eventId`/`runId`, per-run `sequence`, actual `observedAt`/`observedBy`, closed `kind`, actor references, channel, outcome and per-kind allowlisted `evidence`. Unknown/unsafe fields, kinds or versions are rejected; no raw JSON fallback or false complete-trace claim. The [design's event contract](../../openspec/changes/001-oidc-pkce/design.md#6-define-a-versioned-safe-observation-contract) is canonical.
+
+The existing process-local store implements that contract with a strict projection at recording
+and API reads. Capacity reservations include concurrent work and prevent starting outbound
+operations without a complete event budget. A recording/capacity failure marks the owned
+document `complete: false`; it never evicts earlier events or prevents logout/credential cleanup.
 
 auth-client observes its own correlation/validation, exchange outcomes and received HAPI responses. An event for a HAPI response is `observedBy: auth-client` with the BFF observation time. A 200 response does not prove a list of internal security checks.
 

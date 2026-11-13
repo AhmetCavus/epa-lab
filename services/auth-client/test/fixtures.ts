@@ -47,11 +47,32 @@ export const standardTestEnvironment = {
   PLAYGROUND_OIDC_CLIENT_SECRET: 'fictional-standard-client-secret-separate',
   PLAYGROUND_OIDC_REDIRECT_URI: 'http://localhost:3000/api/oauth/callback',
   PLAYGROUND_APP_ORIGIN: 'http://localhost:3000',
+  PLAYGROUND_FHIR_RESOURCE_URL: 'http://127.0.0.1:18083/fhir/Basic/playground-demo',
 };
 
 export const profileTestConfiguration = {
   ...testConfiguration,
   standardProfile: readConfiguration(standardTestEnvironment).standardProfile,
+};
+
+export const syntheticFhirResponse = {
+  resourceType: 'Basic',
+  id: 'playground-demo',
+  meta: {
+    versionId: '1',
+    lastUpdated: '2026-11-12T12:00:00.000Z',
+    source: '#fictional-resource-metadata',
+  },
+  code: {
+    coding: [
+      {
+        system: 'https://example.invalid/playground/demo',
+        code: 'oauth-learning-demo',
+        display: 'Fictional protocol learning resource',
+      },
+    ],
+    text: 'Synthetic non-clinical OAuth demonstration; no patient data',
+  },
 };
 
 export const standardTestMetadata: StandardOidcMetadata = {

@@ -46,6 +46,19 @@ const configuredUrl = z
   .max(2048)
   .refine((candidate) => isSafeConfiguredUrl(candidate, true));
 
+export function isSafeDemoResourceUrl(candidate: string, allowPrivateNetworkHttp = false): boolean {
+  if (!isSafeConfiguredUrl(candidate, allowPrivateNetworkHttp)) {
+    return false;
+  }
+  const url = new URL(candidate);
+  return (
+    candidate === url.href &&
+    url.pathname === '/fhir/Basic/playground-demo' &&
+    !candidate.includes('?') &&
+    !candidate.includes('#')
+  );
+}
+
 const environmentSchema = z
   .object({
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
@@ -119,6 +132,7 @@ const standardEnvironmentSchema = z.object({
   PLAYGROUND_APP_ORIGIN: configuredUrl.refine(
     (value) => isSafeConfiguredUrl(value, true) && value === new URL(value).origin,
   ),
+  PLAYGROUND_FHIR_RESOURCE_URL: configuredUrl.refine((value) => isSafeDemoResourceUrl(value, true)),
 });
 
 function invalidConfiguration(fields: string[]): never {
@@ -160,7 +174,11 @@ export function validateEnvironment(environment: Record<string, unknown>) {
   ) {
     invalidFields.push('PLAYGROUND_OIDC_REDIRECT_URI');
   }
-  for (const key of ['PLAYGROUND_OIDC_REDIRECT_URI', 'PLAYGROUND_APP_ORIGIN'] as const) {
+  for (const key of [
+    'PLAYGROUND_OIDC_REDIRECT_URI',
+    'PLAYGROUND_APP_ORIGIN',
+    'PLAYGROUND_FHIR_RESOURCE_URL',
+  ] as const) {
     if (!isSafeConfiguredUrl(settings[key], base.OIDC_ALLOW_PRIVATE_NETWORK_HTTP)) {
       invalidFields.push(key);
     }
@@ -179,6 +197,7 @@ export function validateEnvironment(environment: Record<string, unknown>) {
     allowedRedirectUris: Object.freeze([settings.PLAYGROUND_OIDC_REDIRECT_URI]),
     scope: 'openid demo.fhir.read',
     applicationOrigin: settings.PLAYGROUND_APP_ORIGIN,
+    resourceUrl: settings.PLAYGROUND_FHIR_RESOURCE_URL,
   });
   return { ...base, ...settings, standardProfile };
 }

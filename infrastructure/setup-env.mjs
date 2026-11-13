@@ -46,6 +46,7 @@ try {
   const values = parseEnv(updated);
   const standardDefaults = {
     PLAYGROUND_OIDC_ENABLED: 'false',
+    PLAYGROUND_FHIR_RESOURCE_URL: 'http://127.0.0.1:18083/fhir/Basic/playground-demo',
     PLAYGROUND_APP_ORIGIN: new URL(
       values.OIDC_DEFAULT_REDIRECT_URI ?? 'http://localhost:3000/callback',
     ).origin,

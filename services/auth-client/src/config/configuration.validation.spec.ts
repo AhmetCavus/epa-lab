@@ -29,6 +29,18 @@ describe('environment validation', () => {
   });
 
   it.each([
+    ['PLAYGROUND_FHIR_RESOURCE_URL', undefined],
+    ['PLAYGROUND_FHIR_RESOURCE_URL', 'http://localhost:18083/fhir/Patient'],
+    [
+      'PLAYGROUND_FHIR_RESOURCE_URL',
+      'http://localhost:18083/fhir/Basic/playground-demo?access_token=secret',
+    ],
+    [
+      'PLAYGROUND_FHIR_RESOURCE_URL',
+      'http://username:password@localhost:18083/fhir/Basic/playground-demo',
+    ],
+    ['PLAYGROUND_FHIR_RESOURCE_URL', 'http://localhost:18083/fhir/Basic/a/../playground-demo'],
+    ['PLAYGROUND_FHIR_RESOURCE_URL', 'http://localhost:18083/fhir/Basic/%70layground-demo'],
     ['PLAYGROUND_OIDC_ENABLED', 'yes'],
     ['PLAYGROUND_OIDC_CLIENT_ID', undefined],
     ['PLAYGROUND_OIDC_CLIENT_ID', 'caller-selected-client'],

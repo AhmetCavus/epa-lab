@@ -4,6 +4,7 @@ import { ConfigModule, registerAs } from '@nestjs/config';
 import type { ConfigType } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { randomBytes } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import { resolve } from 'node:path';
@@ -14,6 +15,8 @@ import { z } from 'zod';
 import { configuration, readConfiguration } from '../src/config/configuration';
 import { clientProfile } from '../src/config/client-profile';
 import { AuthorizationModule } from '../src/authorization/authorization.module';
+import { BrowserLoginStore } from '../src/authorization/browser-login/browser-login.store';
+import { protocolEventDocumentSchema } from '../src/authorization/run-observations/protocol-event';
 import {
   standardBindingCookie,
   standardContextCookie,
@@ -33,7 +36,7 @@ const viewSchema = z
         runId: z.string(),
         outcome: z.string(),
         expiresAt: z.string(),
-        observationsAvailable: z.literal(false),
+        observationsAvailable: z.boolean(),
       })
       .strict()
       .nullable(),
@@ -41,7 +44,7 @@ const viewSchema = z
   .strict()
   .refine((view) => view.authenticated === (view.expiresAt !== null));
 
-describe('standard browser HTTP lifecycle with the real private Keycloak', () => {
+describe('standard browser HTTP lifecycle with real private Keycloak and secured HAPI', () => {
   let app: INestApplication<Server> | undefined;
   let config: ConfigType<typeof configuration>;
   let environment: Record<string, string | undefined>;
@@ -52,6 +55,8 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
   let transport: jest.SpiedFunction<OidcClientService['requestJson']>;
   let logs: jest.SpiedFunction<Logger['log']>;
   let warnings: jest.SpiedFunction<Logger['warn']>;
+  let store: BrowserLoginStore;
+  let upstream: jest.SpiedFunction<typeof fetch>;
   const username = `browser-lifecycle-${randomBytes(8).toString('hex')}`;
   const password = randomBytes(32).toString('base64url');
   const sensitive = new Set<string>([password]);
@@ -99,6 +104,9 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
               readConfiguration({
                 ...environment,
                 PLAYGROUND_OIDC_ENABLED: 'true',
+                PLAYGROUND_FHIR_RESOURCE_URL:
+                  environment.PLAYGROUND_FHIR_RESOURCE_URL ??
+                  'http://127.0.0.1:18083/fhir/Basic/playground-demo',
                 PLAYGROUND_APP_ORIGIN: new URL(callback).origin,
               }),
             ),
@@ -108,6 +116,7 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
       ],
     }).compile();
     config = module.get<ConfigType<typeof configuration>>(configuration.KEY);
+    store = module.get(BrowserLoginStore);
     const profile = clientProfile(config, 'playground-standard');
     origin = profile.applicationOrigin;
     host = new URL(origin).host;
@@ -198,6 +207,14 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
     configureRequestLogging(app);
     app.useGlobalFilters(new AuthorizationErrorFilter());
     await app.listen(0, '127.0.0.1');
+    const originalFetch = globalThis.fetch;
+    upstream = jest.spyOn(globalThis, 'fetch').mockImplementation((...args) => {
+      const authorization = new Headers(args[1]?.headers).get('authorization');
+      if (authorization) {
+        sensitive.add(authorization);
+      }
+      return originalFetch(...args);
+    });
   });
 
   afterAll(async () => {
@@ -205,7 +222,20 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
       if (identityId) {
         await admin(`/users/${identityId}`, 'DELETE');
       }
-      const output = JSON.stringify([logs?.mock.calls, warnings?.mock.calls]);
+      await app?.close();
+      const hapi = spawnSync('docker', ['logs', 'epa-lab-integration-res-server'], {
+        encoding: 'utf8',
+        maxBuffer: 8 * 1024 * 1024,
+      });
+      if (hapi.status !== 0) {
+        throw new Error('Private HAPI log verification failed');
+      }
+      const output = JSON.stringify([
+        logs?.mock.calls,
+        warnings?.mock.calls,
+        hapi.stdout,
+        hapi.stderr,
+      ]);
       expect([...sensitive].some((value) => output.includes(value))).toBe(false);
     } finally {
       await app?.close();
@@ -246,6 +276,55 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
     }
     return parsed.data;
   }
+
+  function safeResponse(response: TestResponse) {
+    expect([...sensitive].some((value) => response.text.includes(value))).toBe(false);
+    expect(response.get('Cache-Control')).toBe('no-store');
+    expect(response.get('Access-Control-Allow-Origin')).toBeUndefined();
+  }
+
+  async function events(browser: ReturnType<typeof request.agent>, runId: string | undefined) {
+    if (!runId) {
+      throw new Error('Expected a current authentication run');
+    }
+    const response = await browser
+      .get(`/api/oauth/runs/${runId}/events`)
+      .set('Host', host)
+      .expect(200);
+    safeResponse(response);
+    const value: unknown = response.body;
+    const parsed = protocolEventDocumentSchema.safeParse(value);
+    if (!parsed.success) {
+      throw new Error('Unsafe protocol event document');
+    }
+    return parsed.data;
+  }
+
+  function resourceRequests() {
+    const target = clientProfile(config, 'playground-standard').resourceUrl;
+    return upstream.mock.calls.filter(([url]) => url === target).length;
+  }
+
+  async function authenticate(scope?: 'openid') {
+    const browser = request.agent(server());
+    const started = await browser.get('/api/oauth/login').set('Host', host).expect(302);
+    cookie(started, standardContextCookie);
+    cookie(started, standardBindingCookie);
+    const location = started.get('Location');
+    if (!location) {
+      throw new Error('Provider redirect missing');
+    }
+    const callback = await providerCallback(location, scope);
+    const completed = await browser
+      .get('/api/oauth/callback')
+      .set('Host', host)
+      .query(Object.fromEntries(callback.searchParams))
+      .expect(303);
+    const context = cookie(completed, standardContextCookie);
+    const session = view(await browser.get('/api/oauth/session').set('Host', host).expect(200));
+    expect(session.authenticated).toBe(true);
+    return { browser, context, session };
+  }
   function providerHeaders() {
     return { cookie: [...providerCookies].map(([name, value]) => `${name}=${value}`).join('; ') };
   }
@@ -264,8 +343,12 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
     }
   }
 
-  async function providerCallback(location: string): Promise<URL> {
+  async function providerCallback(location: string, scope?: 'openid'): Promise<URL> {
     let url = new URL(location);
+    if (scope) {
+      // Test-only narrower grant: the public BFF continues to select its fixed scope.
+      url.searchParams.set('scope', scope);
+    }
     const state = url.searchParams.get('state');
     const nonce = url.searchParams.get('nonce');
     if (!state || !nonce) {
@@ -461,6 +544,142 @@ describe('standard browser HTTP lifecycle with the real private Keycloak', () =>
       .set('Host', host)
       .set('Origin', origin)
       .set(standardCsrfHeader, restored.csrfToken)
+      .expect(200);
+  });
+
+  it('reads only the synthetic HAPI resource and preserves truthful owned history across reload and logout', async () => {
+    const { browser, context, session } = await authenticate();
+    const before = await events(browser, session.currentRun?.runId);
+    expect(before.events.map((event) => event.kind)).toEqual([
+      'authorization-started',
+      'authorization-redirect-issued',
+      'callback-accepted',
+      'token-exchange-started',
+      'token-response-received',
+      'token-validation-started',
+      'token-validation-succeeded',
+      'session-established',
+      'workspace-redirect-issued',
+    ]);
+    const calls = resourceRequests();
+    const resource = await browser.get('/api/oauth/resource').set('Host', host).expect(200);
+    safeResponse(resource);
+    expect(resource.body).toEqual({
+      outcome: 'allowed',
+      runId: session.currentRun?.runId,
+      resource: { resourceType: 'Basic', id: 'playground-demo', code: 'oauth-learning-demo' },
+      resourceServerReport: {
+        available: true,
+        reportedBy: 'res-server',
+        decision: 'allowed',
+        reason: 'demo-read-allowed',
+      },
+    });
+    expect(resourceRequests()).toBe(calls + 1);
+    const observed = await events(browser, session.currentRun?.runId);
+    expect(observed.complete).toBe(true);
+    expect(observed.events.slice(-3).map((event) => event.kind)).toEqual([
+      'resource-requested',
+      'resource-response-received',
+      'resource-allowed',
+    ]);
+    expect(observed.events.every((event) => event.observedBy === 'auth-client')).toBe(true);
+    expect(observed.events.at(-2)).toMatchObject({
+      sourceActorId: 'resource-server',
+      targetActorId: 'bff',
+      evidence: { httpStatus: 200, resourceServerReport: { reportedBy: 'res-server' } },
+    });
+    expect(observed.events.map((event) => event.sequence)).toEqual(
+      Array.from({ length: observed.events.length }, (_, index) => index + 1),
+    );
+    const times = observed.events.map((event) => Date.parse(event.observedAt));
+    expect(times.every((time, index) => index === 0 || time >= (times[index - 1] ?? 0))).toBe(true);
+    const restored = view(await browser.get('/api/oauth/session').set('Host', host).expect(200));
+    expect(restored.currentRun?.runId).toBe(session.currentRun?.runId);
+    expect(await events(browser, session.currentRun?.runId)).toEqual(observed);
+    await request(server())
+      .get(`/api/oauth/runs/${session.currentRun?.runId}/events`)
+      .set('Host', host)
+      .expect(404);
+    const signedOut = await browser
+      .post('/api/oauth/logout')
+      .set('Host', host)
+      .set('Origin', origin)
+      .set(standardCsrfHeader, session.csrfToken)
+      .expect(200);
+    cookie(signedOut, standardContextCookie);
+    expect(view(signedOut).authenticated).toBe(false);
+    const local = await browser.get('/api/oauth/resource').set('Host', host).expect(401);
+    safeResponse(local);
+    expect(resourceRequests()).toBe(calls + 1);
+    const retained = await events(browser, session.currentRun?.runId);
+    expect(retained.expiresAt).toBe(observed.expiresAt);
+    expect(retained.events.slice(0, observed.events.length)).toEqual(observed.events);
+    expect(retained.events.slice(-2).map((event) => event.kind)).toEqual([
+      'session-ended',
+      'resource-rejected',
+    ]);
+    await request(server())
+      .get(`/api/oauth/runs/${session.currentRun?.runId}/events`)
+      .set('Host', host)
+      .set('Cookie', `${standardContextCookie}=${context.value}`)
+      .expect(404);
+  });
+
+  it('keeps real authentication while HAPI denies a narrower grant without demo.fhir.read', async () => {
+    const { browser, session } = await authenticate('openid');
+    const response = await browser.get('/api/oauth/resource').set('Host', host).expect(403);
+    safeResponse(response);
+    expect(response.body).toEqual({
+      outcome: 'denied',
+      runId: session.currentRun?.runId,
+      resourceServerReport: {
+        available: true,
+        reportedBy: 'res-server',
+        decision: 'denied',
+        reason: 'insufficient-permission',
+      },
+    });
+    expect(
+      view(await browser.get('/api/oauth/session').set('Host', host).expect(200)).authenticated,
+    ).toBe(true);
+    const observed = await events(browser, session.currentRun?.runId);
+    expect(observed.events.at(-1)?.kind).toBe('resource-denied');
+    expect(observed.events.at(-2)).toMatchObject({
+      evidence: { httpStatus: 403, resourceServerReport: { reason: 'insufficient-permission' } },
+    });
+    await browser
+      .post('/api/oauth/logout')
+      .set('Host', host)
+      .set('Origin', origin)
+      .set(standardCsrfHeader, session.csrfToken)
+      .expect(200);
+  });
+
+  it('reports an actual HAPI authentication failure for a corrupted server-held Access Token', async () => {
+    const { browser, context, session } = await authenticate();
+    const authentication = store.standard.context(context.value)?.authentication;
+    if (!authentication) {
+      throw new Error('Expected server-held standard credentials');
+    }
+    authentication.tokens.access_token = 'fictional-invalid-access-token';
+    sensitive.add(authentication.tokens.access_token);
+    const response = await browser.get('/api/oauth/resource').set('Host', host).expect(401);
+    safeResponse(response);
+    expect(response.body).toMatchObject({
+      outcome: 'denied',
+      resourceServerReport: { available: true, reportedBy: 'res-server', reason: 'invalid-token' },
+    });
+    const observed = await events(browser, session.currentRun?.runId);
+    expect(observed.events.at(-2)).toMatchObject({
+      evidence: { httpStatus: 401, resourceServerReport: { reason: 'invalid-token' } },
+    });
+    expect(observed.events.at(-1)?.kind).toBe('resource-denied');
+    await browser
+      .post('/api/oauth/logout')
+      .set('Host', host)
+      .set('Origin', origin)
+      .set(standardCsrfHeader, session.csrfToken)
       .expect(200);
   });
 });

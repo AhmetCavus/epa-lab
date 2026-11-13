@@ -29,6 +29,9 @@ export interface VerifiedLogin {
   expiresAt: number;
 }
 
+export type TokenExchangeObservation =
+  'response-received' | 'validation-started' | 'validation-succeeded';
+
 @Injectable()
 export class TokenService {
   constructor(
@@ -42,6 +45,7 @@ export class TokenService {
     transaction: BoundAuthorizationTransaction,
     code: string,
     expectedProfile: ClientProfileId,
+    observe?: (observation: TokenExchangeObservation) => void,
   ): Promise<VerifiedLogin> {
     const profile = transactionProfile(this.config, transaction, expectedProfile);
     const trustedMetadata = validateProfileMetadata(
@@ -49,22 +53,23 @@ export class TokenService {
       profile,
       this.config.allowPrivateNetworkHttp,
     );
-    const parsed = tokensSchema.safeParse(
-      await this.client.requestJson(trustedMetadata.token_endpoint, 200, {
-        method: 'POST',
-        headers: {
-          authorization: createClientAuthorization(profile.clientId, profile.clientSecret),
-          'content-type': 'application/x-www-form-urlencoded',
-          accept: 'application/json',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: transaction.profile.redirectUri,
-          code_verifier: transaction.codeVerifier,
-        }).toString(),
-      }),
-    );
+    const response = await this.client.requestJson(trustedMetadata.token_endpoint, 200, {
+      method: 'POST',
+      headers: {
+        authorization: createClientAuthorization(profile.clientId, profile.clientSecret),
+        'content-type': 'application/x-www-form-urlencoded',
+        accept: 'application/json',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: transaction.profile.redirectUri,
+        code_verifier: transaction.codeVerifier,
+      }).toString(),
+    });
+    observe?.('response-received');
+    observe?.('validation-started');
+    const parsed = tokensSchema.safeParse(response);
 
     if (!parsed.success) {
       throw new OidcUpstreamError('invalid_token_response');
@@ -78,6 +83,7 @@ export class TokenService {
       tokens.access_token,
       expectedProfile,
     );
+    observe?.('validation-succeeded');
 
     return {
       tokens,

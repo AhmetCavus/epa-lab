@@ -21,6 +21,7 @@ export interface StandardClientProfile extends ProfileSettings {
   readonly authorizationMode: 'direct';
   readonly scope: 'openid demo.fhir.read';
   readonly applicationOrigin: string;
+  readonly resourceUrl: string;
 }
 
 export type ClientProfile = EpaClientProfile | StandardClientProfile;

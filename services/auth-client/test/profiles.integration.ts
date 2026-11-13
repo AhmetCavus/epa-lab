@@ -119,6 +119,9 @@ describe('real Keycloak profile separation (no mission browser routes or session
               readConfiguration({
                 ...environment,
                 PLAYGROUND_OIDC_ENABLED: 'true',
+                PLAYGROUND_FHIR_RESOURCE_URL:
+                  environment.PLAYGROUND_FHIR_RESOURCE_URL ??
+                  'http://127.0.0.1:18083/fhir/Basic/playground-demo',
                 PLAYGROUND_APP_ORIGIN: new URL(callback).origin,
               }),
             ),

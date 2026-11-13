@@ -1,4 +1,4 @@
-# Auth-client profiles and browser lifecycle
+# Auth-client profiles, browser lifecycle and observations
 
 The existing NestJS package remains `@epa-auth-lab/authorization`. It now supports two fixed,
 server-selected OAuth/OIDC profiles through the existing authorization, discovery, transport,
@@ -28,6 +28,7 @@ PLAYGROUND_APP_ORIGIN=http://localhost:3000
 PLAYGROUND_OIDC_CLIENT_ID=playground-oidc
 PLAYGROUND_OIDC_CLIENT_SECRET=
 PLAYGROUND_OIDC_REDIRECT_URI=http://localhost:3000/api/oauth/callback
+PLAYGROUND_FHIR_RESOURCE_URL=http://127.0.0.1:18083/fhir/Basic/playground-demo
 ```
 
 The blank example secret must be filled server-side by the existing `env:init` workflow.
@@ -36,6 +37,12 @@ and differ from the ePA secret. Its fixed client ID and exact callback must also
 from ePA. The callback is exactly `${PLAYGROUND_APP_ORIGIN}/api/oauth/callback`, with no
 query, fragment or wildcard. Incomplete/invalid enabled configuration fails at startup with
 field names only; rejected values and credentials are not included in errors.
+
+The resource URL is also required when enabled. It must be a canonical URL for exactly
+`/fhir/Basic/playground-demo`, without credentials, query, fragment or encoded/path aliases.
+It is selected by the server and frozen with the standard configuration. Use the private
+[integration setup](../../infrastructure/README.md) for the loopback URL above; a container
+without host networking needs a private address reachable from that container instead.
 
 The existing transport rules apply: HTTPS, or loopback HTTP; private IPv4 HTTP requires the
 explicit `OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true` development opt-in. For LAN use, set the
@@ -46,7 +53,7 @@ not override it. These settings enable the backend handlers, not SPA integration
 
 `env:init` adds missing standard defaults without rotating existing values. Compose passes
 the namespaced settings to auth-client, disabled by default. Source configuration changes
-do not update a running container. Tasks 4.1–5.5 were verified in private test processes;
+do not update a running container. Tasks 4.1–5.5 and 7.1–7.6 were verified in private test processes;
 the running deployment, its `.env`, port bindings and public fixture-only UI were preserved.
 
 ## Discovery and transaction binding
@@ -84,12 +91,14 @@ cookies and no ePA credential/session fallback.
 
 The following handlers are implemented only when the standard profile is enabled:
 
-| Method and route          | Behavior                                                                                                                                                                                                                 |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /api/oauth/login`    | Top-level browser navigation creates a fresh owned run and correlated standard transaction, sets opaque cookies and redirects directly to the discovered Keycloak authorization endpoint with code/S256; no PAR request. |
-| `GET /api/oauth/callback` | Checks state, browser cookies, optional issuer and the stored profile; consumes once before exchange, validates OIDC and returns HTTP 303 to `/missions/oauth-oidc/workspace`.                                           |
-| `GET /api/oauth/session`  | Returns minimal authentication/expiry, current owned run and context-bound logout anti-CSRF material. Creates an anonymous context if the old one is missing, expired or lost after restart.                             |
-| `POST /api/oauth/logout`  | Requires the exact configured `Origin` and current `X-Playground-CSRF` header. Drops credentials, cancels context-bound attempts and rotates to an anonymous context.                                                    |
+| Method and route                    | Behavior                                                                                                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/oauth/login`              | Top-level browser navigation creates a fresh owned run and correlated standard transaction, sets opaque cookies and redirects directly to the discovered Keycloak authorization endpoint with code/S256; no PAR request. |
+| `GET /api/oauth/callback`           | Checks state, browser cookies, optional issuer and the stored profile; consumes once before exchange, validates OIDC and returns HTTP 303 to `/missions/oauth-oidc/workspace`.                                           |
+| `GET /api/oauth/session`            | Returns minimal authentication/expiry, current owned run and context-bound logout anti-CSRF material. Creates an anonymous context if the old one is missing, expired or lost after restart.                             |
+| `POST /api/oauth/logout`            | Requires the exact configured `Origin` and current `X-Playground-CSRF` header. Drops credentials, cancels context-bound attempts and rotates to an anonymous context.                                                    |
+| `GET /api/oauth/resource`           | Uses only the current standard session's server-held Access Token for the fixed synthetic HAPI read. Returns a minimal synthetic view or a safe failure.                                                                 |
+| `GET /api/oauth/runs/:runId/events` | Returns the complete retained version-1 event document only to the owning browser viewing context. A run ID grants no access.                                                                                            |
 
 Login, session and logout reject query parameters, including caller-selected clients,
 issuers and return URLs. Callback accepts only its documented OAuth/OIDC response fields.
@@ -99,10 +108,9 @@ missing, mismatched, replayed, expired or cancelled correlation returns 403 with
 cookies or changing another run. Wrong-host requests return 403. A lost transaction requires
 a fresh login on the canonical host and same process; retrying a raw callback cannot recover it.
 
-All four handlers send `Cache-Control: no-store`, `Pragma: no-cache` and
+All six handlers send `Cache-Control: no-store`, `Pragma: no-cache` and
 `Referrer-Policy: no-referrer`. No credentialed CORS policy is enabled. The React Playground
 does not call these handlers yet; its Workspace return remains the existing fixture view.
-`/api/oauth/resource` and `/api/oauth/runs/:runId/events` are still unimplemented.
 
 ### Storage, cookies and recovery
 
@@ -140,7 +148,8 @@ The exact JSON fields are `authenticated`, `expiresAt`, `csrfToken` and `current
 ```
 
 Authenticated responses use an ISO expiry string. An owned current run contains only `runId`,
-`outcome`, its original ISO `expiresAt` and `observationsAvailable: false`. Outcomes are
+`outcome`, its original ISO `expiresAt` and boolean `observationsAvailable`. This flag is true
+when its safe history is complete, and false after an observation/capacity failure. Outcomes are
 `pending`, `authenticated`, `provider-denied`, `authentication-failed`, `signed-out`,
 `cancelled` or `expired`. Anti-CSRF material is returned only for same-origin application
 use and belongs in the logout header, never in teaching evidence. No token, raw identity
@@ -160,12 +169,113 @@ token exchange or ID Token validation. After all asynchronous processing, eligib
 rechecked immediately before a synchronous rotation/session commit. A stale completion
 cannot restore authentication or issue cookies that overwrite the signed-out context.
 
-Internal authentication outcome history is capped at 100 entries per run; it is not the
-planned teaching-event API. Cleanup and cancellation complete even if recording throws or
-history/collections are full. History failure marks internal completeness unavailable;
-`observationsAvailable` remains false without invented events. Safe history never grants
+Versioned observation history is capped at 100 entries per run. Cleanup and cancellation
+complete even if recording throws or history/collections are full. History failure makes
+`observationsAvailable` and the event document's `complete` false without invented events. Safe history never grants
 resource permission. Tokens, secrets and callback queries remain outside routine logs and
-frontend storage. HAPI authorization and public API routing remain separate work.
+frontend storage. Public API routing remains outside this local/private implementation.
+
+## Protected synthetic resource
+
+The resource handler accepts no query settings, caller Authorization header or request body;
+HEAD is rejected. Missing, expired, signed-out or ePA-only authentication returns 401 with
+`{"outcome":"rejected","reason":"authentication-required"}` before any HAPI call.
+The fixed request sends only the server-held standard Access Token and FHIR Accept header,
+follows no redirect, and uses `OIDC_HTTP_TIMEOUT_MS` (default 5000 ms, validated 100–30000 ms).
+The shared OIDC/resource JSON reader caps decoded response bytes at 65536, including chunked
+and compressed responses. Non-success upstream bodies are discarded. Only the known
+fictional Basic shape is accepted, and metadata is discarded before projection:
+
+```json
+{
+  "outcome": "allowed",
+  "runId": "<owned run UUID>",
+  "resource": {
+    "resourceType": "Basic",
+    "id": "playground-demo",
+    "code": "oauth-learning-demo"
+  },
+  "resourceServerReport": {
+    "available": true,
+    "reportedBy": "res-server",
+    "decision": "allowed",
+    "reason": "demo-read-allowed"
+  }
+}
+```
+
+HAPI 401/403 responses retain those statuses and return only `outcome: denied`, the owned
+`runId` and validated `resourceServerReport`. BFF authentication remains independent of HAPI
+authorization. Transport/response failures return `outcome: unavailable`, `runId` and a
+closed reason: `timeout` (504), or `network-error`, `unexpected-status`, `invalid-response`,
+`response-too-large` (502). No upstream exception, body or credential is returned.
+
+After asynchronous work the BFF rechecks the same context/authentication before releasing
+a resource result. Logout, expiry or a replacing login makes it return local 401
+`session-no-longer-active`; an already received HAPI response remains an observed response,
+without claiming that the stale browser remains authenticated. During a new pending login,
+existing credentials and resource observations still belong to their originating authenticated run.
+
+Only `X-Playground-Decision` and `X-Playground-Reason` are read as reports. The accepted pairs
+are 200/allowed/`demo-read-allowed`, 401/denied/`missing-token` or `invalid-token`, and
+403/denied/`insufficient-permission` or `operation-not-allowed`. Missing, duplicate, unknown,
+oversized or status-inconsistent values project to exactly `{"available":false}`. Other
+headers are ignored. A nested report is an explicit HAPI assertion; the containing response
+event is observed and timed by auth-client. It contains no inferred internal checks or HAPI timestamp.
+
+## Owned version-1 protocol events
+
+The strict runtime/type contract is
+[`protocol-event.ts`](src/authorization/run-observations/protocol-event.ts). The event API
+returns exactly `schemaVersion: 1`, `runId`, original ISO `expiresAt`, boolean `complete`,
+and the retained `events` array. There is no pagination, truncation or raw JSON fallback.
+Unknown/foreign/expired/lost runs return the same 404. Authentication is not required to view
+eligible safe history after logout; the rotated owning cookie is required. Old cookies,
+another browser or an ePA session cannot read it. Reads do not create runs, renew expiry or
+repeat protocol operations. Corrupt stored evidence produces a safe error and marks history incomplete.
+
+Every event has server-generated UUID `eventId`/`runId`, contiguous per-run `sequence`
+starting at 1, actual UTC `observedAt`, `observedBy: auth-client`, a closed `kind`/`outcome`,
+fixed actor/channel fields and strict per-kind `evidence`. Repeated reads preserve all IDs
+and timestamps. No arbitrary metadata map, claims, paths, error strings or HTTP bodies are accepted.
+
+| Kind                                                      | Evidence allowlist                                                                                 | Observation boundary                                  |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `authorization-started`                                   | `responseType: code`, `pkceMethod: S256`, `authorizationMode: direct`                              | BFF actor-local initiation                            |
+| `authorization-redirect-issued`                           | `httpStatus: 302`, `destinationActorId: authorization-server`, code/S256                           | Actual BFF → browser front-channel instruction        |
+| `authorization-failed`                                    | `reason: authorization-unavailable`                                                                | BFF actor-local failure                               |
+| `authorization-cancelled`                                 | `reason: superseded / local-logout / expired`                                                      | BFF actor-local cancellation                          |
+| `callback-accepted`                                       | `correlation: matched`, `response: code / provider-error`                                          | Owned browser → BFF front-channel receipt             |
+| `callback-rejected`                                       | `reason: provider-denied / context-ineligible / malformed-callback / issuer-mismatch`              | BFF actor-local rejection of proven owned work        |
+| `token-exchange-started`                                  | `grantType: authorization_code`, `pkceMethod: S256`                                                | BFF → AS back-channel initiation                      |
+| `token-response-received`                                 | `httpStatus: 200`                                                                                  | AS → BFF back-channel response receipt                |
+| `token-exchange-failed`                                   | closed timeout/network/provider/response `reason`, optional numeric `httpStatus`                   | BFF actor-local transport/response failure            |
+| `token-validation-started` / `token-validation-succeeded` | `tokenPurpose: id-token`                                                                           | Actual BFF actor-local validation attempt/completion  |
+| `token-validation-failed`                                 | `reason: oidc-validation-failed`                                                                   | BFF actor-local rejection                             |
+| `session-established`                                     | `contextRotated: true`                                                                             | BFF actor-local commit after eligibility check        |
+| `workspace-redirect-issued`                               | `httpStatus: 303`, `target: oauth-workspace`                                                       | Actual BFF → browser front-channel instruction        |
+| `session-ended`                                           | `reason: local-logout / token-expired`, boolean `authenticationRemoved`                            | BFF actor-local cleanup                               |
+| `resource-requested`                                      | `operation: read-demo-basic`, `method: GET`                                                        | BFF → Resource Server back-channel initiation         |
+| `resource-response-received`                              | fixed `operation`, numeric `httpStatus`, strict `resourceServerReport`                             | Resource Server → BFF back-channel response receipt   |
+| `resource-allowed` / `resource-denied`                    | fixed `operation`, `httpStatus: 200` / `401 or 403`                                                | BFF actor-local result handling after actual response |
+| `resource-rejected`                                       | fixed `operation`, `httpStatus: 401`, `reason: authentication-required / session-no-longer-active` | BFF actor-local rejection; never a HAPI denial        |
+| `resource-failed`                                         | fixed `operation`, closed resource failure `reason`                                                | BFF actor-local failure                               |
+
+Actor references use existing `browser`, `bff`, `authorization-server` and `resource-server`
+IDs. Local observations have only `actorId: bff`; network observations have fixed source/
+target actors and front/back channel. Redirect issuance does not claim that Keycloak received
+the browser navigation. Keycloak password checks, PKCE comparison and token creation remain
+unobserved provider internals. Unknown, unowned and replayed callbacks cannot mutate another
+run or fabricate events. Owned malformed/issuer-mismatched callbacks record only a safe local reason.
+
+Before external work, the existing store reserves enough of the 100-event budget: one slot
+for login redirect/failure, seven for callback/exchange/session/return, and three for resource
+request/response/result. Concurrent work counts these reservations. Insufficient capacity
+returns 503 before discovery/exchange/resource contact and marks history incomplete; existing
+events remain intact and contiguous. Recorder failure also marks incomplete. Logout and
+credential/callback cleanup always run independently and may add events only on a best-effort basis.
+Routine standard-route request IDs are server generated; no caller-controlled identifier,
+query, header or body is copied into logs. The legacy ePA request-ID contract remains intact.
 
 ## Verification
 
@@ -185,10 +295,16 @@ and real cryptographically signed positive/negative ID Token cases for both prof
 Standard lifecycle tests cover bounded storage, restart/expiry, cookie/CSRF isolation,
 clean redirects, session restoration, one-time completion, logout during discovery/exchange/
 validation, and cleanup despite full or failing history recording.
+Resource/event tests cover decoded byte/time limits, redirect refusal, strict DTOs/header reports,
+safe failure projection, complete sequence/ownership, concurrent reservations, stale resources,
+and disclosure checks for API/event/log outputs.
 Existing ePA browser, replay, capacity, transport, header and log-safety tests remain in place.
 
-Integration requires the configured private Keycloak with both registered clients and
-server-side administrator settings for disposable test identities. Suites create temporary
+Integration requires the configured private Keycloak with both registered clients,
+server-side administrator settings for disposable test identities, and the secured HAPI
+integration container at `127.0.0.1:18083` (or the configured resource URL). Start it using
+the private run guide above; the browser integration suite also scans that container's logs
+for its actual runtime secrets. Suites create temporary
 fully fictional identities and remove them afterward. They verify real
 standard/ePA code exchange, wrong-profile/code/PKCE cases, replay and expiry under the
 unchanged provider code lifetime. The browser lifecycle suite starts a temporary auth-client
@@ -200,8 +316,11 @@ to the existing deployed auth-client or SPA. This is HTTP lifecycle integration,
 browser acceptance test. Profiles are enabled only in test configuration; `.env`, registered
 callbacks, existing users, containers and routing remain unchanged. There is no mock fallback
 in the real integration suites.
+Real HAPI cases verify the synthetic 200, an actual narrower `openid`-only grant's 403,
+and an invalid server-held token's 401 with explicit HAPI reports and BFF provenance.
 
 See the [task 4.1–4.4 evidence](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md)
-and [task 5.1–5.5 evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md)
-for actual results and preservation checks. These checks establish the backend browser
-lifecycle; SPA integration, resource access/authorization and teaching events remain pending.
+and [task 5.1–5.5 evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md),
+plus [task 7.1–7.6 evidence](../../openspec/changes/001-oidc-pkce/resource-observability-verification.md)
+for actual results and preservation checks. These establish the backend browser lifecycle,
+protected resource operation and owned safe events. SPA integration remains pending.

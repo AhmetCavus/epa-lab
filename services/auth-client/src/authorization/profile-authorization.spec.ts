@@ -135,7 +135,7 @@ describe('fixed authorization profiles', () => {
       .expect(404);
   });
 
-  it('rejects legacy login query profile selection and leaves resource/event APIs unimplemented', async () => {
+  it('rejects legacy login query profile selection and keeps standard resource/run ownership separate', async () => {
     await request(app.getHttpServer())
       .get('/login')
       .query({
@@ -150,8 +150,13 @@ describe('fixed authorization profiles', () => {
       throw new Error('Expected an ePA login redirect');
     }
     expect(new URL(location).searchParams.get('client_id')).toBe(testConfiguration.clientId);
-    for (const path of ['/api/oauth/resource', '/api/oauth/runs/unowned/events']) {
-      await request(app.getHttpServer()).get(path).expect(404);
-    }
+    await request(app.getHttpServer())
+      .get('/api/oauth/resource')
+      .set('Host', 'localhost:3000')
+      .expect(401);
+    await request(app.getHttpServer())
+      .get('/api/oauth/runs/unowned/events')
+      .set('Host', 'localhost:3000')
+      .expect(404);
   });
 });

@@ -90,7 +90,7 @@ describe('standard namespace in the bounded process-local browser store', () => 
       currentRun: {
         runId: start.attempt.runId,
         outcome: 'signed-out',
-        observationsAvailable: false,
+        observationsAvailable: true,
       },
     });
   });
@@ -192,7 +192,13 @@ describe('standard namespace in the bounded process-local browser store', () => 
       throw new Error('Expected an owned run');
     }
     while (run.history.length < standardHistoryLimit) {
-      state.record(run, 'pending');
+      state.record(run, {
+        kind: 'authorization-started',
+        channel: 'actor-local',
+        actorId: 'bff',
+        outcome: 'pending',
+        evidence: { responseType: 'code', pkceMethod: 'S256', authorizationMode: 'direct' },
+      });
     }
     const anonymous = state.logout(authenticated.id, authenticated.csrfToken);
     expect(authenticated.authentication).toBeUndefined();
@@ -227,7 +233,13 @@ describe('standard namespace in the bounded process-local browser store', () => 
       throw new Error('Expected an owned run');
     }
     while (run.history.length < standardHistoryLimit) {
-      state.record(run, 'pending');
+      state.record(run, {
+        kind: 'authorization-started',
+        channel: 'actor-local',
+        actorId: 'bff',
+        outcome: 'pending',
+        evidence: { responseType: 'code', pkceMethod: 'S256', authorizationMode: 'direct' },
+      });
     }
     for (let index = 0; index < standardCollectionLimit - 2; index += 1) {
       state.begin(undefined);

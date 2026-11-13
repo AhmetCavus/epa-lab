@@ -30,6 +30,7 @@ services:
       PLAYGROUND_OIDC_CLIENT_ID: ${PLAYGROUND_OIDC_CLIENT_ID:-playground-oidc}
       PLAYGROUND_OIDC_CLIENT_SECRET: ${PLAYGROUND_OIDC_CLIENT_SECRET:-}
       PLAYGROUND_OIDC_REDIRECT_URI: ${PLAYGROUND_OIDC_REDIRECT_URI:-http://localhost:3000/api/oauth/callback}
+      PLAYGROUND_FHIR_RESOURCE_URL: ${PLAYGROUND_FHIR_RESOURCE_URL:-http://127.0.0.1:18083/fhir/Basic/playground-demo}
     depends_on:
       keycloak:
         condition: service_healthy

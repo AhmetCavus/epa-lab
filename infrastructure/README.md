@@ -8,13 +8,14 @@ extends the existing canonical HAPI and PostgreSQL definitions. Its separate
 For the component inventory and shared host-stack lifecycle, see the
 [root guide](../README.md#yoster-setup). The existing ePA/PAR and browser-demo commands are
 in [EPA.md](../EPA.md). This isolated profile starts only HAPI and its own PostgreSQL;
-Keycloak and auth-client must already be configured/running for provider/BFF checks. The
-auth-client's reachability to HAPI is verified transport, not an implemented mission resource route.
+Keycloak must already be configured/running for provider checks. The BFF integration suites
+start temporary loopback auth-client processes from the existing server-side configuration.
 
 For the separate standard client in the existing Keycloak realm, see the
 [Keycloak registration/migration guide](keycloak/README.md). The [auth-client profiles and backend browser lifecycle](../services/auth-client/README.md) are verified
 separately in temporary loopback test processes. The [HAPI policy](../services/res-server/SECURITY.md)
-validates Access Tokens and allows only the synthetic read; SPA integration and BFF resource access remain pending.
+validates Access Tokens and allows only the synthetic read. The BFF's fixed resource route
+and owned safe event API are verified under tasks 7.1–7.6; SPA integration remains pending.
 No existing container is replaced by those checks and the public Playground stays fixture-only.
 
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an
@@ -63,6 +64,19 @@ with `demo.fhir.read` is authorized. All other data operations/interfaces, inclu
 CDS, metadata/test UI and `/actuator/health`, are denied. See the HAPI policy for the fixed
 401/403 decision headers, focused Gradle tests and real-Keycloak verification command.
 
+With this secured integration instance healthy, run the BFF's real private integration suite:
+
+```bash
+corepack pnpm test:integration
+```
+
+The suite enables the standard profile only in its temporary process, using the configured
+private client/callback and `PLAYGROUND_FHIR_RESOURCE_URL` (defaulting in tests to the
+loopback synthetic read above). It exercises real Keycloak login/exchange and HAPI 200/401/403,
+owned event provenance, safe responses/logs and existing ePA/PAR regressions. Temporary
+fictional identities are deleted afterward. The tests neither update `.env` nor send
+callbacks to the deployed auth-client or public fixture UI.
+
 Stop and remove only the isolated setup:
 
 ```bash
@@ -75,3 +89,5 @@ These commands leave all original containers, volumes and public routes in place
 The integration image remains available for the next run. Verification evidence is
 recorded in the historical [repository verification](../openspec/changes/001-oidc-pkce/repository-verification.md)
 and the [Resource Server security verification](../openspec/changes/001-oidc-pkce/resource-server-verification.md).
+See [BFF resource/observation verification](../openspec/changes/001-oidc-pkce/resource-observability-verification.md)
+for the current backend connection and preservation results.
