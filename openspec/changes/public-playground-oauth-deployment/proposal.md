@@ -22,9 +22,16 @@ and reproducible deployment controls; enabling the private Vite binding is insuf
   users, client credentials and mandatory PAR policy, subject to independent compatibility
   verification before cutover.
 - Make Keycloak production startup and tested migration from its observed embedded
-  development database prerequisites. Use a dedicated Keycloak PostgreSQL container and
-  volume for provider-data isolation, as selected by the owner on 2026-11-13. This confirms
-  the proposal's database arrangement, not implementation or deployment authorization.
+  development database prerequisites. The owner's revised architecture decision on
+  2026-11-13 reuses the existing PostgreSQL 16 container and persistent volume: retain
+  database `hapi` unchanged and provision database/role `keycloak` with separate credentials
+  and least privileges. No second PostgreSQL container, new database volume or public
+  database port is planned. This supersedes the earlier container-isolation choice and
+  authorizes planning only.
+- Define idempotent provisioning, independent verified logical backups/restores, bounded
+  connection/capacity budgets and shared-instance failure/rollback procedures. Preserve
+  HAPI data, schema, credentials and permissions. The observed `hapi` superuser privilege
+  is an explicit security limitation to resolve before claiming two-way isolation.
 - Use **owner-provisioned individual demo accounts, with no public registration**, as
   confirmed by the owner. Only the fixed fictional `Basic/playground-demo` is accessible.
 - Add public HTTPS/proxy validation, secure cookies, exact-Origin/CSRF enforcement, bounded
@@ -54,6 +61,8 @@ and `yappai.host.json`; project-scoped Nginx/Traefik/Tunnel policy and operation
 The watched Traefik file is outside this repository at
 `/srv/yappai/hosting/infra/traefik/dynamic/epa-lab.yml` and needs a reviewed, reproducible source.
 HAPI needs deployment configuration rather than a new authorization implementation.
+Keycloak will connect privately to `res-server-db:5432/keycloak`; HAPI continues using
+`res-server-db:5432/hapi`. Existing database bootstrap settings and the shared volume remain.
 
 No second BFF/Resource Server, public Vite, new protocol framework, real patient data,
 self-service identity system, public ePA execution or unrelated dependency upgrade is planned.

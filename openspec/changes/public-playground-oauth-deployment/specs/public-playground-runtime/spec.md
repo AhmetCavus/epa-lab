@@ -197,16 +197,10 @@ session and owned-history responses MUST NOT be shared-cached.
 ### Requirement: Reproducible production provider and HAPI lifecycle
 
 Public ingress MUST remain disabled until the provider uses supported production startup
-and verified migration into its own private database service and volume, separate from
-FHIR storage. The canonical host lifecycle SHALL retain HAPI trust, resource limits and
+and verified migration into database `keycloak` on the existing private PostgreSQL instance.
+The canonical host lifecycle SHALL retain HAPI trust, resource limits and
 deliberate conflict-safe synthetic initialization without resetting existing databases or
 relying on an easily omitted overlay.
-
-#### Scenario: Independent provider storage
-
-- **WHEN** the provider database is started, restarted or restored through the documented lifecycle
-- **THEN** it uses its dedicated unpublished service and volume, independently of the FHIR database
-- **AND** those provider operations leave HAPI's database service, data and volume unchanged.
 
 #### Scenario: Provider migration and failure
 
@@ -219,6 +213,95 @@ relying on an easily omitted overlay.
 - **WHEN** the documented canonical host/Yoster lifecycle or fresh recursive setup is exercised
 - **THEN** reviewed images, public/provider trust, HAPI memory/heap settings and conflict-safe fixture policy are reproduced
 - **AND** restart never silently removes required settings or overwrites conflicting data.
+
+### Requirement: Shared PostgreSQL instance with separate databases
+
+HAPI and Keycloak SHALL reuse the existing PostgreSQL 16 container and persistent volume,
+with databases `hapi` and `keycloak` respectively. No second PostgreSQL container, production
+database volume or public PostgreSQL port SHALL be introduced. Database communication MUST
+remain private.
+
+#### Scenario: Shared-instance database separation
+
+- **WHEN** the production configuration is verified before and after migration
+- **THEN** the same existing PostgreSQL container/volume serves both named databases through private endpoints
+- **AND** HAPI retains its existing database, credentials, schema and permissions, while Keycloak uses distinct credentials for `keycloak`.
+
+### Requirement: Least-privileged Keycloak database access
+
+Keycloak SHALL use its own non-administrative database role, limited to the privileges
+required for its database and migrations. Provisioning MUST preserve HAPI credentials,
+data, schema and permissions. Existing privileged access MUST be disclosed and resolved
+before any claim of mutual database isolation or public-release approval.
+
+#### Scenario: Restricted provider credentials
+
+- **WHEN** real connections use the new role against its own database and other database targets
+- **THEN** required Keycloak schema/data operations succeed and unauthorized connections/access fail
+- **AND** the role has no superuser, database/role-creation, replication, row-security-bypass or privileged membership rights; existing HAPI access remains unchanged.
+
+#### Scenario: Existing privileged HAPI role
+
+- **WHEN** inspection finds an existing HAPI role that can bypass database permissions
+- **THEN** the limitation is recorded without silently changing HAPI privileges or asserting two-way isolation
+- **AND** an unresolved conflict with the required isolation guarantee blocks public release pending explicit owner resolution.
+
+### Requirement: Idempotent database provisioning and safe rollback
+
+Provisioning SHALL create only missing, owned `keycloak` database/role resources and verify
+them on repeat runs. Conflicts MUST fail closed without rotating existing credentials or
+altering HAPI. Rollback MUST retain database data and affect only journal-owned provider
+changes, without dropping databases/roles, resetting volumes or restarting shared PostgreSQL.
+
+#### Scenario: First run and repeat verification
+
+- **WHEN** provisioning runs initially, resumes after an interruption and runs again
+- **THEN** only the required owned resources and scoped access controls are created once, then verified without duplicate grants or secret rotation
+- **AND** HAPI logical data, role/schema/ACL fingerprints and the original volume remain unchanged.
+
+#### Scenario: Conflict or partial provisioning failure
+
+- **WHEN** a resource name has conflicting ownership/settings/credentials or provisioning fails partially
+- **THEN** migration/public ingress stay disabled and only safely owned provider changes can be withdrawn
+- **AND** existing objects are not overwritten, retained provider data is not deleted and HAPI/shared-server operation is not rolled back.
+
+### Requirement: Separate verified database backups and restores
+
+Each database MUST have a separate private logical backup and verified restore procedure,
+including required ownership/permission and protected role metadata. A database-specific
+restore MUST NOT overwrite the other database. Restoring the shared physical volume or
+cluster-wide roles MUST NOT be treated as provider-only rollback.
+
+#### Scenario: HAPI backup restoration
+
+- **WHEN** the `hapi` backup is fully restored into a guarded empty verification database
+- **THEN** schema, ownership, permissions and synthetic-resource checks match the captured baseline
+- **AND** the live HAPI/Keycloak databases, credentials and existing volume are not reset or overwritten.
+
+#### Scenario: Keycloak backup restoration
+
+- **WHEN** the separate `keycloak` backup is restored into its guarded empty verification target
+- **THEN** realm/user/client/credential/signing-key/ePA-policy checks and provider startup/login tests pass
+- **AND** HAPI logical fingerprints and database access remain unchanged; shared-volume or global-role replay is not used for that restore.
+
+### Requirement: Verified shared-instance capacity and failure behavior
+
+The release SHALL verify combined connection, memory, storage, I/O and recovery capacity,
+bound the new provider pool/role and reserve operational headroom without silently changing
+HAPI settings. Monitoring and maintenance procedures MUST reflect that shared PostgreSQL
+failure affects both applications.
+
+#### Scenario: Mixed workload and recovery budgets
+
+- **WHEN** measured HAPI/provider load, backups/restores and connection-pressure tests are assessed
+- **THEN** bounded provider settings fit the verified server budget with HAPI and operational headroom
+- **AND** insufficient capacity or unacceptable interference blocks release rather than triggering implicit global/HAPI changes.
+
+#### Scenario: Shared outage and targeted provider recovery
+
+- **WHEN** a controlled shared-server outage/recovery and a separate provider-only rollback are rehearsed
+- **THEN** monitoring reports the shared impact and both application/database contracts recover through the documented maintenance procedure
+- **AND** provider-only rollback does not stop/recreate shared PostgreSQL, restore `hapi` or replace/delete the persistent volume.
 
 ### Requirement: Preserve Mission Control presentation
 
