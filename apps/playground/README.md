@@ -128,7 +128,9 @@ but actual acceptance failed because the private Docker bridge could not reach t
 BFF/JWKS endpoints. The [deployment/rollback record](../../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
 documents the removed private frontend and disabled standard mission. Task 9.5 remains
 unchecked; the integration-test link does not establish persistent operator availability.
-The public deployment stays fixture-only.
+The owner's [scoped firewall correction](../../openspec/changes/001-oidc-pkce/firewall-verification.md)
+now restores bridge TCP/HTTP connectivity, but the private frontend has not been redeployed
+and persistent-browser acceptance has not been repeated. The public deployment stays fixture-only.
 
 ## Hosted deployment
 

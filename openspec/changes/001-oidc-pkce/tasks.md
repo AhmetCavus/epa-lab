@@ -207,6 +207,26 @@ are preserved. Existing six ePA integration tests, the public fixture browser ch
 deployed production dependency audit pass. No new network/security fix is included.
 Task 9.5 remains unchecked pending resolution and actual persistent acceptance; no archive.
 
+### Task 9.5 firewall prerequisite — Approved; administrative execution blocked
+
+**2026-11-13; 49/50 unchanged.** The owner approved only the two reviewed bridge-scoped
+UFW input rules, backup, ordering/duplicate inspection, TCP/HTTP verification and scoped
+rollback. Approval is recorded in the existing deployment plan before firewall mutation.
+The [firewall execution record](firewall-verification.md) confirms the bridge/subnet and
+records `sudo: interactive authentication is required`. No complete UFW backup, privileged
+rule inspection or insertion was possible; no rules were added or removed and post-fix
+connectivity is unverified. Docker, deployment, public routing and OAuth/JWT configuration
+remain unchanged. Task 9.5 stays unchecked; no private Playground redeployment or archive.
+
+**Owner-applied follow-up, 2026-11-13:** the owner confirmed the terminal correction was
+done. The administrator audit records the protected backup invocation and exact two approved
+UFW insertion commands. [Read-only evaluation](firewall-verification.md#owner-execution-and-read-only-evaluation--17131715-cet)
+from the existing Keycloak container on `epa-lab_default` now connects to both configured
+host ports and returns **HTTP 200** for BFF readiness and JWKS. The agent inserted/deleted no
+rules and created/reconfigured no containers. Privileged rule ordering, duplicate counts
+and backup integrity remain independently unverified. The private SPA remains withdrawn;
+task **9.5 stays unchecked, 49/50**. No redeployment, authenticated runtime acceptance or archive.
+
 ## Workflow follow-up
 
 - After review explicitly authorizes implementation, use `$openspec-apply-change 001-oidc-pkce` to carry the approved plan into code.

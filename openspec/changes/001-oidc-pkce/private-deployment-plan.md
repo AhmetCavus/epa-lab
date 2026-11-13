@@ -334,3 +334,23 @@ unchecked at **49/50**, and the change is not archived. See the
 [dated deployment and rollback evidence](private-deployment-verification.md) for actual
 commands, verification limits and the remaining private-network prerequisite. The reviewed
 packet above is retained as history; it is not a claim that the runtime is available.
+
+## Separate firewall-only owner approval — 2026-11-13
+
+After read-only diagnosis confirmed UFW drops, the owner explicitly authorized only the
+two reviewed input exceptions on `br-99730318335e`, from `172.24.0.0/16` to
+`192.168.178.131`, TCP ports **3000** and **5555**. This authorization includes a complete
+UFW backup, rule-order/duplicate inspection, connectivity verification and rollback of
+only newly inserted rules if verification fails. It excludes changes to default policies,
+Docker networks/containers, public routing and OAuth/JWT configuration. Do not redeploy
+the private Playground or mark task 9.5 complete under this authorization.
+
+Approval is recorded before any host-firewall mutation. The
+[firewall execution record](firewall-verification.md) preserves the initially blocked
+agent preflight and subsequent owner-applied correction. The administrator audit records
+the backup and exact two approved insertion commands; read-only checks from the existing
+Keycloak container on the affected bridge now connect to both ports and return HTTP 200.
+The agent added/removed no rules and redeployed nothing. Current privileged rule ordering,
+duplicate counts and root-private backup integrity remain independently unverified.
+Task 9.5 remains unchecked at **49/50** pending actual persistent-runtime acceptance;
+this firewall-only authorization does not permit private Playground redeployment.

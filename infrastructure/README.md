@@ -22,7 +22,10 @@ was executed, but the actual Docker bridge runtime could not reach the host BFF/
 The [deployment and targeted rollback record](../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
 documents both failed acceptance attempts, preserved services and the disabled mission.
 [`docker-compose.private.yml`](docker-compose.private.yml) is the approved optional overlay;
-do not reapply it to claim availability before the connectivity prerequisite is resolved.
+the owner's [firewall correction evaluation](../openspec/changes/001-oidc-pkce/firewall-verification.md)
+now verifies bridge TCP/HTTP connectivity to both host targets. No private frontend was
+redeployed and task 9.5 still requires actual persistent-runtime acceptance. The firewall-only
+follow-up does not authorize reapplying this overlay or promoting availability.
 The [earlier runbook](../openspec/changes/001-oidc-pkce/private-runtime-verification.md) preserves
 the original failed remote check and isolated runtime evidence.
 The isolated checks leave existing containers in place. The separately approved deployment
