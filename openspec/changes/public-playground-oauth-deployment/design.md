@@ -1,6 +1,6 @@
 # Design
 
-**Status: DRAFT — proposed decisions for review; no implementation or deployment approval.**
+**Status: DRAFT revision — planning only; no live changes or public deployment.**
 
 ## Context
 
@@ -26,6 +26,8 @@ Owner-confirmed access is individual provisioned demo accounts with no public re
 
 **Non-Goals:** another BFF/Resource Server/Keycloak/PostgreSQL instance, public Vite, distributed sessions,
 SSO-wide logout, public ePA execution, self-service accounts, clinical data or a visual redesign.
+HAPI data migration, importing existing users into the public realm, generic migration tooling
+and unrelated schema/data transformations are excluded.
 One BFF replica retains the accepted process-local lifetimes and restart semantics.
 
 ## Decisions
@@ -69,9 +71,13 @@ Propose realm `playground-public`, with frontend URL `https://auth-playground.ya
 issuer `https://auth-playground.yappai.de/realms/playground-public`. Reuse confidential client
 ID `playground-oidc` in that realm with a new server-held secret, exact callback, S256,
 Code-only/no PAR, RS256 tokens, audience `playground-fhir` and optional permission `demo.fhir.read`.
+Provision this realm from the owned definition with fresh signing keys and client credentials;
+provision new individual synthetic accounts through the existing Keycloak administration
+tools. Existing demo accounts, private standard runs and realm state are not copied into it.
 The definition contains no legacy client, seeded shared user or inherited administrative
-roles. Reuse existing managed-client tooling with explicit realm ownership and idempotent
-conflict detection; never import the whole `epa-demo` fixture into the public realm.
+roles. Reuse managed-client provisioning with explicit realm ownership and repeat/conflict
+checks; do not build a user-data migration or import `epa-demo` as the public realm. Existing
+users needed by ePA stay in their legacy realm during its separate storage transition.
 
 Keep the global private hostname and existing `epa-demo` configuration/credentials unchanged.
 Keycloak documents realm-level frontend URL configuration; proving the pinned version's
@@ -96,9 +102,11 @@ global issuer or start a second provider silently.
 `res-server-db` service/container and its existing `res-server-data` persistent volume.
 This retains the shared-instance decision and resolves B1 through runtime-account separation.
 Add no PostgreSQL container or production database volume, and publish no PostgreSQL port.
-The change stays DRAFT. The owner's planning instruction explicitly replaces the earlier
-freeze of HAPI runtime credentials/permissions with the scoped migration below; logical
-data/schema preservation and administrative recovery remain mandatory. No live change is authorized.
+This DRAFT revision separates fresh setup, an in-place privilege transition and legacy
+provider storage replacement. Preserve the existing HAPI database, data, logical schema and
+volume. HAPI needs reviewed ownership/grant/credential changes, not a data migration. No
+replacement HAPI database, live dump/reload, ETL or data transformation belongs in rollout.
+No live change is authorized by this planning request.
 
 | Consumer       | Database / login role               | Required boundary                                                                                                                       |
 | -------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -165,7 +173,7 @@ canonical host path. The current `pg_isready -U hapi -d hapi` is a server-availa
 not authenticated application SQL; retaining that hint does not justify administrator
 credentials in HAPI. Verify application readiness separately using `hapi_app`.
 
-**Minimum ownership and privilege delta:**
+**Targeted HAPI privilege transition and provider database privileges:**
 
 - Both runtime roles have LOGIN only when ready, NOSUPERUSER/NOCREATEDB/NOCREATEROLE/
   NOREPLICATION/NOBYPASSRLS, finite connection limits and no memberships or SET ROLE path
@@ -173,20 +181,20 @@ credentials in HAPI. Verify application readiness separately using `hapi_app`.
   database ownership nor database-level CREATE; bootstrap retains database/schema ownership.
 - On each application database revoke default PUBLIC CONNECT/TEMPORARY, grant CONNECT to
   its own runtime role, and give that role USAGE/CREATE on the existing `public` schema,
-  removing PUBLIC schema access. This is an explicit journaled HAPI ACL change. Preserve
+  removing PUBLIC schema access. This is an explicit recorded HAPI ACL change. Preserve
   built-in catalog/language access; grant TEMPORARY or additional privileges only if a
-  reproducible migration test proves a specific need and records the reviewed delta.
+  reproducible application-startup or DDL test proves a specific need and records the reviewed delta.
 - Hibernate schema update needs ownership for ALTER/index/constraint operations, beyond
   DML grants. Transfer only the reviewed HAPI-managed tables/sequences in `hapi.public` to
   `hapi_app`; verify dependent indexes, row/array types and owned sequences follow correctly.
   Journal each old/new owner and ACL, and retain table/sequence values and logical definitions.
-  Keycloak creates/owns its own tables/sequences and migration locks as `keycloak_app`.
+  Keycloak creates/owns its own tables/sequences and schema-update locks as `keycloak_app`.
 - Do not use blanket `REASSIGN OWNED BY hapi`, `DROP OWNED`, catalog edits or schema-wide
   grants without an inventory. Exclude databases, tablespaces, system schemas/objects and
   extension members from transfer. Keep extension installation/upgrades administrator-only;
   a new privileged DDL requirement blocks release for review, not a superuser grant to an app.
 
-This retains the existing automatic schema-migration model with only own-schema DDL; the
+This retains existing application-managed schema updates with only own-schema DDL; the
 runtime owners necessarily can alter/drop their own objects. It is not a read-only database
 account or a change to FHIR authorization. Splitting out another migration service/framework
 or granting bootstrap-role membership would add scope or defeat the boundary.
@@ -208,69 +216,53 @@ reload without shared-server restart, and test real logins from actual applicati
 an ACL check or SET ROLE simulation alone is insufficient.
 [Authentication rules](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html)
 
-**Idempotent migration procedure, to implement only after approval/rehearsal:**
+**Small project-specific procedure, after separate live authorization:**
 
-1. Capture container/volume identity, administrator recovery proof, protected secrets, both
-   backup procedures and baseline object/ACL/data/sequence fingerprints. Review the complete
-   dependency inventory and exact allowed owner/ACL/HBA deltas. Serialize administration
-   with a control-database lock and protected journal; abort on unknown objects/clients.
-   Compare data/sequence preservation while writes are frozen; record legitimate later
-   application changes separately from the ownership/ACL migration.
-2. Create only missing journal-owned `hapi_app`/`keycloak_app` roles initially NOLOGIN and
-   database `keycloak` owned by the retained administrator. Database creation is a separate
-   non-transactional step. Conflicting names/owners/credentials fail closed; reruns verify
-   existing managed secrets without rotating them or adopting an unrelated resource.
-3. Freeze HAPI writes, stop only HAPI and drain its old connections. Within a bounded-lock
-   transaction apply the inventoried HAPI object-owner/ACL changes; provision scoped
-   Keycloak schema access separately. Install/validate/reload journaled HBA restrictions,
-   preserve the independent recovery path and enable only ready runtime logins.
-4. Switch only application credential references. Verify real `hapi_app` startup, Hibernate
-   migrations, fixed synthetic read, restart and security regressions before provider work.
-   Migrate Keycloak from its consistent embedded copy as `keycloak_app`; verify production
-   startup, users/keys/client credentials and private ePA/PAR before enabling public ingress.
-5. Prove own-database DDL/DML and two-way cross-database denial using real SCRAM logins;
-   reject bootstrap TCP, privileged role/SET ROLE and system/extension administration.
-   Repeat provisioning and ordinary application recreation: expected metadata is a
-   verified no-op, data/sequence values are preserved and neither app resumes admin use.
-6. On failure keep ingress closed. Abort an uncommitted ownership transaction; otherwise
-   retain committed data/roles and use only the journaled, rehearsed recovery procedure.
-   Undo owner/ACL/HBA deltas only while affected applications are stopped and recovery
-   remains proven. Disable only safe unused journal-owned logins. Never automatically DROP
-   objects/roles/databases, replay global roles, restart/reset PostgreSQL or restore HAPI.
-   After a successful role cutover, application rollback keeps non-superuser credentials;
-   if recovery would require running HAPI as bootstrap again, leave HAPI stopped and block
-   release for a scoped correction rather than silently falling back to administrator use.
+1. Record administrator recovery, one normal HAPI backup, exact object/ACL/HBA baselines and
+   approved deltas. Rehearse on a guarded synthetic database/schema with representative HAPI
+   ownership; schema-only metadata may be reused, but no HAPI dataset copy is required.
+2. Provision/verify only missing owned runtime roles and database `keycloak` using existing
+   PostgreSQL tools. Roles begin NOLOGIN; database creation is a separate non-transactional
+   step. Fail on conflicting resources or credentials; repeat execution verifies a no-op
+   without secret rotation. Record created resources and old/new metadata in a private change record.
+3. Drain/stop only HAPI and apply its exact owner/grant changes transactionally with bounded
+   lock waits. Apply the reviewed private HBA rules, reload, test recovery and switch HAPI to
+   `hapi_app`. Retain data/schema/sequence values; permit no unintended Hibernate schema DDL.
+   Set up Keycloak's own database privileges separately; legacy provider transfer is described below.
+4. Verify actual restricted-role startup, the fixed synthetic read, restart, required
+   own-schema DDL on the synthetic rehearsal target and real cross-database/admin/SET ROLE
+   denial. Compare the approved privilege delta and frozen-boundary data/sequence state;
+   record later legitimate application writes separately.
+5. On failure keep ingress closed and abort uncommitted changes. For committed changes,
+   use the recorded, rehearsed owner/ACL/config reversal while affected applications are
+   stopped; retain data and administrator recovery. Successful privilege changes stay in
+   place during provider/public rollback. No automatic superuser fallback, object/database
+   deletion, shared-server restart or HAPI data restore is a privilege-transition rollback.
 
-**Separate backup/restore procedures (templates to implement and verify, not run here):**
+Use short reviewed SQL/CLI procedures and existing operations structure. A generic migration
+framework, resumable state machine, schema-version engine or bulk data conversion is unnecessary.
 
-| Database   | Protected backup                                                                                                                                                                                      | Verified restore and preservation checks                                                                                                                                                                                                   |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `hapi`     | Separate PostgreSQL-16 `pg_dump --format=custom --dbname=hapi --file=<private-hapi-dump>` before and after runtime-role migration, retaining ownership/ACLs and schema/fixture/sequence fingerprints. | Restore the selected baseline alone into a guarded empty verification database; compare its versioned owners/grants, logical schema, sequence values and synthetic read. Never overwrite live `hapi` during provider migration/recovery.   |
-| `keycloak` | Separate custom-format dump of `keycloak` during a documented consistent provider backup window, with realm/user/client/key preservation fingerprints.                                                | Restore its own dump into a separately guarded empty verification database; verify credentials/key/policy fingerprints, provider startup and real ePA/public login. Confirm live HAPI metadata/data and service identity remain unchanged. |
+**Separate backup/recovery assurance, not HAPI migration:**
 
-Use private Unix-socket/Docker-network connections and mode-0600 secret files, not public
-ports or passwords in arguments. Store artifacts/checksums off the shared data volume under
-mode-0700/0600 protection. Retain protected cluster role/authentication metadata separately
-because per-database dumps do not contain roles; never replay global role changes onto the
-live cluster during a single-database restore. Do not discard ownership/ACLs to obtain a
-passing restore. Validate archive structure and a full restore, not just dump command exit.
+| Database   | Protected backup                                                                                                                                                 | Restore verification                                                                                                                                              |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hapi`     | Normal PostgreSQL-16 `pg_dump --format=custom --dbname=hapi --file=<private-hapi-dump>`, retaining ownership/ACLs and schema/fixture/sequence recovery metadata. | Verify an ordinary recovery restore into a guarded empty target. Live HAPI keeps its existing database/data throughout privilege transition and provider rollout. |
+| `keycloak` | Separate custom-format dump after legacy preservation and fresh public setup; protect realm/user/client/key material.                                            | Verify its own guarded restore, restricted startup, legacy ePA preservation and newly provisioned public accounts; leave live HAPI untouched.                     |
+
+Use private connections and mode-0600 secret files, never passwords in arguments or public
+ports. Store backups/checksums off the shared volume under 0700/0600 protection. Retain
+protected role/authentication metadata separately; per-database dumps omit roles. Restore
+ownership/ACLs faithfully, with explicit rehearsal-role mappings where needed; never replay
+cluster-wide roles onto the live server for a single-database recovery.
 [PostgreSQL logical backups](https://www.postgresql.org/docs/16/backup-dump.html)
 
-Restore rehearsals use approved temporary verification databases on the same instance, with
-strict target-name/ownership guards, scoped private test access and measured headroom; they
-add no second PostgreSQL container. Use journal-owned rehearsal roles with the same restricted
-attributes and explicit source-to-rehearsal owner/ACL mappings; do not widen live application
-roles' database access. Compare unmodified restored metadata first, then any mapped migration
-delta against the journal. Restore both pre- and post-migration HAPI ownership states and
-rehearse Hibernate startup against the restored schema and fresh synthetic schema, including
-representative table/sequence/index/constraint DDL. Verify Keycloak migrations and real
-HAPI 200/401/403 plus ePA/PAR using isolated application copies, not live write tests.
-Use `pg_restore --exit-on-error --dbname=<guarded-empty-verification-db> <private-dump>`
-only after those target guards pass. Do not use `--clean`/`--create` against live databases or
-delete retained data. A live database-recovery cutover requires its own maintenance procedure,
-service-specific write freeze and explicit authorization; it is not provisioning rollback.
-Physical volume/PITR recovery affects the cluster and both databases, so it is not a
-Keycloak-only restore or rollback mechanism.
+Use guarded verification databases on the existing instance with measured headroom; add no
+PostgreSQL container or broader live runtime access. One ordinary restore check per database
+remains an operational gate, independent of the synthetic privilege rehearsal; no pre/post
+data-migration restore matrix is required. Run `pg_restore --exit-on-error
+--dbname=<guarded-empty-verification-db> <private-dump>` only after target guards pass.
+Do not clean/create over live databases or reset the shared volume. Live data recovery is a
+separately authorized operation; physical recovery affects both databases, not just Keycloak.
 [Cluster recovery scope](https://www.postgresql.org/docs/16/continuous-archiving.html)
 
 **Shared capacity/failure checks:** current server limit is 100 connections, including three
@@ -285,23 +277,55 @@ outage/recovery in controlled maintenance; both applications share process/stora
 failures. Monitor both database workloads and actual provider/FHIR operations, not only a
 process health flag. Do not claim independent storage availability.
 
-Use the existing pinned Keycloak image in production `start` mode, with explicit hostname,
-proxy handling, health and supported database configuration. Preserve the old embedded-data
-volume intact. No public ingress while `start-dev`/embedded development storage remains.
-Narrow the existing port-5555 binding to its current private LAN address, preserving the
-literal ePA issuer and private administration; publish no management or database port.
-PostgreSQL is supported by the provider. [Production guide](https://www.keycloak.org/server/configuration-production),
+**Separate legacy Keycloak production-storage transition:** read-only inspection confirms
+configured image `quay.io/keycloak/keycloak:26.8.0`, `start-dev`, `KC_DB=dev-file` and volume
+`epa-auth-lab_keycloak-data` mounted at `/opt/keycloak/data`. H2 files `keycloakdb.mv.db` and
+`keycloakdb.trace.db` are present. No database was opened, copied or exported in this review.
+Changing the vendor setting alone will not transfer the existing legacy provider state.
+
+Use the same pinned version in production `start` mode with PostgreSQL, explicit hostname,
+proxy handling and health. Do not combine this storage change with a provider version upgrade.
+Preserve the original embedded-data volume. No public ingress while development startup/storage remains.
+Narrow port 5555 to its existing private LAN address without changing the literal ePA issuer;
+keep administration/management and PostgreSQL private.
+[Production guide](https://www.keycloak.org/server/configuration-production),
 [database guide](https://www.keycloak.org/server/db)
 
-Rehearse migration from a consistent, protected copy: offline all-realm/user export into
-the newly provisioned, verified-empty `keycloak` database on the shared instance, without
-overwriting the live realm or touching `hapi`. Compare IDs, users/credential
-fingerprints, client secrets, keys, roles and ePA policies; prove actual legacy login/PAR.
-Exports omit sessions and other state and require stopped nodes for consistency. Therefore
-include a maintenance/write-freeze window, fresh-login boundary and old code/refresh/session
-rejection tests; do not promise uninterrupted SSO or treat a realm export as a complete
-database backup. Failure to preserve required security state blocks cutover.
-[Import/export limitations](https://www.keycloak.org/server/importExport)
+The minimal proposed transfer uses Keycloak's own offline CLI, not table-by-table conversion:
+
+1. In a separately authorized provider maintenance window stop Keycloak, take a consistent,
+   protected copy/backup of the dev-file volume and retain it for rollback. Export from a
+   disposable working copy using the pinned image, without public ports or writes to the
+   original volume. A raw copy of the running H2 file is not a consistent backup.
+2. Use full CLI `kc.sh export --dir <private-export> --users different_files` for existing
+   legacy realms, including `epa-demo` and administrative recovery state. Do not use the
+   checked-in fixture or Admin Console partial export as a preservation source. Keep exports,
+   credentials and key material private (0700 directories / 0600 files); do not print them.
+3. Import once into the verified-empty private `keycloak` database with `keycloak_app`, using
+   `kc.sh import --dir <private-export> --override false`. Reject an unexpected/non-empty
+   target before import; a skipped conflicting realm is not a successful transfer. Rehearse
+   these commands on isolated copies before cutover; keep legacy writes frozen during cutover.
+4. Prove the original ePA realm/user/client IDs, user credentials, client secrets, roles,
+   issuer and PAR policy are preserved. Compare key-provider/private-material preservation
+   privately without logging values, plus active/retained key IDs and public-key
+   fingerprints, then verify newly issued ePA token signatures with the pre-transition
+   public keys. Fingerprint equality alone does not prove the private signing key survived.
+   Run real ePA header/browser/PAR and PAR-bypass tests. If the pinned version cannot preserve
+   this state, stop; do not regenerate legacy keys/users or weaken validation to proceed.
+5. Once private compatibility passes, create `playground-public` and its new accounts from
+   scratch as Decision 2 specifies. No existing demo-user transfer is required for public setup.
+
+This is a proposed, unverified legacy storage procedure. Keycloak documents consistent
+offline CLI transfer and the inadequacy of masked partial exports; pinned-version key and
+credential preservation still require rehearsal. Sessions, revocation state and events are
+not fully transferred: require fresh login and reject old codes/refresh sessions rather than
+claiming SSO continuity. Retain a consistent original-volume backup as well as the export;
+after PostgreSQL becomes authoritative use its separate verified backups.
+[CLI transfer and limitations](https://www.keycloak.org/server/importExport)
+
+A consistent legacy source copy is a prerequisite for isolated rehearsal. If none is
+available, obtain a separately approved maintenance/backup window; do not export against
+the live H2 store, substitute fixtures or claim legacy preservation from fresh-account tests.
 
 ### 4. Preserve profile binding and constrain demo access
 
@@ -386,13 +410,13 @@ update only public demo availability, rate-limit/recovery wording and existing m
 
 | Risk                                                                       | Mitigation                                                                                                                                                                                   |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Provider production migration affects ePA                                  | Isolated rehearsal, exact issuer/key/user/policy comparisons, real ePA tests, consistent backup, bounded maintenance and tested recovery before ingress.                                     |
+| Legacy provider storage transition affects ePA                             | Pinned-version offline CLI rehearsal, actual signing with preserved keys, real ePA/PAR tests, consistent source backup and recovery before lifting the write freeze.                         |
 | Shared edge trust or logs leak credentials                                 | Project-only peer restrictions, overwritten headers, negative spoof/bypass tests and actual secret-sentinel failure-path scans; no global proxy loosening.                                   |
 | Public abuse exhausts local stores                                         | Verified-IP and aggregate/in-flight limits, short tokens, owner-controlled accounts, unchanged storage bounds and independent cleanup. One BFF replica; restart requires fresh login.        |
 | Host-only recreation drops HAPI settings                                   | Canonical host/Yoster manifest and ordinary lifecycle acceptance, immutable image/source records and preflight drift detection.                                                              |
 | External HTTPS authority is unavailable from HAPI                          | Test fresh JWKS acquisition and deny unknown/invalid credentials; block release on transport failure rather than weakening trust.                                                            |
 | Shared database process, disk or maintenance failure affects both services | Bound application pools/runtime roles and measure combined capacity, backup space and contention; rehearse outage/recovery and monitor both workloads. No independent-availability claim.    |
-| HAPI bootstrap credential or ownership migration defeats isolation         | Move applications to `hapi_app`/`keycloak_app`, remove admin secret reuse, transfer only inventoried app objects and prove recovery/cross-database denial. Own-schema DDL remains necessary. |
+| HAPI bootstrap credential or privilege change defeats isolation            | Move applications to `hapi_app`/`keycloak_app`, remove admin secret reuse, transfer only inventoried app objects and prove recovery/cross-database denial. Own-schema DDL remains necessary. |
 | Cluster restore rolls back unrelated database changes                      | Use separately verified logical dumps and targeted empty recovery databases; never restore the shared physical volume as a provider-only rollback.                                           |
 
 ## Known Implementation Blockers
@@ -403,42 +427,45 @@ existing bootstrap administrator used only for administration. Catalog inspectio
 OID 10 and the object/credential dependencies above. This resolves the earlier contradictory
 requirement to retain HAPI's runtime credential/permissions while claiming isolation; it
 does not demote the bootstrap role or accept application superuser access as an exception.
-The live application still uses that administrator. Provisioning, exact ownership/grant/HBA
+The live application still uses that administrator. The targeted privilege transition, exact ownership/grant/HBA
 deltas, real Hibernate/Keycloak operation, denied cross-database logins and recovery must all
 pass tasks 2.1/5.1/5.2 before task 6.1 may release. The scoped planning update is not evidence
 of a completed security remediation or implementation/deployment approval.
 
-Migration preservation, independent restore rehearsals, shared capacity/failure tests and
+Legacy provider preservation, ordinary backup/recovery checks, shared capacity/failure tests and
 the existing public-ingress/operational gates remain unverified implementation work. No
-new database, role, rule, backup, container or volume was created during this update; only
-catalog metadata was read inside `BEGIN READ ONLY`.
+new database, role, rule, backup, container or volume was created during this revision.
+Earlier B1 catalog inspection used `BEGIN READ ONLY`; the new provider check read only
+container/storage metadata. Existing verification history is retained.
 
-## Migration Plan
+## Release Plan
 
 1. After explicit approval of this change, align active authorization/architecture/UX/hosting
    documentation without rewriting change 001's accepted private history. Record the exact
    scope and the revised shared-instance/separate-database/runtime-account decision, including
    the exact approved HAPI ownership/ACL/credential delta resolving B1. Settle operational values and independently close
    the privileged UFW order/duplicate/default-policy/backup-integrity finding.
-2. Build and stage versioned artifacts; rehearse runtime-account/ownership migration and its
-   rollback, idempotent database provisioning, both logical restores, mixed-load/shared-outage
-   behavior, provider migration and public realm/proxy compatibility using guarded verification
-   databases/roles and synthetic users. Prove operator recovery and actual least-privilege
+2. Build and stage versioned artifacts; rehearse the targeted HAPI privilege transition on
+   synthetic schemas, ordinary per-database recovery and legacy Keycloak offline transfer
+   from a consistent source copy. Create the public realm/users fresh. Test mixed-load/shared-outage
+   behavior, repeat/conflict checks and public realm/proxy compatibility in isolated targets.
+   Prove operator recovery and actual least-privilege
    application startup, both directions of database denial and private HAPI/ePA regressions.
    Validate fresh recursive checkout, production package/Java/image advisories and unchanged
    ePA/PAR regressions. Unrelated development findings remain separately recorded.
 3. Produce the concrete release packet: commits/image digests, merged Compose/Yoster and
    host-scoped proxy/Tunnel diffs, exact peer addresses, finite limits, monitoring thresholds,
-   separate protected mode-0700/0600 pre/post-role-migration database backups, role/authentication
-   metadata, dependency/owner/ACL/secret-reference manifest and provisioning journal with tested
+   separate protected mode-0700/0600 database backups and legacy dev-file backup/export,
+   role/authentication metadata and a short owner/ACL/secret-reference change record with tested
    restore/rollback commands. Save the **current available fixture
    image**; the older historical fixture image may have been pruned. Publication requires
    explicit owner authorization; planning/CLI readiness alone grants none.
 4. In the authorized maintenance window verify administrator recovery/backups, drain and
-   stop HAPI only, then apply the rehearsed `hapi_app` credential/owner/ACL/HBA migration.
-   Verify HAPI as a non-superuser before proceeding. Freeze provider writes, snapshot/export
-   consistently, verify/create only journal-owned `keycloak`/`keycloak_app` resources on the
-   existing running PostgreSQL instance, and migrate into the verified-empty provider database.
+   stop HAPI only, then apply the rehearsed `hapi_app` privilege/credential transition in place.
+   Keep its current database/data; no dump/reload or data conversion occurs. Verify restricted
+   HAPI operation, then perform the separately approved legacy Keycloak offline storage transfer
+   into verified-empty `keycloak` using `keycloak_app` on the existing PostgreSQL instance.
+   Keep legacy writes frozen until preservation passes, then provision the public realm/accounts fresh.
    Keep the original Keycloak volume, HAPI data/logical schema, bootstrap identity/password
    and system ownership intact; do not stop, recreate or reset PostgreSQL. Verify private ePA before
    public ingress. Keycloak depends on existing PostgreSQL readiness; Nginx's provider route
@@ -462,14 +489,14 @@ binding only if its prerequisites pass. Keep a successfully migrated provider on
 data. If provider migration fails before the maintenance write freeze is lifted, restore
 only the old provider configuration and intact original Keycloak volume, with public ingress
 closed. Retain the failed `keycloak` database for diagnosis and disable only newly owned
-login/config deltas when safe. Retain a successful HAPI runtime-role migration during
-provider/public rollback; use its separate journaled recovery if that prerequisite fails,
+login/config deltas when safe. Retain a successful HAPI privilege transition during
+provider/public rollback; use its recorded owner/ACL/config reversal if that prerequisite fails,
 without automatically restoring administrator application credentials. Do not restart/restore
 shared PostgreSQL, replay cluster-wide roles or overwrite HAPI data in either rollback. Never revert a writable provider to a stale
 H2 snapshot. A later provider data restore uses its separate verified logical procedure;
 HAPI recovery is a different authorized operation. Exercise both rollback stages and verify
 fixture-only public behavior, private ePA, preserved HAPI logical data/schema/sequence values,
-the expected versioned owner/ACL state and the same shared container/volume afterward. A
+the approved owner/ACL state and the same shared container/volume afterward. A
 recovery path that requires application superuser access blocks release.
 
 ## Open Questions

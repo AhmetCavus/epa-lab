@@ -74,7 +74,7 @@ MUST remain enforced.
 
 ### Requirement: Independently verified ePA compatibility
 
-The release MUST preserve the existing private ePA issuer, users, client identity, credentials,
+The release MUST preserve the existing private ePA issuer, users, signing keys, client identity, credentials,
 required-PAR policy and legacy browser/header contracts. Public execution SHALL NOT depend
 on an unverified change to those settings or expose the conceptual ePA mission as runnable.
 
@@ -91,10 +91,17 @@ on an unverified change to those settings or expose the conceptual ePA mission a
 
 ### Requirement: Controlled individual demo access
 
-Public authentication SHALL be limited to individual demo accounts provisioned by the owner.
+The public realm SHALL be provisioned from scratch with new individual synthetic demo accounts
+provisioned by the owner. Public setup MUST NOT require importing existing demo users or private-realm data.
 Public registration, shared published credentials and administrative privileges MUST be
 absent. Existing issued demo access SHALL expire within five minutes; disabling an account
 MUST block new authentication without claiming immediate revocation of issued bearer tokens.
+
+#### Scenario: Fresh public setup independent of existing demo data
+
+- **WHEN** the public realm and its accounts are provisioned initially and the procedure is repeated
+- **THEN** its owned definition, fresh realm keys/client credentials and new synthetic accounts support the standard mission without copied legacy/demo users or history
+- **AND** repetition verifies the existing owned configuration without rotating credentials, resetting users or adopting a conflicting realm; legacy ePA state remains separate and intact.
 
 #### Scenario: Eligible demo user
 
@@ -197,16 +204,16 @@ session and owned-history responses MUST NOT be shared-cached.
 ### Requirement: Reproducible production provider and HAPI lifecycle
 
 Public ingress MUST remain disabled until the provider uses supported production startup
-and verified migration into database `keycloak` on the existing private PostgreSQL instance.
-The canonical host lifecycle SHALL retain HAPI trust, resource limits and
-deliberate conflict-safe synthetic initialization without resetting existing databases or
-relying on an easily omitted overlay.
+and verified legacy-state transfer into private database `keycloak`. Public realm/accounts
+SHALL be created fresh. HAPI SHALL retain its existing database/data through a targeted
+privilege transition, without data migration or transformation. The canonical lifecycle
+MUST retain HAPI trust, limits and conflict-safe initialization without an optional overlay.
 
-#### Scenario: Provider migration and failure
+#### Scenario: Legacy provider storage transition and failure
 
-- **WHEN** a consistent private-data snapshot is rehearsed and then migrated during the approved maintenance window
-- **THEN** existing users/credentials, realm/client identities, signing-key evidence and ePA policy are preserved and verified before public ingress
-- **AND** failure leaves ingress closed and permits tested recovery without volume deletion; session continuity is not falsely promised.
+- **WHEN** the pinned provider version's offline CLI export/import is rehearsed from a consistent legacy dev-file copy and later applied in the separately approved maintenance window
+- **THEN** the ePA realm/users/credentials/client identities, signing keys, issuer and PAR policies remain intact, administrative recovery works, and new ePA signatures verify against the original public keys
+- **AND** masked/partial export, copying running H2 files, overwritten target realms or unproven key preservation cannot pass; failure keeps ingress closed and permits tested original-volume recovery before writes resume, without promising session continuity.
 
 #### Scenario: Ordinary host restart and fresh setup
 
@@ -223,17 +230,17 @@ remain private.
 
 #### Scenario: Shared-instance database separation
 
-- **WHEN** the production configuration is verified before and after migration
+- **WHEN** the production configuration is verified before and after the storage/privilege transitions
 - **THEN** the same existing PostgreSQL container/volume serves both named databases through private endpoints
 - **AND** HAPI retains its database, logical schema and data, uses `hapi_app`, and Keycloak uses `keycloak_app` for `keycloak`, with separate runtime credentials and only reviewed ownership/grant changes.
 
 ### Requirement: Least-privileged application database access
 
 HAPI and Keycloak SHALL use non-superuser accounts `hapi_app` and `keycloak_app`, limited to
-their own schema/data/migration needs. Runtime access to other databases and administrative
+their own schema/runtime needs. Runtime access to other databases and administrative
 privileges MUST be denied. Existing bootstrap administrator `hapi` MUST remain available
 only for administration/recovery, absent from applications. HAPI logical data/schema and
-the persistent volume MUST be preserved during the scoped credential/ownership/grant migration.
+the persistent volume MUST be preserved during the targeted privilege/credential transition.
 
 #### Scenario: Restricted runtime credentials
 
@@ -243,15 +250,15 @@ the persistent volume MUST be preserved during the scoped credential/ownership/g
 
 #### Scenario: Bootstrap administrator separation and recovery
 
-- **WHEN** the migrated runtime and operator recovery path are verified, including ordinary application recreation
+- **WHEN** the restricted runtime and operator recovery path are verified, including ordinary application recreation
 - **THEN** bootstrap `hapi` remains OID 10 with its administrator credential and system/database ownership intact, and independent operator recovery succeeds
 - **AND** no application receives or uses the bootstrap credential, bootstrap TCP access is denied, and neither restart nor recovery silently restores administrator application access.
 
-#### Scenario: Required schema evolution without administrative access
+#### Scenario: Targeted privilege transition without HAPI data migration
 
-- **WHEN** the real HAPI and Keycloak start and migrate restored and fresh synthetic schemas using restricted rehearsal equivalents of their runtime accounts
-- **THEN** required table, sequence, index and constraint operations succeed, including changes to inventoried existing HAPI objects
-- **AND** only the reviewed application ownership/ACL delta occurs; system objects, extension ownership, logical data and sequence state are preserved at the write-frozen migration boundary, while unauthorized administrative operations fail.
+- **WHEN** restricted roles are rehearsed on representative synthetic schemas and the approved HAPI privilege transition is later applied in place
+- **THEN** necessary table/sequence/index/constraint privileges and application startup work, while live HAPI retains its original database, data, logical schema and sequence state at the frozen transition boundary
+- **AND** the privilege transition performs only approved owner/grant/credential/access changes, without HAPI dataset copy, replacement database, ETL or schema conversion; system/extension ownership and administrative boundaries stay intact and ordinary backup tests remain separate.
 
 #### Scenario: Default grants and authentication-rule bypass attempts
 
@@ -262,27 +269,27 @@ the persistent volume MUST be preserved during the scoped credential/ownership/g
 ### Requirement: Idempotent database provisioning and safe rollback
 
 Provisioning SHALL create only missing owned runtime roles and database `keycloak`, and
-apply only reviewed, journaled application ownership/grant/access changes. Reruns MUST
+apply only reviewed, recorded application ownership/grant/access changes. Reruns MUST
 verify a no-op without rotating credentials. Conflicts MUST fail closed. Rollback MUST
 preserve data and administrative recovery, without dropping objects/roles/databases,
 resetting volumes, restarting shared PostgreSQL or restoring application superuser use.
 
 #### Scenario: First run and repeat verification
 
-- **WHEN** provisioning runs initially, resumes after an interruption and runs again
+- **WHEN** provisioning runs initially, is rechecked after an interruption and runs again
 - **THEN** only the required owned resources and scoped access controls are created once, then verified without duplicate grants or secret rotation
-- **AND** HAPI logical data/schema/sequence values are preserved by the migration, owner/ACL states match the journaled stage, and the original volume and administrator identity remain intact.
+- **AND** HAPI logical data/schema/sequence values remain intact, owner/ACL states match the recorded privilege changes, and no data-migration or generic resumable migration framework is required.
 
 #### Scenario: Conflict or partial provisioning failure
 
 - **WHEN** a resource name has conflicting ownership/settings/credentials or provisioning fails partially
-- **THEN** public ingress stays disabled and only safely owned changes can be withdrawn using the verified journal
+- **THEN** public ingress stays disabled and only safely owned changes can be withdrawn using the reviewed change record
 - **AND** unrelated objects/credentials are untouched, retained data is not deleted and shared PostgreSQL is not reset, recreated or restored.
 
-#### Scenario: Runtime-role migration recovery
+#### Scenario: Privilege transition recovery
 
 - **WHEN** an ownership/grant or application credential transition fails, or a later provider/public release is withdrawn
-- **THEN** transactional or journaled recovery retains data and independently verified administrator access; a successful runtime-role transition remains in place during provider/public rollback
+- **THEN** transactional or recorded owner/ACL/config reversal retains data and independently verified administrator access; a successful privilege transition remains in place during provider/public rollback
 - **AND** affected applications stay stopped if recovery would require bootstrap credentials; restoring application superuser use is never an automatic fallback and an unverified recovery path blocks release.
 
 ### Requirement: Separate verified database backups and restores
@@ -295,8 +302,8 @@ cluster-wide roles MUST NOT be treated as provider-only rollback.
 #### Scenario: HAPI backup restoration
 
 - **WHEN** the `hapi` backup is fully restored into a guarded empty verification database
-- **THEN** logical schema, ownership, permissions, sequence values and synthetic-resource checks match the selected pre/post-role-migration baseline and any explicit rehearsal-role mapping
-- **AND** the live HAPI/Keycloak databases, credentials and existing volume are not reset or overwritten.
+- **THEN** ordinary recovery checks match the backup's schema/owner/grant/sequence baseline and any explicit rehearsal-role mapping, including synthetic-resource reads
+- **AND** this backup assurance does not require a HAPI data-migration or pre/post migration restore matrix; live HAPI/Keycloak data, credentials and the existing volume are not reset or overwritten.
 
 #### Scenario: Keycloak backup restoration
 
