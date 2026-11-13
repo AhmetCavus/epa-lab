@@ -175,6 +175,23 @@ No existing deployment,
 volume, policy, dependency, application source or public route is changed. Task 9.5 stays
 unchecked; no archive.
 
+### Task 9.5 follow-up — Remote verified; one private deployment plan proposed
+
+**2026-11-13; 49/50 unchanged.** A fresh recursive checkout from the configured GitHub
+remotes resolves parent `3a034d9fd6095b191e6b72e821f42e1d89c96d94` and canonical HAPI
+`e65bafc279f02f44b19b47ca7326015886047a63`, both clean, without local URL substitution or
+object alternates. The Git reproducibility blocker is **resolved**.
+
+The [single consolidated plan](private-deployment-plan.md) proposes a persistent private
+SPA entry on `192.168.178.131:5173`, the existing BFF on port 3000 with unchanged ePA/PAR
+settings, the exact standard-client callback-field update, HAPI's trusted JWKS correction,
+and the specified reviewed image rollout. Approval explicitly includes only the guarded
+fictional `Basic/playground-demo` initialization in the retained private database.
+The packaging/configuration drafts validate without starting services; persistent browser
+acceptance remains future work. No application/packaging file, root environment, existing
+container, image tag, database, Keycloak configuration or public route is changed here.
+Task 9.5 remains unchecked pending owner deployment approval and actual acceptance; no archive.
+
 ## Workflow follow-up
 
 - After review explicitly authorizes implementation, use `$openspec-apply-change 001-oidc-pkce` to carry the approved plan into code.

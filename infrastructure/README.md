@@ -16,8 +16,11 @@ For the separate standard client in the existing Keycloak realm, see the
 separately in temporary loopback test processes. The [HAPI policy](../services/res-server/SECURITY.md)
 validates Access Tokens and allows only the synthetic read. The BFF's fixed resource route
 and owned safe event API and private SPA journey are verified through task 9.4. Final
-operator availability remains blocked under task 9.5; the [dated runbook](../openspec/changes/001-oidc-pkce/private-runtime-verification.md)
-records remote checkout, explicit JWKS setup, actual lifecycle evidence and remaining approvals.
+operator availability awaits approval under task 9.5. Remote recursive checkout now passes;
+the [consolidated private deployment plan](../openspec/changes/001-oidc-pkce/private-deployment-plan.md)
+records the exact persistent binding, JWKS correction, reviewed image rollout and rollback.
+The [earlier runbook](../openspec/changes/001-oidc-pkce/private-runtime-verification.md) preserves
+the original failed remote check and isolated runtime evidence.
 No existing container is replaced by those checks and the public Playground stays fixture-only.
 
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an

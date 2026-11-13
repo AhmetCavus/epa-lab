@@ -122,8 +122,9 @@ two tests report an explicit skip. They use Chrome's own Settings zoom API in di
 regular profiles, verify readback/DPR/reflow, and clean up the profiles. Viewport scaling
 and CSS zoom are not substitutes. See the dated [task 8 evidence](../../openspec/changes/001-oidc-pkce/spa-runtime-verification.md)
 for actual checks, screenshots and limitations. Tasks 9.1–9.4 now pass, including the real
-private browser journey. Task 9.5 remains blocked on remote HAPI publication and the
-persistent private runtime handoff; see the [dated runbook and blockers](../../openspec/changes/001-oidc-pkce/private-runtime-verification.md).
+private browser journey. The remote HAPI recursive checkout now passes. Task 9.5 awaits owner
+approval of the proposed persistent private port-5173 binding; see the
+[consolidated deployment plan](../../openspec/changes/001-oidc-pkce/private-deployment-plan.md).
 The existing integration-test link is not a persistent operator runtime. The public deployment
 stays fixture-only.
 
