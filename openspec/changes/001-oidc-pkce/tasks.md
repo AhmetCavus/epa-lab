@@ -121,10 +121,41 @@ Dependency: all preceding implementation groups. This group checks the combined 
 - [x] 9.1 Exercise the real browser journey across SPA, auth-client, existing Keycloak, and secured HAPI from a reproducible local checkout. Verify standard login works without a PAR call, returns to Workspace, restores the same run on refresh, permits the synthetic read, and local logout makes the next BFF request fail while eligible history stays inspectable; record only sanitized evidence.
 - [x] 9.2 Run the cross-component negative matrix: cookie/state loss, expiry/replay/concurrency, client-profile substitution, provider denial, failed PKCE/token validation, restart recovery, direct HAPI 401/403 cases, cross-browser event access, capacity limits, and logout CSRF. Verify actual observable results against both specs and record failures/skips instead of inferring coverage from successful login.
 - [x] 9.3 Re-run real ePA header/PAR and existing browser-demo regressions beside the new standard client, plus the unchanged public fixture configuration. Verify the ePA PAR requirement/contracts, legacy `/session`, conceptual ePA UI, and independent standard behavior all survive; record commands and results without adding the deferred comparison UI.
-- [ ] 9.4 Run the applicable auth-client typecheck/build/test/integration checks, HAPI Gradle security/integration/build checks, SPA typecheck/build/browser/architecture/localization/format checks, and strict OpenSpec validation. Verify the final scenario-to-evidence map covers the complete accepted scope, logs/artifacts contain no secrets or raw callback capture, and limitations/unavailable checks are explicit.
+- [x] 9.4 Run the applicable auth-client typecheck/build/test/integration checks, HAPI Gradle security/integration/build checks, SPA typecheck/build/browser/architecture/localization/format checks, and strict OpenSpec validation. Verify the final scenario-to-evidence map covers the complete accepted scope, logs/artifacts contain no secrets or raw callback capture, and limitations/unavailable checks are explicit.
 - [ ] 9.5 Enable runnable availability only for the verified local runtime binding and deliver its dated verification record and rollback instructions. Verify fixture-only builds/public deployment remain honest and unchanged, no public auth ingress was introduced, and implementation/verification status advances only with actual evidence and required owner review.
 
-Acceptance evidence: [Integrated private acceptance](integrated-acceptance-verification.md). Tasks 9.1–9.3 pass with the fresh local real browser journey, 44 real NestJS/Keycloak/HAPI integration tests, 107 direct Keycloak/HAPI assertions, 122 focused Gradle tests plus 62 real servlet/JPA cases, 91 SPA tests and the actual public fixture-only browser check. Backend Zod is patched from 4.6.5 to 4.6.6. Task 9.4 remains unchecked because the production dependency audit still reports two high and one moderate findings requiring changes beyond the authorized Zod-only update. Task 9.5 is not executed; runnable availability and public routing remain unchanged.
+Initial acceptance evidence (before the approved remediation): [Integrated private acceptance](integrated-acceptance-verification.md). Tasks 9.1–9.3 pass with the fresh local real browser journey, 44 real NestJS/Keycloak/HAPI integration tests, 107 direct Keycloak/HAPI assertions, 122 focused Gradle tests plus 62 real servlet/JPA cases, 91 SPA tests and the actual public fixture-only browser check. Backend Zod is patched from 4.6.5 to 4.6.6. At that stage, task 9.4 remained unchecked because the production dependency audit reported two high and one moderate findings requiring changes beyond the authorized Zod-only update. Task 9.5 is not executed; runnable availability and public routing remain unchanged.
+
+### Task 9.4 remediation scope
+
+**Proposed and owner-approved 2026-11-13; approval recorded before implementation.** The
+[limited scope extension](proposal.md#task-94-security-remediation) and
+[resolution plan](design.md#task-94-dependency-remediation-plan) apply only to the existing
+task 9.4, with no new task ID or change to any acceptance criterion. Approval recording
+changed no checkbox; only verified implementation completes task 9.4.
+
+The owner has approved this scope and explicitly requested apply. Resolve transitive production dependencies
+to compatible patched versions: `body-parser >=2.4.0`, `multer >=2.5.0`, and `qs >=6.16.1`.
+Prefer targeted resolution/lockfile changes and a justified compatible override where
+needed. Preserve NestJS and unrelated pins unless a compatible patched resolution of these
+three targets demonstrably requires a minimal supporting change; document its necessity
+and exact delta. Broader or incompatible changes remain blockers.
+
+Verify the actual production dependency graph, frozen installation and production audit,
+rerun the existing task 9.4 acceptance checks, and record fresh evidence without editing
+historical reports or waiving other findings/limitations. Approval was recorded at **48/50**,
+with task 9.4 unchecked pending implementation and its full original acceptance.
+Task 9.5 remains unchecked and outside this extension. Approval is authorization, not evidence
+that remediation or verification has passed.
+
+**Subsequent verification, 2026-11-13:** the [remediation evidence](dependency-remediation-verification.md)
+records task **9.4 complete**, **49/50** overall. Only `body-parser` 2.4.0, `multer` 2.5.0 and
+`qs` 6.16.1 change version; no NestJS or supporting dependency upgrade is needed. Production
+audit, the existing quality/security/regression checks and real private integration pass.
+The record retains development-tool findings, the remote HAPI checkout limitation, the
+initial public-check retry and the deployed HAPI's unchanged missing-JWKS configuration and
+automatic lifecycle difference. Task **9.5 remains unchecked and unstarted**; no existing
+deployment or public route is changed.
 
 ## Workflow follow-up
 

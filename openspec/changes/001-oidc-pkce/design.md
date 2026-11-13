@@ -2,6 +2,9 @@
 
 **Status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
+**Task 9.4 scope extension:** Approved on 2026-11-13; the
+[limited remediation proposal](proposal.md#task-94-security-remediation) records the owner decision.
+
 **Planning revision:** 2026-11-11
 
 The project owner accepted this design, the reconciled UX/visual baseline and revised specifications on 2026-11-11, authorizing local/private implementation of tasks 2–9. See the [owner approval record](readiness-review.md#consolidated-owner-approval-summary) and [proposal.md](proposal.md) for scope. Recording this decision starts no implementation; public authentication deployment remains excluded.
@@ -213,6 +216,52 @@ Readiness review checks the cancelled-before-exchange, logout-during-in-flight-c
 7. Run the complete local browser journey, direct Resource Server negative cases, ePA regressions, and secret-leak checks. Record actual evidence before enabling runnable availability.
 
 Rollback disables the runtime binding and restores fixture-only operation; reverses only the integration's route/configuration changes and parent gitlink as reviewed; preserves the ePA client, PAR policy, realm data, and unrelated submodule work. Never use a volume reset as rollback.
+
+## Task 9.4 dependency remediation plan
+
+**Proposed and owner-approved 2026-11-13.** This refines the existing blocked quality
+task, without changing architecture or the accepted capability requirements. The canonical
+scope and approval record are in the [proposal addendum](proposal.md#task-94-security-remediation).
+The explicit apply request authorizes implementation after recording that decision.
+
+Read-only inspection found `@nestjs/platform-express` 11.2.7 using Express 5.2.1 and pinning
+`multer` exactly to 2.4.0. Express declares `body-parser: ^2.2.1` and `qs: ^6.14.0`; these
+ranges admit the requested patched floors, but the approval-baseline graph resolved 2.3.0
+and 6.16.0 respectively. A lockfile refresh alone does not remove NestJS's exact Multer pin.
+These initial observations do not prove runtime compatibility. The subsequent
+[dated verification](dependency-remediation-verification.md) records the exact three-package
+resolution, compatibility checks and completed task 9.4; no supporting upgrade was needed.
+
+Under the consolidated approval, implement only within existing task 9.4:
+
+1. Resolve every affected production instance to compatible versions meeting
+   `body-parser >=2.4.0`, `multer >=2.5.0` and `qs >=6.16.1`, preferably within the current
+   majors. Use a targeted lockfile update where declared ranges allow it. Where a pin blocks
+   the patched version, assess a narrowly scoped package-manager override and verify its API
+   compatibility. Record why the override is needed and its exact affected consumer path.
+2. Preserve current NestJS and unrelated dependency pins unless a compatible patched
+   resolution demonstrably requires a supporting change. Document the smallest exact version
+   delta, compatibility evidence and necessity before applying such a prerequisite. Stop and
+   report a blocker if resolution requires an incompatible migration or scope beyond the
+   three-target remediation. No general update command or unrelated audit fix is authorized.
+3. Inspect the installed production graph and lockfile, perform a frozen installation, and
+   verify the three advisories are absent from the production audit. Compare the complete
+   dependency diff with the baseline and explain every necessary resolution change. Record
+   other findings without suppressing audits, weakening checks or accepting a security waiver.
+4. Rerun task 9.4's unchanged checks: NestJS typecheck/build/unit/HTTP and real private
+   integration, ePA/PAR and legacy-session regressions, applicable HAPI Gradle security/
+   integration/build and real Keycloak/HAPI checks, SPA browser/accessibility/localization/
+   formatting, strict OpenSpec, public fixture preservation and disclosure checks. Use the
+   approved isolated setup and run heavy Gradle/browser checks serially. Required real
+   integration is not replaced by mocked evidence; unavailable checks remain explicit blockers.
+5. Add new dated verification evidence while preserving prior reports, recording selected
+   versions, commands, results, graph/audit comparisons and service/volume/routing preservation.
+   Complete task 9.4 only after all its original acceptance criteria pass. Leave task 9.5
+   unchecked and stop without availability promotion or deployment.
+
+No changes to OAuth behavior, the SPA, Keycloak/HAPI policies, the HAPI submodule pointer,
+public routing or existing containers/volumes are included. The completed Zod remediation
+and all prior verification remain the baseline; this plan does not reopen completed tasks.
 
 ## Open Questions
 
