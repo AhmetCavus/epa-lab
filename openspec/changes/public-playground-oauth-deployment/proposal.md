@@ -22,16 +22,19 @@ and reproducible deployment controls; enabling the private Vite binding is insuf
   users, client credentials and mandatory PAR policy, subject to independent compatibility
   verification before cutover.
 - Make Keycloak production startup and tested migration from its observed embedded
-  development database prerequisites. The owner's revised architecture decision on
-  2026-11-13 reuses the existing PostgreSQL 16 container and persistent volume: retain
-  database `hapi` unchanged and provision database/role `keycloak` with separate credentials
-  and least privileges. No second PostgreSQL container, new database volume or public
-  database port is planned. This supersedes the earlier container-isolation choice and
-  authorizes planning only.
+  development database prerequisites. The owner's revised architecture on 2026-11-13
+  reuses the existing PostgreSQL 16 container and persistent volume, with separate `hapi`
+  and `keycloak` databases and non-superuser runtime accounts `hapi_app` and `keycloak_app`.
+  Retain bootstrap administrator `hapi` (confirmed OID 10) for administration/recovery only;
+  remove its credential from application use. No second PostgreSQL container, new production
+  database volume or public database port is planned. These decisions authorize planning only.
 - Define idempotent provisioning, independent verified logical backups/restores, bounded
   connection/capacity budgets and shared-instance failure/rollback procedures. Preserve
-  HAPI data, schema, credentials and permissions. The observed `hapi` superuser privilege
-  is an explicit security limitation to resolve before claiming two-way isolation.
+  HAPI data and logical schema, the existing volume and administrative recovery. Resolve B1
+  in the plan through separate runtime secrets, narrowly inventoried application-object
+  ownership/grant changes and verified cross-database denial. This explicitly supersedes
+  the previous requirement to freeze HAPI runtime credentials/permissions; it does not
+  authorize live changes or claim that the migration/isolation tests have passed.
 - Use **owner-provisioned individual demo accounts, with no public registration**, as
   confirmed by the owner. Only the fixed fictional `Basic/playground-demo` is accessible.
 - Add public HTTPS/proxy validation, secure cookies, exact-Origin/CSRF enforcement, bounded
@@ -62,7 +65,10 @@ The watched Traefik file is outside this repository at
 `/srv/yappai/hosting/infra/traefik/dynamic/epa-lab.yml` and needs a reviewed, reproducible source.
 HAPI needs deployment configuration rather than a new authorization implementation.
 Keycloak will connect privately to `res-server-db:5432/keycloak`; HAPI continues using
-`res-server-db:5432/hapi`. Existing database bootstrap settings and the shared volume remain.
+`res-server-db:5432/hapi`. Existing database bootstrap identity/password and the shared volume
+remain. Planned host/environment/operations updates separate HAPI's runtime credential from
+`RES_SERVER_DB_PASSWORD`, preserve bootstrap ownership of databases/system objects, and give
+each application only its own schema/data/migration privileges.
 
 No second BFF/Resource Server, public Vite, new protocol framework, real patient data,
 self-service identity system, public ePA execution or unrelated dependency upgrade is planned.
