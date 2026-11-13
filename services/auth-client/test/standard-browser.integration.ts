@@ -25,6 +25,11 @@ import {
 import { AuthorizationErrorFilter } from '../src/common/errors/authorization-error.filter';
 import { configureRequestLogging } from '../src/common/logging/request-logging';
 import { OidcClientService } from '../src/oidc/oidc-client.service';
+import { IdTokenService } from '../src/oidc/id-token.service';
+import {
+  standardContextLifetimeMs,
+  standardPendingLifetimeMs,
+} from '../src/authorization/standard-login/standard-browser-state';
 
 const viewSchema = z
   .object({
@@ -83,6 +88,39 @@ describe('standard browser HTTP lifecycle with real private Keycloak and secured
     }
     const result: unknown = await response.json();
     return result;
+  }
+
+  async function refreshAdmin() {
+    const adminUsername = environment.KEYCLOAK_ADMIN_USERNAME;
+    const adminPassword = environment.KEYCLOAK_ADMIN_PASSWORD;
+    if (!adminUsername || !adminPassword) {
+      throw new Error('Private admin credentials required for disposable identity');
+    }
+    sensitive.add(adminPassword);
+    const authenticated = await fetch(
+      `${new URL(config.issuer).origin}/realms/master/protocol/openid-connect/token`,
+      {
+        method: 'POST',
+        redirect: 'error',
+        signal: AbortSignal.timeout(config.httpTimeoutMs),
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: 'admin-cli',
+          grant_type: 'password',
+          username: adminUsername,
+          password: adminPassword,
+        }),
+      },
+    );
+    if (!authenticated.ok) {
+      throw new Error('Private administrator authentication failed');
+    }
+    const parsed = z.object({ access_token: z.string() }).safeParse(await authenticated.json());
+    if (!parsed.success) {
+      throw new Error('Invalid private administrator response');
+    }
+    adminToken = parsed.data.access_token;
+    sensitive.add(adminToken);
   }
 
   beforeAll(async () => {
@@ -157,36 +195,7 @@ describe('standard browser HTTP lifecycle with real private Keycloak and secured
       }
       return result;
     });
-    const adminUsername = environment.KEYCLOAK_ADMIN_USERNAME;
-    const adminPassword = environment.KEYCLOAK_ADMIN_PASSWORD;
-    if (!adminUsername || !adminPassword) {
-      throw new Error('Private admin credentials required for disposable identity');
-    }
-    sensitive.add(adminPassword);
-    const authenticated = await fetch(
-      `${new URL(config.issuer).origin}/realms/master/protocol/openid-connect/token`,
-      {
-        method: 'POST',
-        redirect: 'error',
-        signal: AbortSignal.timeout(config.httpTimeoutMs),
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: 'admin-cli',
-          grant_type: 'password',
-          username: adminUsername,
-          password: adminPassword,
-        }),
-      },
-    );
-    if (!authenticated.ok) {
-      throw new Error('Private administrator authentication failed');
-    }
-    const parsed = z.object({ access_token: z.string() }).safeParse(await authenticated.json());
-    if (!parsed.success) {
-      throw new Error('Invalid private administrator response');
-    }
-    adminToken = parsed.data.access_token;
-    sensitive.add(adminToken);
+    await refreshAdmin();
     await admin('/users', 'POST', {
       username,
       enabled: true,
@@ -220,6 +229,7 @@ describe('standard browser HTTP lifecycle with real private Keycloak and secured
   afterAll(async () => {
     try {
       if (identityId) {
+        await refreshAdmin();
         await admin(`/users/${identityId}`, 'DELETE');
       }
       await app?.close();
@@ -681,5 +691,493 @@ describe('standard browser HTTP lifecycle with real private Keycloak and secured
       .set('Origin', origin)
       .set(standardCsrfHeader, session.csrfToken)
       .expect(200);
+  });
+
+  async function beginCallback(browser = request.agent(server())) {
+    const started = await browser.get('/api/oauth/login').set('Host', host).expect(302);
+    const context = cookie(started, standardContextCookie);
+    const binding = cookie(started, standardBindingCookie);
+    const location = started.get('Location');
+    if (!location) {
+      throw new Error('Provider redirect missing');
+    }
+    const callback = await providerCallback(location);
+    return { browser, context, binding, callback };
+  }
+
+  function complete(started: Awaited<ReturnType<typeof beginCallback>>) {
+    return started.browser
+      .get('/api/oauth/callback')
+      .set('Host', host)
+      .query(Object.fromEntries(started.callback.searchParams));
+  }
+
+  function signOut(browser: ReturnType<typeof request.agent>, csrf: string) {
+    return browser
+      .post('/api/oauth/logout')
+      .set('Host', host)
+      .set('Origin', origin)
+      .set(standardCsrfHeader, csrf);
+  }
+
+  function tokenRequests() {
+    return transport.mock.calls.filter(([url]) => new URL(url).pathname.endsWith('/token')).length;
+  }
+
+  function deferred() {
+    let release: () => void = () => undefined;
+    const promise = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    return { promise, release };
+  }
+
+  function pauseRealCompletion(phase: 'token-exchange' | 'id-token-validation') {
+    const entered = deferred();
+    const gate = deferred();
+    if (phase === 'token-exchange') {
+      const original = transport.getMockImplementation();
+      if (!original) {
+        throw new Error('Expected real provider transport');
+      }
+      transport.mockImplementation(async (...args) => {
+        const result = await original(...args);
+        if (new URL(args[0]).pathname.endsWith('/token')) {
+          entered.release();
+          await gate.promise;
+        }
+        return result;
+      });
+      return {
+        entered: entered.promise,
+        release: gate.release,
+        restore: () => transport.mockImplementation(original),
+      };
+    }
+    if (!app) {
+      throw new Error('Expected private application');
+    }
+    const validator = app.get(IdTokenService);
+    const original = validator.validate.bind(validator);
+    const validation = jest.spyOn(validator, 'validate').mockImplementation(async (...args) => {
+      const result = await original(...args);
+      entered.release();
+      await gate.promise;
+      return result;
+    });
+    return {
+      entered: entered.promise,
+      release: gate.release,
+      restore: () => validation.mockRestore(),
+    };
+  }
+
+  describe('integrated negative acceptance with real provider codes and private HAPI', () => {
+    it.each([
+      'missing-cookies',
+      'missing-binding',
+      'wrong-binding',
+      'wrong-context',
+      'duplicate-context',
+      'unknown-state',
+      'missing-state',
+      'duplicate-state',
+      'code-and-error',
+      'profile-override',
+      'issuer-mismatch',
+      'wrong-host',
+      'epa-route',
+    ])('rejects %s without exchanging or consuming the legitimate real code', async (kind) => {
+      const started = await beginCallback();
+      const query: Record<string, string | string[]> = Object.fromEntries(
+        started.callback.searchParams,
+      );
+      let context = `${standardContextCookie}=${started.context.value}`;
+      let binding = `${standardBindingCookie}=${started.binding.value}`;
+      let expected = 403;
+      if (kind === 'missing-cookies') {
+        context = '';
+        binding = '';
+      }
+      if (kind === 'missing-binding') {
+        binding = '';
+      }
+      if (kind === 'wrong-binding') {
+        binding = `${standardBindingCookie}=${'b'.repeat(43)}`;
+      }
+      if (kind === 'wrong-context') {
+        context = `${standardContextCookie}=${'c'.repeat(43)}`;
+      }
+      if (kind === 'duplicate-context') {
+        context += `; ${context}`;
+      }
+      if (kind === 'unknown-state') {
+        query.state = randomBytes(32).toString('base64url');
+      }
+      if (kind === 'missing-state') {
+        delete query.state;
+        expected = 400;
+      }
+      if (kind === 'duplicate-state') {
+        query.state = [started.callback.searchParams.get('state') ?? '', 'duplicate'];
+        expected = 400;
+      }
+      if (kind === 'code-and-error') {
+        query.error = 'access_denied';
+        expected = 400;
+      }
+      if (kind === 'profile-override') {
+        query.profile = 'epa-par';
+        expected = 400;
+      }
+      if (kind === 'issuer-mismatch') {
+        query.iss = 'http://localhost:5555/realms/untrusted';
+      }
+      const before = tokenRequests();
+      let rejected = request(server())
+        .get(kind === 'epa-route' ? '/callback' : '/api/oauth/callback')
+        .set('Host', kind === 'wrong-host' ? 'localhost:65534' : host)
+        .query(query);
+      const cookies = [context, binding].filter(Boolean).join('; ');
+      if (cookies) {
+        rejected = rejected.set('Cookie', cookies);
+      }
+      safeResponse(await rejected.expect(expected));
+      expect(tokenRequests()).toBe(before);
+      await complete(started).expect(303);
+      const active = view(
+        await started.browser.get('/api/oauth/session').set('Host', host).expect(200),
+      );
+      expect(active.authenticated).toBe(true);
+      expect(tokenRequests()).toBe(before + 1);
+      await signOut(started.browser, active.csrfToken).expect(200);
+    });
+
+    it('classifies a real Keycloak prompt=none denial without exchanging or exposing provider text', async () => {
+      const browser = request.agent(server());
+      const started = await browser.get('/api/oauth/login').set('Host', host).expect(302);
+      cookie(started, standardContextCookie);
+      cookie(started, standardBindingCookie);
+      const url = new URL(started.get('Location') ?? '');
+      url.searchParams.set('prompt', 'none');
+      const provider = await fetch(url, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(config.httpTimeoutMs),
+      });
+      expect(provider.status).toBe(302);
+      const callback = new URL(provider.headers.get('location') ?? '');
+      expect(callback.origin === origin && callback.searchParams.has('error')).toBe(true);
+      await provider.body?.cancel();
+      const before = tokenRequests();
+      const completed = await browser
+        .get('/api/oauth/callback')
+        .set('Host', host)
+        .query(Object.fromEntries(callback.searchParams))
+        .expect(303);
+      safeResponse(completed);
+      expect(completed.get('Location')).toBe('/missions/oauth-oidc/workspace');
+      expect(tokenRequests()).toBe(before);
+      const current = view(await browser.get('/api/oauth/session').set('Host', host).expect(200));
+      expect(current.authenticated).toBe(false);
+      expect(current.currentRun?.outcome).toBe('provider-denied');
+      expect((await events(browser, current.currentRun?.runId)).events.at(-2)).toMatchObject({
+        kind: 'callback-rejected',
+        evidence: { reason: 'provider-denied' },
+      });
+    });
+
+    it('permits one exchange for concurrent real-code callbacks and rejects replay', async () => {
+      const started = await beginCallback();
+      const paused = pauseRealCompletion('token-exchange');
+      const before = tokenRequests();
+      const first = complete(started).then((response) => response);
+      try {
+        await paused.entered;
+        safeResponse(await complete(started).expect(403));
+        expect(tokenRequests()).toBe(before + 1);
+        paused.release();
+        expect((await first).status).toBe(303);
+        await complete(started).expect(403);
+        expect(tokenRequests()).toBe(before + 1);
+        const active = view(
+          await started.browser.get('/api/oauth/session').set('Host', host).expect(200),
+        );
+        await signOut(started.browser, active.csrfToken).expect(200);
+      } finally {
+        paused.release();
+        paused.restore();
+      }
+    });
+
+    it.each(['token-exchange', 'id-token-validation'] as const)(
+      'logout cancels an in-flight callback after real %s completes',
+      async (phase) => {
+        const active = await authenticate();
+        const originalContext = store.standard.context(active.context.value);
+        const pending = await beginCallback(active.browser);
+        const paused = pauseRealCompletion(phase);
+        const stale = complete(pending).then((response) => response);
+        try {
+          await paused.entered;
+          const signedOut = view(
+            await signOut(active.browser, active.session.csrfToken).expect(200),
+          );
+          expect(originalContext?.authentication).toBeUndefined();
+          paused.release();
+          const rejected = await stale;
+          expect(rejected.status).toBe(403);
+          expect(rejected.get('Set-Cookie')).toBeUndefined();
+          safeResponse(rejected);
+          const restored = view(
+            await active.browser.get('/api/oauth/session').set('Host', host).expect(200),
+          );
+          expect(!restored.authenticated && restored.csrfToken === signedOut.csrfToken).toBe(true);
+          const calls = resourceRequests();
+          await active.browser.get('/api/oauth/resource').set('Host', host).expect(401);
+          expect(resourceRequests()).toBe(calls);
+        } finally {
+          paused.release();
+          paused.restore();
+        }
+      },
+    );
+
+    it.each(['signature', 'nonce'] as const)(
+      'rejects fault-injected %s validation of a real signed Keycloak ID Token',
+      async (fault) => {
+        const started = await beginCallback();
+        if (!app) {
+          throw new Error('Expected private application');
+        }
+        const validator = app.get(IdTokenService);
+        const original = validator.validate.bind(validator);
+        const validation = jest
+          .spyOn(validator, 'validate')
+          .mockImplementationOnce((metadata, idToken, transaction, accessToken, profile) => {
+            if (fault === 'nonce') {
+              const nonce = randomBytes(32).toString('base64url');
+              sensitive.add(nonce);
+              return original(metadata, idToken, { ...transaction, nonce }, accessToken, profile);
+            }
+            const parts = idToken.split('.');
+            const signature = parts[2];
+            if (!signature) {
+              throw new Error('Expected actual signed provider token');
+            }
+            const first = signature[0] === 'A' ? 'B' : 'A';
+            const changed = `${parts[0]}.${parts[1]}.${first}${signature.slice(1)}`;
+            sensitive.add(changed);
+            return original(metadata, changed, transaction, accessToken, profile);
+          });
+        try {
+          const result = await complete(started).expect(303);
+          safeResponse(result);
+          const current = view(
+            await started.browser.get('/api/oauth/session').set('Host', host).expect(200),
+          );
+          expect(current.authenticated).toBe(false);
+          expect(current.currentRun?.outcome).toBe('authentication-failed');
+          expect(
+            (await events(started.browser, current.currentRun?.runId)).events.map(
+              (event) => event.kind,
+            ),
+          ).toContain('token-validation-failed');
+        } finally {
+          validation.mockRestore();
+        }
+      },
+    );
+
+    it('keeps cross-browser histories and CSRF independent after real authentication', async () => {
+      const first = await authenticate();
+      const second = await authenticate();
+      const before = await events(second.browser, second.session.currentRun?.runId);
+      safeResponse(
+        await first.browser
+          .get(`/api/oauth/runs/${second.session.currentRun?.runId}/events`)
+          .set('Host', host)
+          .expect(404),
+      );
+      await signOut(first.browser, second.session.csrfToken).expect(403);
+      for (const headers of [
+        { csrf: first.session.csrfToken },
+        { origin: 'http://localhost:65534', csrf: first.session.csrfToken },
+        { origin, csrf: 'wrong' },
+        { origin },
+      ]) {
+        let rejected = first.browser.post('/api/oauth/logout').set('Host', host);
+        if (headers.origin) {
+          rejected = rejected.set('Origin', headers.origin);
+        }
+        if (headers.csrf) {
+          rejected = rejected.set(standardCsrfHeader, headers.csrf);
+        }
+        await rejected.expect(403);
+      }
+      await first.browser.get('/api/oauth/logout').set('Host', host).expect(404);
+      expect(
+        view(await first.browser.get('/api/oauth/session').set('Host', host).expect(200))
+          .authenticated,
+      ).toBe(true);
+      await signOut(first.browser, first.session.csrfToken).expect(200);
+      expect(
+        view(await second.browser.get('/api/oauth/session').set('Host', host).expect(200))
+          .authenticated,
+      ).toBe(true);
+      expect(await events(second.browser, second.session.currentRun?.runId)).toEqual(before);
+      await signOut(second.browser, second.session.csrfToken).expect(200);
+    });
+
+    it('rejects pending expiry, expired authentication and history using the BFF clock only', async () => {
+      const pending = await beginCallback();
+      const calls = tokenRequests();
+      const clock = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + standardPendingLifetimeMs);
+      try {
+        await request(server())
+          .get('/api/oauth/callback')
+          .set('Host', host)
+          .set(
+            'Cookie',
+            `${standardContextCookie}=${pending.context.value}; ${standardBindingCookie}=${pending.binding.value}`,
+          )
+          .query(Object.fromEntries(pending.callback.searchParams))
+          .expect(403);
+        expect(tokenRequests()).toBe(calls);
+      } finally {
+        clock.mockRestore();
+      }
+      const active = await authenticate();
+      const expiry = Date.parse(active.session.expiresAt ?? '');
+      const tokenClock = jest.spyOn(Date, 'now').mockReturnValue(expiry + 1);
+      const resourceCalls = resourceRequests();
+      try {
+        await active.browser.get('/api/oauth/resource').set('Host', host).expect(401);
+        expect(resourceRequests()).toBe(resourceCalls);
+        expect(
+          view(await active.browser.get('/api/oauth/session').set('Host', host).expect(200))
+            .authenticated,
+        ).toBe(false);
+      } finally {
+        tokenClock.mockRestore();
+      }
+      const historyClock = jest
+        .spyOn(Date, 'now')
+        .mockReturnValue(Date.now() + standardContextLifetimeMs);
+      try {
+        await active.browser
+          .get(`/api/oauth/runs/${active.session.currentRun?.runId}/events`)
+          .set('Host', host)
+          .expect(404);
+      } finally {
+        historyClock.mockRestore();
+      }
+    });
+
+    it('rejects a real pending callback on a fresh process-local application instance', async () => {
+      const started = await beginCallback();
+      const freshModule = await Test.createTestingModule({
+        imports: [
+          ConfigModule.forRoot({
+            isGlobal: true,
+            ignoreEnvFile: true,
+            skipProcessEnv: true,
+            load: [registerAs('lab', () => config)],
+          }),
+          AuthorizationModule,
+        ],
+      }).compile();
+      const fresh = freshModule.createNestApplication<INestApplication<Server>>({ logger: false });
+      configureRequestLogging(fresh);
+      fresh.useGlobalFilters(new AuthorizationErrorFilter());
+      await fresh.listen(0, '127.0.0.1');
+      const before = upstream.mock.calls.length;
+      try {
+        await request(fresh.getHttpServer())
+          .get('/api/oauth/callback')
+          .set('Host', host)
+          .set(
+            'Cookie',
+            `${standardContextCookie}=${started.context.value}; ${standardBindingCookie}=${started.binding.value}`,
+          )
+          .query(Object.fromEntries(started.callback.searchParams))
+          .expect(403);
+        const anonymous = view(
+          await request(fresh.getHttpServer())
+            .get('/api/oauth/session')
+            .set('Host', host)
+            .expect(200),
+        );
+        expect(!anonymous.authenticated && anonymous.currentRun === null).toBe(true);
+        expect(upstream.mock.calls.length).toBe(before);
+      } finally {
+        await fresh.close();
+      }
+    });
+
+    it('exhausts actual observations and still cleans up credentials and a pending real callback', async () => {
+      const started = await beginCallback();
+      // One actual rejected callback plus login's nine observations yields ten.
+      await started.browser
+        .get('/api/oauth/callback')
+        .set('Host', host)
+        .query({
+          ...Object.fromEntries(started.callback.searchParams),
+          iss: 'http://localhost:5555/untrusted',
+        })
+        .expect(403);
+      const completed = await complete(started).expect(303);
+      const activeCookie = cookie(completed, standardContextCookie);
+      const activeContext = store.standard.context(activeCookie.value);
+      const active = view(
+        await started.browser.get('/api/oauth/session').set('Host', host).expect(200),
+      );
+      for (let index = 0; index < 30; index += 1) {
+        safeResponse(
+          await started.browser.get('/api/oauth/resource').set('Host', host).expect(200),
+        );
+      }
+      const full = await events(started.browser, active.currentRun?.runId);
+      expect(full.events.length).toBe(100);
+      const requests = resourceRequests();
+      await started.browser.get('/api/oauth/resource').set('Host', host).expect(503);
+      expect(resourceRequests()).toBe(requests);
+      const waiting = await beginCallback(started.browser);
+      const before = tokenRequests();
+      const signedOut = view(await signOut(started.browser, active.csrfToken).expect(200));
+      expect(signedOut.authenticated).toBe(false);
+      expect(activeContext?.authentication).toBeUndefined();
+      await complete(waiting).expect(403);
+      expect(tokenRequests()).toBe(before);
+      await started.browser.get('/api/oauth/resource').set('Host', host).expect(401);
+      expect(resourceRequests()).toBe(requests);
+      const retained = await events(started.browser, active.currentRun?.runId);
+      expect(retained.events).toEqual(full.events);
+      expect(retained.expiresAt).toBe(full.expiresAt);
+      expect(retained.complete).toBe(false);
+    });
+
+    it('finishes real-session logout despite a throwing event recorder and cancels its pending code', async () => {
+      const active = await authenticate();
+      const prior = store.standard.context(active.context.value);
+      const waiting = await beginCallback(active.browser);
+      const before = tokenRequests();
+      const marker = 'fictional-private-recorder-failure';
+      sensitive.add(marker);
+      const recorder = jest.spyOn(store.standard, 'record').mockImplementation(() => {
+        throw new Error(marker);
+      });
+      try {
+        const signedOut = view(await signOut(active.browser, active.session.csrfToken).expect(200));
+        expect(signedOut.authenticated).toBe(false);
+        expect(prior?.authentication).toBeUndefined();
+        await complete(waiting).expect(403);
+        expect(tokenRequests()).toBe(before);
+        expect((await events(active.browser, active.session.currentRun?.runId)).complete).toBe(
+          false,
+        );
+      } finally {
+        recorder.mockRestore();
+      }
+    });
   });
 });

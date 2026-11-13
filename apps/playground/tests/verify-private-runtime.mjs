@@ -493,6 +493,8 @@ try {
   await app?.close();
   globalThis.fetch = originalFetch;
   if (identityCreated && api) {
+    // A slow acceptance run can outlive the original admin token.
+    api = await adminApi(standardSettings());
     const identities = await api(`/users?username=${username}&exact=true`);
     for (const identity of identities) {
       if (identity.username === username) await api(`/users/${identity.id}`, 'DELETE');
