@@ -122,7 +122,7 @@ Dependency: all preceding implementation groups. This group checks the combined 
 - [x] 9.2 Run the cross-component negative matrix: cookie/state loss, expiry/replay/concurrency, client-profile substitution, provider denial, failed PKCE/token validation, restart recovery, direct HAPI 401/403 cases, cross-browser event access, capacity limits, and logout CSRF. Verify actual observable results against both specs and record failures/skips instead of inferring coverage from successful login.
 - [x] 9.3 Re-run real ePA header/PAR and existing browser-demo regressions beside the new standard client, plus the unchanged public fixture configuration. Verify the ePA PAR requirement/contracts, legacy `/session`, conceptual ePA UI, and independent standard behavior all survive; record commands and results without adding the deferred comparison UI.
 - [x] 9.4 Run the applicable auth-client typecheck/build/test/integration checks, HAPI Gradle security/integration/build checks, SPA typecheck/build/browser/architecture/localization/format checks, and strict OpenSpec validation. Verify the final scenario-to-evidence map covers the complete accepted scope, logs/artifacts contain no secrets or raw callback capture, and limitations/unavailable checks are explicit.
-- [ ] 9.5 Enable runnable availability only for the verified local runtime binding and deliver its dated verification record and rollback instructions. Verify fixture-only builds/public deployment remain honest and unchanged, no public auth ingress was introduced, and implementation/verification status advances only with actual evidence and required owner review.
+- [x] 9.5 Enable runnable availability only for the verified local runtime binding and deliver its dated verification record and rollback instructions. Verify fixture-only builds/public deployment remain honest and unchanged, no public auth ingress was introduced, and implementation/verification status advances only with actual evidence and required owner review.
 
 Initial acceptance evidence (before the approved remediation): [Integrated private acceptance](integrated-acceptance-verification.md). Tasks 9.1–9.3 pass with the fresh local real browser journey, 44 real NestJS/Keycloak/HAPI integration tests, 107 direct Keycloak/HAPI assertions, 122 focused Gradle tests plus 62 real servlet/JPA cases, 91 SPA tests and the actual public fixture-only browser check. Backend Zod is patched from 4.6.5 to 4.6.6. At that stage, task 9.4 remained unchecked because the production dependency audit reported two high and one moderate findings requiring changes beyond the authorized Zod-only update. Task 9.5 is not executed; runnable availability and public routing remain unchanged.
 
@@ -226,6 +226,25 @@ host ports and returns **HTTP 200** for BFF readiness and JWKS. The agent insert
 rules and created/reconfigured no containers. Privileged rule ordering, duplicate counts
 and backup integrity remain independently unverified. The private SPA remains withdrawn;
 task **9.5 stays unchecked, 49/50**. No redeployment, authenticated runtime acceptance or archive.
+
+### Task 9.5 completion — Persistent private deployment accepted
+
+**2026-11-13; 50/50 complete.** The owner authorized resuming the reviewed deployment after
+firewall transport was restored. The [dated persistent-runtime acceptance](private-deployment-acceptance.md)
+records the exact reviewed images, fresh protected backups, targeted startup and exercised
+rollback. The actual deployed port-5173 Mission Control passes real Keycloak PKCE login
+without PAR, fixed return, same-run reload, synthetic read, Inspector provenance, exact
+Origin/CSRF logout, old-cookie rejection, bounded history and frontend/BFF restart recovery
+including fresh login. Both deployed network contexts reach BFF/JWKS. The direct HAPI
+matrix passes 107 assertions and six real ePA/PAR/legacy integration tests pass. Public
+fixture-only browser/Nginx/routing, Keycloak users/ePA policy, all 43 unrelated containers,
+networks/volumes, source code and HAPI pointer are preserved. Production audit, disclosure,
+format/lint, documentation/configuration checks and strict OpenSpec validation pass.
+The initial verifier header-observation error and successful targeted rollback are retained.
+Privileged firewall-order/duplicate and root-private backup-integrity inspection remain
+explicitly pending administrator follow-up. Only this private binding is available;
+public catalog/fixture behavior and existing integration-test labels remain unchanged.
+Stop after task 9.5. **Do not archive.**
 
 ## Workflow follow-up
 

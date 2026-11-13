@@ -54,7 +54,8 @@ The private catalog retains Fixture preview/Planned availability. Its additional
 private integration test** link is explicitly for verification, without claiming released
 runnable availability. The fixture link uses `?view=fixture`; that parameter only selects
 presentation. The ePA concept has no execution binding. Public cards and routes retain
-their existing fixture behavior. Availability promotion belongs to task 9.5.
+their existing fixture behavior. Task 9.5 verifies persistent availability of this private
+entry; its existing labels remain unchanged under the reviewed deployment scope.
 
 The existing Workspace restores through `/api/oauth/session` and the owned event API on
 return/refresh, with a one-shot expiry read and browser-return recovery. These reads never
@@ -121,16 +122,14 @@ requires a full Chromium executable through `PLAYGROUND_NATIVE_CHROMIUM`; withou
 two tests report an explicit skip. They use Chrome's own Settings zoom API in disposable
 regular profiles, verify readback/DPR/reflow, and clean up the profiles. Viewport scaling
 and CSS zoom are not substitutes. See the dated [task 8 evidence](../../openspec/changes/001-oidc-pkce/spa-runtime-verification.md)
-for actual checks, screenshots and limitations. Tasks 9.1–9.4 now pass, including the real
-private browser journey in isolation. The remote HAPI recursive checkout passes. The owner
-approved the [persistent private port-5173 plan](../../openspec/changes/001-oidc-pkce/private-deployment-plan.md),
-but actual acceptance failed because the private Docker bridge could not reach the host
-BFF/JWKS endpoints. The [deployment/rollback record](../../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
-documents the removed private frontend and disabled standard mission. Task 9.5 remains
-unchecked; the integration-test link does not establish persistent operator availability.
-The owner's [scoped firewall correction](../../openspec/changes/001-oidc-pkce/firewall-verification.md)
-now restores bridge TCP/HTTP connectivity, but the private frontend has not been redeployed
-and persistent-browser acceptance has not been repeated. The public deployment stays fixture-only.
+for actual checks, screenshots and limitations. Tasks 9.1–9.5 now pass. The
+[persistent private acceptance/runbook](../../openspec/changes/001-oidc-pkce/private-deployment-acceptance.md)
+verifies the actual deployed port-5173 frontend, real Keycloak/HAPI journey, logout/history
+and restart recovery. The owner-approved [deployment plan](../../openspec/changes/001-oidc-pkce/private-deployment-plan.md)
+remains the private scope. The [earlier deployment/rollback record](../../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
+and [firewall evaluation](../../openspec/changes/001-oidc-pkce/firewall-verification.md) preserve
+the prior failures and correction. The private frontend now remains running; the public
+deployment stays fixture-only. Privileged firewall inspection remains separately pending.
 
 ## Hosted deployment
 
@@ -211,8 +210,8 @@ which owns one active actor/event inspection and derived highlights. Map scale, 
 and focus stay in UI. `tests/architecture.spec.ts` checks dependency direction, cycles,
 canonical models and framework-independent domain compilation. Only the existing two
 missions are registered. Task-8 implementation uses the accepted local/private approval;
-full mission acceptance, runnable availability and any public authentication require their
-separate remaining work/authorization.
+task 9.5 now verifies persistent private execution. Public authentication still requires
+separate authorization, and the public deployment remains fixture-only.
 
 See [verification.md](verification.md) for scope, adaptations and verification evidence.
 

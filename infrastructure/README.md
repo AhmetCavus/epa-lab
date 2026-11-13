@@ -16,21 +16,21 @@ For the separate standard client in the existing Keycloak realm, see the
 separately in temporary loopback test processes. The [HAPI policy](../services/res-server/SECURITY.md)
 validates Access Tokens and allows only the synthetic read. The BFF's fixed resource route
 and owned safe event API and private SPA journey are verified through task 9.4. Final
-operator availability remains blocked under task 9.5. Remote recursive checkout passes;
-the [approved private deployment plan](../openspec/changes/001-oidc-pkce/private-deployment-plan.md)
-was executed, but the actual Docker bridge runtime could not reach the host BFF/JWKS.
-The [deployment and targeted rollback record](../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
-documents both failed acceptance attempts, preserved services and the disabled mission.
-[`docker-compose.private.yml`](docker-compose.private.yml) is the approved optional overlay;
-the owner's [firewall correction evaluation](../openspec/changes/001-oidc-pkce/firewall-verification.md)
-now verifies bridge TCP/HTTP connectivity to both host targets. No private frontend was
-redeployed and task 9.5 still requires actual persistent-runtime acceptance. The firewall-only
-follow-up does not authorize reapplying this overlay or promoting availability.
+operator availability is verified through task 9.5. Remote recursive checkout and the
+[actual persistent runtime](../openspec/changes/001-oidc-pkce/private-deployment-acceptance.md)
+pass at `http://192.168.178.131:5173/missions`. Use its targeted startup/shutdown and durable
+rollback instructions with the [approved private plan](../openspec/changes/001-oidc-pkce/private-deployment-plan.md)
+and [`docker-compose.private.yml`](docker-compose.private.yml). The
+[historical deployment/rollback record](../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
+and [firewall correction evaluation](../openspec/changes/001-oidc-pkce/firewall-verification.md)
+preserve prior failures and correction. Privileged firewall inspection remains pending;
+no public authentication or archive is authorized.
 The [earlier runbook](../openspec/changes/001-oidc-pkce/private-runtime-verification.md) preserves
 the original failed remote check and isolated runtime evidence.
-The isolated checks leave existing containers in place. The separately approved deployment
-recreated only auth-client/HAPI; its rollback retained the patched images, corrected trusted
-JWKS and disabled seeding. Keycloak/PostgreSQL/public containers and volumes are unchanged.
+The isolated checks leave existing containers in place. The accepted private deployment
+recreated only auth-client/HAPI and added the private frontend, retaining reviewed patched
+images and trusted JWKS with guarded synthetic initialization. Keycloak/PostgreSQL/public
+containers and volumes are unchanged.
 The public Playground stays fixture-only.
 
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an

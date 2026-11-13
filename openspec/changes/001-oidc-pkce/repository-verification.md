@@ -622,3 +622,15 @@ JWKS remain, while Keycloak/PostgreSQL/public containers, volumes and routing ar
 The [dated deployment/rollback report](private-deployment-verification.md) records commands,
 image identities, backups, preservation and the remaining connectivity blocker. Task 9.5
 is unchecked; no archive and no network/security workaround.
+
+## Task 9.5 completion — Persistent private acceptance, 2026-11-13
+
+The owner-authorized resume after the scoped firewall correction passes actual persistent
+Mission Control/BFF/Keycloak/HAPI acceptance. The [dated final acceptance/runbook](private-deployment-acceptance.md)
+records exact images, protected snapshots, startup and exercised rollback, browser login/
+reload/resource/Inspector/logout/history/restart recovery, deployed network checks,
+107 real HAPI assertions, six ePA integration regressions and public fixture preservation.
+Only the approved private binding is running; all existing Keycloak/PostgreSQL/public
+containers and volumes/routing are preserved. Task **9.5 is complete, 50/50**. Historical
+failures above remain historical. Privileged firewall inspection remains recorded as pending;
+the OpenSpec change is not archived.

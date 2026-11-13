@@ -354,3 +354,42 @@ The agent added/removed no rules and redeployed nothing. Current privileged rule
 duplicate counts and root-private backup integrity remain independently unverified.
 Task 9.5 remains unchecked at **49/50** pending actual persistent-runtime acceptance;
 this firewall-only authorization does not permit private Playground redeployment.
+
+## Owner-authorized deployment resume after firewall correction — 2026-11-13
+
+The owner explicitly authorized resuming **only task 9.5** and the previously approved
+private deployment packet after bridge BFF/JWKS connectivity was restored. This supersedes
+the firewall-only follow-up's no-redeployment limit for the three named services: existing
+patched auth-client, secured canonical HAPI and private Mission Control on port 5173.
+Preserve Keycloak/ePA PAR behavior, PostgreSQL/volumes and the public fixture deployment
+and routing. No public authentication, unrelated feature, dependency or security-policy
+change is authorized. Perform the approved targeted rollback if deployment fails.
+
+This authorization is recorded before renewed deployment. Fresh snapshots and mode-0600
+environment/client backups are held under `/tmp/epa-001-task95-resume-20261113/`.
+The five reviewed configuration values remain the complete allowed set; trusted JWKS is
+already correct, so only four values need changing from the withdrawn state. Both backend
+images and the existing private frontend image match their reviewed immutable identities.
+Preflight bridge requests to BFF readiness and configured JWKS return 200. Privileged UFW
+rule-order/duplicate and root-private backup-integrity inspections remain pending unless
+independently verified by an administrator; successful transport does not assert those checks.
+
+Actual acceptance must exercise the deployed frontend and HAPI, normal Keycloak PKCE login,
+fixed Workspace return, stable run after reload, protected synthetic read, Inspector
+provenance, CSRF logout, old-authentication rejection, retained history, private restart
+recovery, public fixture preservation and ePA/PAR regressions. Mark task 9.5 complete only
+after these conditions pass, stop there and do not archive.
+
+## Final resumed outcome — persistent private acceptance passed
+
+The [dated acceptance and lifecycle record](private-deployment-acceptance.md) verifies the
+actual persistent frontend/BFF/Keycloak/HAPI journey, deployed network connectivity,
+real resource authorization, owned observations, CSRF logout, invalidated old authentication,
+safe history and frontend/BFF restart recovery. The runtime remains healthy at the approved
+private binding after the verifier exits. Required public/ePA regressions and preservation
+checks pass. The first resumed verification's provisional-header error and successful
+targeted rollback are retained; the corrected full-header verification passes with unchanged
+application/security code. Fresh snapshots and durable guarded rollback/reapply helpers
+are retained privately. Task **9.5 is complete, 50/50**, with no archive or public deployment.
+Privileged firewall-order/duplicate and root-private backup-integrity inspections remain
+the independently unverified administrative follow-up explicitly accepted for recording.
