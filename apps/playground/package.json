@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:private": "vite --mode private --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview --host 127.0.0.1",
     "test": "npm run build && playwright test",
+    "test:private": "node tests/verify-private-runtime.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -17,7 +19,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-i18next": "17.1.0",
-    "react-router-dom": "7.18.4"
+    "react-router-dom": "7.18.4",
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

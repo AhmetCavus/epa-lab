@@ -260,12 +260,216 @@
     "context": "Wähle einen Akteur, Lernschritt oder ein Beispiel, um den Kontext zu erkunden.",
     "loaded": "Beispiele geladen",
     "replay": "Erklärung wiederholen",
-    "reset": "Ansicht zurücksetzen"
+    "reset": "Ansicht zurücksetzen",
+    "execution": "PRIVATE AUSFÜHRUNG",
+    "privateRuntime": "Privater Integrationstest",
+    "runStatus": "Aktueller Ausführungsstatus",
+    "runId": "Durchlauf-ID",
+    "runExpiry": "Historie läuft ab um"
   },
   "announcements": {
     "loaded": "Beispiele geladen. Es wurde kein Live-Vorgang ausgeführt.",
     "replayed": "Erklärung ab dem ersten Beispiel wiederholt.",
     "reset": "Ansicht zurückgesetzt. Geladene Beispiele bleiben erhalten.",
     "fitted": "Diagramm in lesbarer Größe. Scrolle horizontal, um weitere Teilnehmer zu erreichen."
+  },
+  "runtime": {
+    "notice": "Private Integration zur Prüfung. Das BFF hält die OAuth-Zugangsdaten; Keycloak zeigt die Anmeldung. Interne Passwortprüfung, PKCE-Vergleich und Token-Erstellung bleiben erklärt, nicht beobachtbar. Die Katalogverfügbarkeit ist noch ungeprüft.",
+    "catalogAction": "Privaten Integrationstest öffnen",
+    "catalogNotice": "Beispiel- und Konzeptvorschauen bleiben verfügbar. Die getrennt konfigurierte private Integration dient der Prüfung; ausführbare Katalogverfügbarkeit ist noch nicht freigegeben.",
+    "traceUnavailable": "Ablauf unvollständig oder nicht verfügbar. Berechtigte vorhandene Beobachtungen bleiben nach Möglichkeit erhalten; fehlende Ereignisse werden nicht erfunden.",
+    "phases": {
+      "restoring": "Eigene Sitzung und Durchlauf werden wiederhergestellt…",
+      "ready": "Private Integration",
+      "navigating": "Weiterleitung zu Keycloak…",
+      "resource": "Synthetische Ressource wird angefordert…",
+      "logout": "Lokale Sitzung wird beendet…"
+    },
+    "authentication": {
+      "authenticated": "Anwendungsanmeldung: angemeldet.",
+      "anonymous": "Anwendungsanmeldung: anonym.",
+      "expired": "Anwendungsanmeldung: abgelaufen. Starte einen neuen Versuch.",
+      "unavailable": "Anwendungsanmeldung: bis zur Wiederherstellung des Status unbekannt."
+    },
+    "run": {
+      "none": "Kein aktueller Durchlauf. Starte die Anmeldung für einen neuen Versuch.",
+      "pending": "Aktueller Anmeldeversuch: ausstehend. Kehre zurück oder starte neu; ein Anbietererfolg wird nicht angenommen.",
+      "authenticated": "Aktueller Anmeldeversuch: angemeldet. Die Ressourcenautorisierung wird getrennt geprüft.",
+      "provider-denied": "Aktueller Anmeldeversuch: vom Anbieter abgelehnt. Wiederholen legt einen neuen Versuch an.",
+      "authentication-failed": "Aktueller Anmeldeversuch: fehlgeschlagen. Interne Anbieterdiagnosen werden nicht angezeigt.",
+      "signed-out": "Lokal abgemeldet. Berechtigte sichere Historie bleibt einsehbar; Anbieter-SSO kann weiter bestehen.",
+      "cancelled": "Aktueller Anmeldeversuch: abgebrochen. Wiederholen legt eine neue Transaktion an.",
+      "expired": "Aktueller Durchlauf: abgelaufen. Das Anzeigen verlängert die Aufbewahrung nicht."
+    },
+    "actions": {
+      "start": "Anmeldung starten",
+      "retry": "Ablauf neu starten",
+      "resource": "Ressource abrufen",
+      "restore": "Status aktualisieren",
+      "logout": "Abmelden",
+      "cancel": "Ausstehende Anmeldung abbrechen"
+    },
+    "errors": {
+      "unavailable": "Das private Backend ist nicht erreichbar. Aktualisiere den Status oder starte neu, sobald es erreichbar ist.",
+      "unsupported-response": "Unbekannte oder unsichere Antwort abgelehnt. Es werden keine Rohdaten angezeigt.",
+      "ownership-lost": "Der eigene Durchlauf ist nicht verfügbar oder abgelaufen. Starte einen neuen Versuch.",
+      "capacity": "Die Durchlaufkapazität ist nicht verfügbar. Starte einen neuen Versuch; lokales Abmelden bleibt unabhängig.",
+      "request-rejected": "Die Anfrage wurde abgelehnt. Aktualisiere den Status, um den aktuellen Browserkontext wiederherzustellen.",
+      "timeout": "Die Anfrage hat das Zeitlimit überschritten. Ihr Abschluss ist unbekannt; aktualisiere vor dem Fortfahren den Status."
+    },
+    "resource": {
+      "allowed": "Letztes Ressourcenergebnis: synthetischer Lesezugriff auf Basic/playground-demo erlaubt.",
+      "permission-denied": "Letztes Ressourcenergebnis: Resource Server hat die Autorisierung abgelehnt (HTTP 403). Die Anwendungsanmeldung ist davon getrennt.",
+      "token-denied": "Letztes Ressourcenergebnis: Resource Server hat den Berechtigungsnachweis abgelehnt (HTTP 401). Die Anwendungsanmeldung ist davon getrennt.",
+      "local-rejection": "Letztes Ressourcenergebnis: lokal vom BFF abgelehnt. Dies ist keine HAPI-Ablehnung.",
+      "timeout": "Letztes Ressourcenergebnis: Zeitlimit überschritten. Eine Serverablehnung wird nicht abgeleitet.",
+      "network-error": "Letztes Ressourcenergebnis: Transport nicht verfügbar. Eine Serverentscheidung wird nicht abgeleitet.",
+      "unexpected-status": "Letztes Ressourcenergebnis: unerwartete HTTP-Antwort. Eine interne Ursache wird nicht abgeleitet.",
+      "invalid-response": "Letztes Ressourcenergebnis: Antwort von der sicheren BFF-Projektion abgelehnt.",
+      "response-too-large": "Letztes Ressourcenergebnis: Antwort überschreitet die sichere Größenbegrenzung.",
+      "unavailable": "Letztes Ressourcenergebnis für diese Ansicht nicht verfügbar. Eine Serverentscheidung wird nicht abgeleitet."
+    },
+    "outcomes": {
+      "pending": "Ausstehend",
+      "issued": "Ausgegeben",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen",
+      "accepted": "Akzeptiert",
+      "rejected": "Abgelehnt",
+      "received": "Empfangen",
+      "authenticated": "Angemeldet",
+      "signed-out": "Abgemeldet",
+      "expired": "Abgelaufen",
+      "allowed": "Erlaubt",
+      "denied": "Abgelehnt"
+    },
+    "evidence": {
+      "responseType": "Antworttyp",
+      "pkceMethod": "PKCE-Methode",
+      "authorizationMode": "Autorisierungsart",
+      "httpStatus": "HTTP-Status",
+      "destinationActorId": "Vorgesehenes Ziel",
+      "reason": "Ursachenklassifikation",
+      "correlation": "Browserzuordnung",
+      "response": "Antwortklassifikation",
+      "grantType": "Grant-Typ",
+      "tokenPurpose": "Prüfzweck",
+      "contextRotated": "Kontext gewechselt",
+      "target": "Rückkehrziel",
+      "authenticationRemoved": "Anmeldung entfernt",
+      "operation": "Operationsalias",
+      "method": "HTTP-Methode",
+      "decision": "Gemeldete Entscheidung"
+    },
+    "events": {
+      "authorization-started": {
+        "title": "Autorisierung gestartet",
+        "summary": "Das BFF hat einen neuen Standard-Anmeldeversuch angelegt.",
+        "explanation": "Dies belegt den lokalen Beginn, nicht den Empfang oder eine Anmeldung beim Anbieter."
+      },
+      "authorization-redirect-issued": {
+        "title": "Autorisierungsweiterleitung ausgegeben",
+        "summary": "Das BFF hat eine Browserweiterleitung zum Authorization Server ausgegeben.",
+        "explanation": "Beobachtet wurde die Anweisung vom BFF an den Browser. Sie belegt keinen Empfang beim Anbieter."
+      },
+      "authorization-failed": {
+        "title": "Autorisierungsvorbereitung fehlgeschlagen",
+        "summary": "Das BFF konnte den Autorisierungsversuch nicht vorbereiten.",
+        "explanation": "Bekannt ist nur der eingegrenzte lokale Fehler. Eine interne Anbieterursache wird nicht abgeleitet."
+      },
+      "authorization-cancelled": {
+        "title": "Autorisierungsversuch abgebrochen",
+        "summary": "Das BFF hat diesen kontextgebundenen Versuch abgebrochen.",
+        "explanation": "Ein neuer Versuch, lokales Abmelden oder Ablauf kann Arbeit abbrechen. Ein neuer Versuch erhält eine neue Transaktion."
+      },
+      "callback-accepted": {
+        "title": "Rückkehr zugeordnet",
+        "summary": "Das BFF hat eine Antwort dem zugehörigen Browser zugeordnet.",
+        "explanation": "Die Zuordnung wird vor einmaliger Verwendung und Code-Austausch geprüft. Sie begründet allein noch keine Anmeldung."
+      },
+      "callback-rejected": {
+        "title": "Rückkehr lokal abgelehnt",
+        "summary": "Das BFF hat einen zugeordneten Rückkehrversuch abgelehnt.",
+        "explanation": "Die Ursache ist sicher klassifiziert. Rohe Rückkehrdaten und Anbieterfehlertexte werden nicht angezeigt."
+      },
+      "token-exchange-started": {
+        "title": "Code-Austausch gestartet",
+        "summary": "Das BFF hat den Code-Austausch eingeleitet.",
+        "explanation": "Der vertrauliche Client verwendet serverseitige Zugangsdaten und den gespeicherten PKCE-Prüfwert im Backchannel."
+      },
+      "token-response-received": {
+        "title": "Token-Antwort empfangen",
+        "summary": "Das BFF hat die erwartete HTTP-Token-Antwort empfangen.",
+        "explanation": "Empfang und Token-Prüfung sind getrennt. Weder Tokens noch der Antwortkörper sind Lernbelege."
+      },
+      "token-exchange-failed": {
+        "title": "Code-Austausch fehlgeschlagen",
+        "summary": "Das BFF konnte den Austausch nicht erfolgreich abschließen.",
+        "explanation": "Status oder Klassifikation beschreiben das BFF-Ergebnis, keine beobachtete interne Anbieterprüfung."
+      },
+      "token-validation-started": {
+        "title": "OIDC-Prüfung gestartet",
+        "summary": "Das BFF hat die Prüfung der OIDC-Antwort und des ID Token begonnen.",
+        "explanation": "Dies sind lokale Client-Prüfungen. Das Ereignis behauptet noch keinen erfolgreichen Abschluss aller Prüfungen."
+      },
+      "token-validation-succeeded": {
+        "title": "OIDC-Prüfung erfolgreich",
+        "summary": "Das BFF hat seine Prüfung der OIDC-Antwort und des ID Token abgeschlossen.",
+        "explanation": "Die Client-Prüfung ist von der unabhängigen Access-Token-Autorisierung beim Resource Server getrennt."
+      },
+      "token-validation-failed": {
+        "title": "OIDC-Prüfung abgelehnt",
+        "summary": "Das BFF hat die OIDC-Antwort oder das ID Token abgelehnt.",
+        "explanation": "Dieser Versuch begründet keine Sitzung. Die Oberfläche zeigt keine Claims und errät keine einzelne fehlgeschlagene Prüfung."
+      },
+      "session-established": {
+        "title": "Anwendungssitzung hergestellt",
+        "summary": "Das BFF hat eine angemeldete Sitzung gespeichert und den Browserkontext gewechselt.",
+        "explanation": "Dies folgt auf Prüfung und abschließende Gültigkeitskontrolle. Es gewährt allein noch keinen FHIR-Zugriff."
+      },
+      "workspace-redirect-issued": {
+        "title": "Workspace-Rückkehr ausgegeben",
+        "summary": "Das BFF hat die bereinigte Weiterleitung zu diesem OAuth-Workspace ausgegeben.",
+        "explanation": "Die feste Rückkehradresse enthält keine Rückkehrgeheimnisse. Das Anzeigen stellt den Zustand ohne erneute Protokollausführung her."
+      },
+      "session-ended": {
+        "title": "Lokale Sitzung beendet",
+        "summary": "Das BFF hat lokales Abmelden oder den Ablauf der Anmeldung verarbeitet.",
+        "explanation": "Berechtigte sichere Historie kann einsehbar bleiben. Dies behauptet weder Anbieter-SSO-Abmeldung noch einen Widerruf von Bearer-Tokens."
+      },
+      "resource-requested": {
+        "title": "Synthetischen Lesezugriff eingeleitet",
+        "summary": "Das BFF hat den festen synthetischen Ressourcenzugriff eingeleitet.",
+        "explanation": "Es wird nur das serverseitige Standard-Access-Token verwendet. Das Ereignis belegt noch keinen Empfang oder eine Freigabe durch HAPI."
+      },
+      "resource-response-received": {
+        "title": "Ressourcenantwort empfangen",
+        "summary": "Das BFF hat eine tatsächliche HTTP-Antwort vom Resource Server empfangen.",
+        "explanation": "Das BFF beobachtet Status und Empfangszeit. Nur eine explizite geprüfte Meldung beschreibt die Serverentscheidung; interne Prüfungen bleiben unbeobachtet."
+      },
+      "resource-allowed": {
+        "title": "Synthetischer Lesezugriff erfolgreich",
+        "summary": "Das BFF hat die erlaubte synthetische Ressourcenantwort akzeptiert.",
+        "explanation": "Das begrenzte fiktive Ergebnis hat Projektion und aktuelle Sitzungskontrolle passiert. Anmeldung und Ressourcenautorisierung sind getrennte Ergebnisse."
+      },
+      "resource-denied": {
+        "title": "Ressourcenablehnung empfangen",
+        "summary": "Das BFF hat eine tatsächliche Authentifizierungs- oder Autorisierungsablehnung des Resource Server verarbeitet.",
+        "explanation": "Prüfe den empfangenen Status und eine explizit gemeldete Ursache. Die BFF-Anwendungssitzung kann weiter angemeldet sein."
+      },
+      "resource-rejected": {
+        "title": "Ressourcenzugriff lokal abgelehnt",
+        "summary": "Das BFF hat den Zugriff wegen fehlender gültiger Anwendungsanmeldung abgelehnt.",
+        "explanation": "Dies ist eine lokale BFF-Entscheidung, kein Beleg für eine HAPI-Anfrage oder -Ablehnung. Getrennt empfangene Antworten behalten ihre eigene Herkunft."
+      },
+      "resource-failed": {
+        "title": "Ressourcenoperation nicht verfügbar",
+        "summary": "Das BFF konnte die begrenzte Ressourcenoperation nicht abschließen.",
+        "explanation": "Ein Transport- oder Antwortfehler ist von einer beobachteten Serverablehnung getrennt. Verborgene Ursachen und Antwortkörper werden nicht angezeigt."
+      }
+    },
+    "subtitle": "Authorization Code + PKCE S256 · private Integration",
+    "catalogIntro": "Erkunde die bestehenden Lernvorschauen oder öffne die ausdrücklich konfigurierte private Integration zur Prüfung. Ausführbare Verfügbarkeit bleibt ausstehend.",
+    "catalogNoticeTitle": "Private Prüfung · Verfügbarkeit unverändert"
   }
 }

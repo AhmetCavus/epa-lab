@@ -13,10 +13,13 @@
   },
   "header": {
     "slice": "UI-SLICE 001",
-    "preview": "VORSCHAU"
+    "preview": "VORSCHAU",
+    "private": "Lokal",
+    "integration": "Prüfung"
   },
   "footer": {
-    "notice": "Lernvorschau mit Beispieldaten · keine Live-Protokollausführung"
+    "notice": "Lernvorschau mit Beispieldaten · keine Live-Protokollausführung",
+    "privateNotice": "Private Prüfumgebung · Beispiele und Beobachtungen bleiben getrennt"
   },
   "notFound": {
     "eyebrow": "UNBEKANNTES ZIEL",

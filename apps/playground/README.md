@@ -1,6 +1,10 @@
 # Auth Protocol Playground — UI Slice 001
 
-An isolated React/TypeScript browser app for the authorized fixture-only Catalog and Mission Control Workspace. It coexists with the existing `epa-auth-lab` services without calling or changing them. It is independent of the root's backend commands and workspace membership; root `playground:*` scripts manage its hosted deployment.
+An isolated React/TypeScript browser app for the Catalog and Mission Control Workspace.
+Default development, production builds and the public deployment remain fixture-only.
+Tasks 8.1–8.6 add an explicitly configured private Vite execution binding to the existing
+`epa-auth-lab` BFF; it uses no separate authentication service. This package keeps its
+independent npm workflow; root `playground:*` scripts manage the existing static deployment.
 
 From the repository root, with Node 24:
 
@@ -15,6 +19,110 @@ Open <http://127.0.0.1:5173/missions>. Both workspace routes also support direct
 - `/missions/epa-concept/workspace`: planned, conceptual actor/checkpoint layout, with no telemetry or simulated operational results.
 
 Selecting a learning checkpoint never loads events or executes anything. Replay explanation selects the first loaded sample. Reset view clears selections and restores the map scale while retaining loaded samples. Fit returns to the readable 100% map scale; narrow diagrams scroll horizontally instead of shrinking essential text. Map controls never change browser page zoom. Refreshing or changing mission discards transient UI state; only an explicit language preference persists, with no session, backend connection or credential handling.
+
+## Explicit private execution
+
+Only `npm run dev:private` can enable this binding. Both server-side variables are required:
+
+| Setting                     | Meaning                                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `PLAYGROUND_PRIVATE_ORIGIN` | Exact canonical local/private application origin matching the BFF profile and registered `/api/oauth/callback` |
+| `PLAYGROUND_BFF_TARGET`     | Canonical local/private origin of the configured existing BFF instance, reachable from Vite                    |
+
+Both values reject credentials, paths, query/fragment and public hosts. HTTP/HTTPS loopback
+and private IPv4 origins are supported. Vite binds only to loopback, proxies `/api/oauth`
+with the browser's Host/Origin intact and does not follow upstream redirects. Its private
+logger omits request URLs, queries and raw exceptions. The target stays server-side.
+No client secret is a Vite variable. Static builds, including `build --mode private`, and
+production preview compile execution off and add no API proxy. URL parameters cannot enable it.
+The browser must also be at the configured canonical origin before execution is offered.
+
+For an already configured private BFF/canonical frontend origin, use the existing dev server:
+
+```sh
+PLAYGROUND_PRIVATE_ORIGIN=http://localhost:5173 PLAYGROUND_BFF_TARGET=http://127.0.0.1:18080 npm --prefix apps/playground run dev:private
+```
+
+The example requires that exact callback origin to be registered and configured server-side;
+it does not change an existing realm. On this Dev Server, the registered private origin's
+port is already occupied by the existing deployment. Do not replace that service to run
+this example. The focused test below maps the unchanged canonical browser origin only to
+task-owned loopback listeners, preserving normal navigation, cookie scopes and callback
+registration. Directly opening a different Vite origin keeps execution disabled.
+
+The private catalog retains Fixture preview/Planned availability. Its additional **Open
+private integration test** link is explicitly for verification, without claiming released
+runnable availability. The fixture link uses `?view=fixture`; that parameter only selects
+presentation. The ePA concept has no execution binding. Public cards and routes retain
+their existing fixture behavior. Availability promotion belongs to task 9.5.
+
+The existing Workspace restores through `/api/oauth/session` and the owned event API on
+return/refresh, with a one-shot expiry read and browser-return recovery. These reads never
+start login, exchange codes or request a resource. Start/Retry navigates the top-level
+browser to `/api/oauth/login`; Keycloak owns the login form. Retry creates a fresh attempt.
+The callback returns by clean 303 to the existing Workspace. Unknown, expired or restarted
+context offers safe recovery; it never reconstructs a run from examples.
+
+**Access resource** calls the fixed BFF resource route; **Sign out** posts its context-bound
+CSRF header with the browser's exact Origin. The CSRF value is held only in application
+memory and never enters presentation/events/storage. Credentials remain in the BFF and
+HttpOnly scoped cookies. All API fetches use same-origin mode/credentials, no-store, no
+redirect following, a ten-second timeout and a 128 KiB decoded JSON limit. Zod **4.6.6**
+validates the finite version-1 wire contract and minimal session/resource DTOs. Producer/
+consumer compatibility is checked against the existing BFF schema in repository tests.
+Unknown fields, versions/kinds, actor/channel substitutions, broken order and unsafe data
+have a localized unavailable outcome with no raw JSON or exception fallback.
+
+Authentication, current login outcome and the last resource outcome are separate. Resource
+execution is disabled while restoring or while the current attempt is pending/failed;
+an earlier retained BFF authentication is still reported accurately. Local cleanup remains
+available independently of trace/resource capacity. Logout commits its authoritative result
+before reading events, retains eligible bounded history under its original expiry and
+rejects late UI results. It does not claim provider-wide SSO logout or token revocation.
+Replay, Reset view, checkpoints and actor/event selection make no protocol calls. Locale
+changes retain run/event identities, selection, loaded fixtures and map scale.
+
+### Observation presentation
+
+Protocol-flow now accepts `FlowEvent = FixtureEvent | ObservedEvent`. The observed variant
+adds actual observer/time, per-run sequence, outcome and an optional explicitly reported
+evidence block. It introduces no OAuth imports or wire decoding into the renderer. The
+mission-owned adapter projects only allowlisted values into this neutral shape. Local BFF
+checks use arrowless markers; actual messages retain directional paths and synchronized
+actor/timeline/Inspector selection. A redirect event represents BFF → browser issuance.
+It does not claim receipt by Keycloak. Provider password/PKCE/token internals remain separate
+explanations without fabricated events, observers, timestamps or network arrows.
+
+Only a validated HAPI report supplies `reportedBy: res-server`. The containing response is
+observed/timed by `auth-client`. Missing/invalid reports remain unavailable; response status
+does not imply a list of internal checks. BFF-local rejection never becomes a HAPI denial.
+Repeated event reads preserve the original IDs, order and timestamps. An incomplete trace
+is labeled explicitly, including after successful logout without a stored logout event.
+
+### Focused private verification
+
+With the [isolated secured HAPI setup](../../infrastructure/README.md) healthy, the configured
+private Keycloak reachable and existing BFF source built, run from repository root:
+
+```sh
+corepack pnpm build
+PLAYGROUND_VERIFY_PRIVATE=true npm --prefix apps/playground run test:private
+```
+
+This starts temporary instances of the existing BFF and private Vite on loopback ports.
+It creates/removes one fictional identity, navigates the real provider, validates safe
+Workspace restoration/resource/logout and scans BFF/browser/HAPI logs in memory. It neither
+updates `.env`, registrations, running services/volumes nor adds public routing. Screenshots
+are taken only at clean Workspace URLs; no trace/HAR/video or raw callback is retained.
+Sanitized evidence is stored under ignored `.cache/oidc-runtime/real/`.
+
+For the browser/accessibility matrix, run `npm test` as usual. Native zoom additionally
+requires a full Chromium executable through `PLAYGROUND_NATIVE_CHROMIUM`; without it, those
+two tests report an explicit skip. They use Chrome's own Settings zoom API in disposable
+regular profiles, verify readback/DPR/reflow, and clean up the profiles. Viewport scaling
+and CSS zoom are not substitutes. See the dated [task 8 evidence](../../openspec/changes/001-oidc-pkce/spa-runtime-verification.md)
+for actual checks, screenshots and limitations. Full group-9 acceptance and runnable
+availability remain pending; the public deployment stays fixture-only.
 
 ## Hosted deployment
 
@@ -89,7 +197,14 @@ src/
 
 Mission's public `index.ts` connects to app composition. Protocol-flow exposes `contracts.ts` (types), `selection.ts` (coordination hook) and `index.ts` (UI); internal modules import their own implementations directly. Domain/application code does not import UI barrels. No protocol-flow data layer or shared UI folder is needed by the current application.
 
-`useMissionWorkspace` coordinates checkpoints, fixture loading, replay and reset. It composes `useProtocolSelection`, which owns one active actor/event inspection and its derived highlights. Map scale, scrolling and browser effects stay in UI. `tests/architecture.spec.ts` checks dependency direction, cycles, canonical models and framework-independent domain compilation using the existing test runner and TypeScript compiler. The app still registers only its two static previews. New real execution capabilities require separate approval.
+`useMissionWorkspace` coordinates checkpoints, fixture loading, replay and reset, and composes
+the explicitly enabled mission-owned `useOAuthMission`. It reuses `useProtocolSelection`,
+which owns one active actor/event inspection and derived highlights. Map scale, scrolling
+and focus stay in UI. `tests/architecture.spec.ts` checks dependency direction, cycles,
+canonical models and framework-independent domain compilation. Only the existing two
+missions are registered. Task-8 implementation uses the accepted local/private approval;
+full mission acceptance, runnable availability and any public authentication require their
+separate remaining work/authorization.
 
 See [verification.md](verification.md) for scope, adaptations and verification evidence.
 

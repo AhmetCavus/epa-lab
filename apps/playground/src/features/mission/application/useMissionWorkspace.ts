@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { useProtocolSelection } from '../../protocol-flow/selection';
 import type { Mission } from '../domain/mission';
+import { useOAuthMission } from './useOAuthMission';
 
 type WorkspaceAnnouncement = 'loaded' | 'replayed' | 'reset' | 'fitted';
 
-export function useMissionWorkspace(mission: Mission) {
+export function useMissionWorkspace(mission: Mission, privateRuntime = false) {
+  const execution = useOAuthMission(privateRuntime && mission.execution === 'oauth-standard');
   const [checkpointId, setCheckpointId] = useState(mission.checkpoints[0]?.id ?? null);
   const [hasLoadedSamples, setHasLoadedSamples] = useState(false);
   const [announcement, setAnnouncement] = useState<WorkspaceAnnouncement | null>(null);
-  const events =
+  const fixtureEvents =
     mission.preview.kind === 'fixture' && hasLoadedSamples ? mission.preview.events : [];
+  const events = execution?.events ?? fixtureEvents;
   const checkpoint = mission.checkpoints.find((entry) => entry.id === checkpointId);
   const actors = mission.groups.flatMap((group) => group.actors);
   const inspection = useProtocolSelection({
@@ -48,6 +51,8 @@ export function useMissionWorkspace(mission: Mission) {
     checkpoint,
     selectedIndex,
     hasLoadedSamples,
+    execution,
+    channels: execution?.channels ?? mission.channels,
     events,
     actors,
     announcement,

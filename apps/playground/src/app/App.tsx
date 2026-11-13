@@ -5,6 +5,7 @@ import { Catalog } from '../features/mission';
 import { WorkspaceRoute } from './WorkspaceRoute';
 import { NotFound } from './NotFound';
 import { selectLanguage } from './i18n';
+import { privateOAuthRuntime } from './runtime';
 
 export function App() {
   const { t, i18n } = useTranslation('common');
@@ -39,9 +40,9 @@ export function App() {
           </Link>
         </nav>
         <span className="header-label">
-          {t('common:header.slice')}
+          {t(privateOAuthRuntime ? 'header.private' : 'header.slice')}
           <span> / </span>
-          {t('common:header.preview')}
+          {t(privateOAuthRuntime ? 'header.integration' : 'header.preview')}
         </span>
         <label className="language-control">
           <span>{t('language.label')}</span>
@@ -60,7 +61,7 @@ export function App() {
       </header>
       <Routes>
         <Route path="/" element={<Navigate to="/missions" replace />} />
-        <Route path="/missions" element={<Catalog />} />
+        <Route path="/missions" element={<Catalog privateRuntime={privateOAuthRuntime} />} />
         <Route path="/missions/:missionId/workspace" element={<WorkspaceRoute />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -68,7 +69,7 @@ export function App() {
         <span>
           Auth Protocol Playground <span className="footer-version">/ 001</span>
         </span>
-        <span>{t('common:footer.notice')}</span>
+        <span>{t(privateOAuthRuntime ? 'footer.privateNotice' : 'footer.notice')}</span>
       </footer>
     </>
   );

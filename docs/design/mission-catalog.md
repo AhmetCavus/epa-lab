@@ -56,6 +56,13 @@ Until that binding is available and verified, preserve the explicit Fixture prev
 
 The ePA card remains Planned with a conceptual preview and no runnable action. The existing auth-client's separate PAR demonstration does not change this card's availability. The first standard mission uses Authorization Code + PKCE without PAR; a comparison of the two flows is deferred.
 
+**Implementation alignment, 2026-11-13:** default fixture cards remain unchanged. Only the
+explicit private Vite binding adds a separately labeled integration-test link on the OAuth
+card; its fixture link selects `?view=fixture`. Neither this link nor focused task-8
+verification changes Fixture preview/Planned availability. Runnable promotion remains task
+9.5. The public build/deployment contains no enabled binding or backend routing. See the
+[runtime guide](../../apps/playground/README.md#explicit-private-execution).
+
 Retain the two-card layout, full-width responsive hero, existing JPEGs, status text independent of color, keyboard navigation and German-default/English copy. No filters, introduction overlay, additional mission card or artwork redesign is required for this integration. The open design questions below remain optional future review topics, not missing first-integration decisions.
 
 Component, API and deployment boundaries are recorded in [system-context.md](../architecture/system-context.md). The [integration design](../../openspec/changes/001-oidc-pkce/design.md), [mission-experience specification](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) and [consolidated readiness review](../../openspec/changes/001-oidc-pkce/readiness-review.md) govern runtime availability and approval.

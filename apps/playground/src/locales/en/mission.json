@@ -260,12 +260,216 @@
     "context": "Select an actor, checkpoint or fixture sample to explore its context.",
     "loaded": "Fixture samples loaded",
     "replay": "Replay explanation",
-    "reset": "Reset view"
+    "reset": "Reset view",
+    "execution": "PRIVATE EXECUTION",
+    "privateRuntime": "Private integration test",
+    "runStatus": "Current execution status",
+    "runId": "Run ID",
+    "runExpiry": "History expires at"
   },
   "announcements": {
     "loaded": "Fixture samples loaded. No live operation occurred.",
     "replayed": "Explanation replayed from the first fixture sample.",
     "reset": "View reset. Loaded fixture samples are preserved.",
     "fitted": "Map at readable size. Scroll horizontally to reach additional participants."
+  },
+  "runtime": {
+    "notice": "Private integration for verification. The BFF holds OAuth credentials; Keycloak supplies the login screen. Provider-internal password checks, PKCE comparison and token creation remain explained, not observable. Catalog availability is still unverified.",
+    "catalogAction": "Open private integration test",
+    "catalogNotice": "Fixture and conceptual previews remain available. The separately configured private integration is for verification; runnable catalog availability is not yet released.",
+    "traceUnavailable": "Trace incomplete or unavailable. Existing eligible observations are retained where possible; no missing event is invented.",
+    "phases": {
+      "restoring": "Restoring owned session and run…",
+      "ready": "Private integration",
+      "navigating": "Leaving for Keycloak…",
+      "resource": "Requesting the synthetic resource…",
+      "logout": "Ending the local session…"
+    },
+    "authentication": {
+      "authenticated": "Application authentication: authenticated.",
+      "anonymous": "Application authentication: anonymous.",
+      "expired": "Application authentication: expired. Start a fresh attempt.",
+      "unavailable": "Application authentication: unavailable until status is restored."
+    },
+    "run": {
+      "none": "No current run. Start authentication to create a fresh attempt.",
+      "pending": "Current login attempt: pending. Return or retry; no provider success is inferred.",
+      "authenticated": "Current login attempt: authenticated. Resource authorization is checked separately.",
+      "provider-denied": "Current login attempt: provider denial. Retry creates a fresh attempt.",
+      "authentication-failed": "Current login attempt: failed. No upstream diagnostics are displayed.",
+      "signed-out": "Locally signed out. Eligible safe history remains inspectable; provider SSO may still exist.",
+      "cancelled": "Current login attempt: cancelled. Retry creates a fresh transaction.",
+      "expired": "Current run: expired. Viewing history does not renew its lifetime."
+    },
+    "actions": {
+      "start": "Start authentication",
+      "retry": "Retry flow",
+      "resource": "Access resource",
+      "restore": "Refresh status",
+      "logout": "Sign out",
+      "cancel": "Cancel pending login"
+    },
+    "errors": {
+      "unavailable": "The private backend is unavailable. Refresh status or start again when it is reachable.",
+      "unsupported-response": "Unsupported or unsafe response rejected. No raw data is displayed.",
+      "ownership-lost": "The owned run is unavailable or expired. Start a fresh attempt.",
+      "capacity": "Run capacity is unavailable. Start a fresh attempt; local sign-out remains independent.",
+      "request-rejected": "The request was rejected. Refresh status to recover the current browser context.",
+      "timeout": "The request timed out. Its completion is unknown; refresh status before continuing."
+    },
+    "resource": {
+      "allowed": "Last resource outcome: synthetic Basic/playground-demo read allowed.",
+      "permission-denied": "Last resource outcome: Resource Server authorization denied (HTTP 403). Application authentication is separate.",
+      "token-denied": "Last resource outcome: Resource Server rejected its credential (HTTP 401). Application authentication is separate.",
+      "local-rejection": "Last resource outcome: rejected locally by the BFF. This is not a HAPI denial.",
+      "timeout": "Last resource outcome: timed out. No Resource Server denial is inferred.",
+      "network-error": "Last resource outcome: transport unavailable. No Resource Server decision is inferred.",
+      "unexpected-status": "Last resource outcome: unexpected HTTP response. No internal cause is inferred.",
+      "invalid-response": "Last resource outcome: response rejected by the BFF safe projection.",
+      "response-too-large": "Last resource outcome: response exceeded the safe size limit.",
+      "unavailable": "Last resource result unavailable to this view. No server decision is inferred."
+    },
+    "outcomes": {
+      "pending": "Pending",
+      "issued": "Issued",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "received": "Received",
+      "authenticated": "Authenticated",
+      "signed-out": "Signed out",
+      "expired": "Expired",
+      "allowed": "Allowed",
+      "denied": "Denied"
+    },
+    "evidence": {
+      "responseType": "Response type",
+      "pkceMethod": "PKCE method",
+      "authorizationMode": "Authorization mode",
+      "httpStatus": "HTTP status",
+      "destinationActorId": "Intended destination",
+      "reason": "Reason classification",
+      "correlation": "Browser correlation",
+      "response": "Response classification",
+      "grantType": "Grant type",
+      "tokenPurpose": "Validation purpose",
+      "contextRotated": "Context rotated",
+      "target": "Return target",
+      "authenticationRemoved": "Authentication removed",
+      "operation": "Operation alias",
+      "method": "HTTP method",
+      "decision": "Reported decision"
+    },
+    "events": {
+      "authorization-started": {
+        "title": "Authorization started",
+        "summary": "The BFF created a fresh standard login attempt.",
+        "explanation": "This records local initiation, not receipt or authentication at the provider."
+      },
+      "authorization-redirect-issued": {
+        "title": "Authorization redirect issued",
+        "summary": "The BFF issued a browser redirect toward the Authorization Server.",
+        "explanation": "This is the BFF → browser instruction. It does not prove the provider received the navigation."
+      },
+      "authorization-failed": {
+        "title": "Authorization preparation failed",
+        "summary": "The BFF could not prepare the authorization attempt.",
+        "explanation": "Only the bounded local failure is known. No provider-internal cause is inferred."
+      },
+      "authorization-cancelled": {
+        "title": "Authorization attempt cancelled",
+        "summary": "The BFF cancelled this context-bound attempt.",
+        "explanation": "A superseding attempt, logout or expiry can cancel work. A retry creates a new transaction."
+      },
+      "callback-accepted": {
+        "title": "Callback correlated",
+        "summary": "The BFF accepted a response correlated to the owning browser.",
+        "explanation": "Correlation is checked before one-time consumption and code exchange. It does not by itself establish authentication."
+      },
+      "callback-rejected": {
+        "title": "Callback rejected locally",
+        "summary": "The BFF rejected an owned callback attempt.",
+        "explanation": "The reason is a safe classification. No raw callback or provider error text is exposed."
+      },
+      "token-exchange-started": {
+        "title": "Code exchange started",
+        "summary": "The BFF initiated the code-exchange attempt.",
+        "explanation": "The confidential client uses server-held credentials and the stored PKCE verifier on the back channel."
+      },
+      "token-response-received": {
+        "title": "Token response received",
+        "summary": "The BFF received the expected HTTP token response.",
+        "explanation": "Receipt is distinct from token validation. Neither tokens nor the response body are teaching evidence."
+      },
+      "token-exchange-failed": {
+        "title": "Code exchange failed",
+        "summary": "The BFF could not complete the exchange successfully.",
+        "explanation": "The recorded status or classification describes the BFF result, not an observed provider-internal check."
+      },
+      "token-validation-started": {
+        "title": "OIDC validation started",
+        "summary": "The BFF started validating the OIDC response and ID Token.",
+        "explanation": "These are local client checks. This event does not assert that every check has already passed."
+      },
+      "token-validation-succeeded": {
+        "title": "OIDC validation succeeded",
+        "summary": "The BFF completed its OIDC response and ID Token validation.",
+        "explanation": "Client-side validation is distinct from independent Access Token authorization at the Resource Server."
+      },
+      "token-validation-failed": {
+        "title": "OIDC validation rejected",
+        "summary": "The BFF rejected the OIDC response or ID Token.",
+        "explanation": "No session is established from this attempt. The UI does not expose claims or guess the failed internal check."
+      },
+      "session-established": {
+        "title": "Application session established",
+        "summary": "The BFF committed an authenticated session and rotated browser context.",
+        "explanation": "This follows validation and the final eligibility check. It does not grant FHIR access by itself."
+      },
+      "workspace-redirect-issued": {
+        "title": "Workspace return issued",
+        "summary": "The BFF issued the clean redirect to this OAuth Workspace.",
+        "explanation": "The fixed return contains no callback secrets. Viewing the Workspace restores state without repeating protocol work."
+      },
+      "session-ended": {
+        "title": "Local session ended",
+        "summary": "The BFF completed local sign-out or authentication expiry.",
+        "explanation": "Eligible safe history can remain inspectable. This does not claim provider SSO logout or bearer-token revocation."
+      },
+      "resource-requested": {
+        "title": "Synthetic read initiated",
+        "summary": "The BFF initiated the fixed synthetic resource read.",
+        "explanation": "Only its server-held standard Access Token is used. This event does not claim receipt or approval by HAPI."
+      },
+      "resource-response-received": {
+        "title": "Resource response received",
+        "summary": "The BFF received an actual HTTP response from the Resource Server.",
+        "explanation": "The BFF observes status and receipt time. Only an explicit validated report can state a server decision; internal checks remain unobserved."
+      },
+      "resource-allowed": {
+        "title": "Synthetic read succeeded",
+        "summary": "The BFF accepted the allowed synthetic resource response.",
+        "explanation": "The bounded fictional result passed projection and current-session eligibility. Authentication and resource authorization are separate outcomes."
+      },
+      "resource-denied": {
+        "title": "Resource denial received",
+        "summary": "The BFF handled a real Resource Server authentication or authorization denial.",
+        "explanation": "Inspect the received status and any explicit reported reason. The BFF application session may still be authenticated."
+      },
+      "resource-rejected": {
+        "title": "Resource access rejected locally",
+        "summary": "The BFF rejected resource access because eligible application authentication was absent.",
+        "explanation": "This is a BFF-local decision. It is never evidence of a HAPI request or denial; separately received responses retain their own provenance."
+      },
+      "resource-failed": {
+        "title": "Resource operation unavailable",
+        "summary": "The BFF could not complete the bounded resource operation.",
+        "explanation": "A transport or response failure is distinct from an observed Resource Server denial. No hidden root cause or body is exposed."
+      }
+    },
+    "subtitle": "Authorization Code + PKCE S256 · private integration",
+    "catalogIntro": "Explore the existing learning previews or open the explicitly configured private integration for verification. Runnable availability remains pending.",
+    "catalogNoticeTitle": "Private verification · availability unchanged"
   }
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Actor, FixtureEvent } from '../domain/protocol-flow';
+import type { Actor, FlowEvent } from '../domain/protocol-flow';
 import { interactionActorIds } from '../domain/protocol-flow';
 
 type InspectionSelection =
@@ -9,7 +9,7 @@ type InspectionSelection =
 
 interface ProtocolSelectionOptions {
   actors: readonly Actor[];
-  events: readonly FixtureEvent[];
+  events: readonly FlowEvent[];
   contextActorIds: readonly string[];
 }
 

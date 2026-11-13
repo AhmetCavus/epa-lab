@@ -13,10 +13,13 @@
   },
   "header": {
     "slice": "UI SLICE 001",
-    "preview": "PREVIEW"
+    "preview": "PREVIEW",
+    "private": "Local",
+    "integration": "Verification"
   },
   "footer": {
-    "notice": "Fixture-only learning preview · no live protocol execution"
+    "notice": "Fixture-only learning preview · no live protocol execution",
+    "privateNotice": "Private verification environment · fixtures and observations remain separate"
   },
   "notFound": {
     "eyebrow": "UNKNOWN DESTINATION",

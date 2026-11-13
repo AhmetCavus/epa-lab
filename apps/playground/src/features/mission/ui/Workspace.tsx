@@ -5,13 +5,21 @@ import type { Mission } from '../domain/mission';
 import { useMissionWorkspace } from '../application/useMissionWorkspace';
 import { ActorCanvas, Inspector, Timeline } from '../../protocol-flow';
 
-export function Workspace({ mission }: { mission: Mission }) {
+export function Workspace({
+  mission,
+  privateRuntime = false,
+}: {
+  mission: Mission;
+  privateRuntime?: boolean;
+}) {
   const { t } = useTranslation('mission');
   const {
     checkpointId,
     checkpoint,
     selectedIndex,
     hasLoadedSamples,
+    execution,
+    channels,
     events,
     actors,
     announcement,
@@ -25,9 +33,31 @@ export function Workspace({ mission }: { mission: Mission }) {
     replayExplanation,
     resetWorkspace,
     announce,
-  } = useMissionWorkspace(mission);
+  } = useMissionWorkspace(mission, privateRuntime);
   const [scale, setScale] = useState(1);
   const mapViewportRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const invokedAction = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (execution?.phase !== 'ready' || !invokedAction.current) {
+      return;
+    }
+    const buttons = [
+      ...(actionsRef.current?.querySelectorAll<HTMLButtonElement>('[data-runtime-action]') ?? []),
+    ];
+    const active = document.activeElement;
+    if (
+      active === document.body ||
+      (active instanceof HTMLElement && actionsRef.current?.contains(active))
+    ) {
+      const original = buttons.find(
+        (button) => button.dataset.runtimeAction === invokedAction.current && !button.disabled,
+      );
+      (original ?? buttons.find((button) => !button.disabled))?.focus();
+    }
+    invokedAction.current = null;
+  }, [execution?.phase]);
 
   useEffect(() => {
     document.title = t('common:titles.workspace', { mission: t(mission.titleKey) });
@@ -53,17 +83,18 @@ export function Workspace({ mission }: { mission: Mission }) {
       <header className="workspace-heading">
         <div>
           <p className="eyebrow">
-            {t('mission:workspace.eyebrow')} <span>{t('mission:workspace.preview')}</span>
+            {t('mission:workspace.eyebrow')}{' '}
+            <span>{t(execution ? 'workspace.execution' : 'workspace.preview')}</span>
           </p>
           <h1>{t(mission.titleKey)}</h1>
-          <p>{t(mission.subtitleKey)}</p>
+          <p>{t(execution?.subtitleKey ?? mission.subtitleKey)}</p>
         </div>
         <div className="workspace-status">
           <span className={`badge ${mission.preview.kind}`}>
-            {t(`availability.${mission.availability}`)}
+            {t(execution ? 'workspace.privateRuntime' : `availability.${mission.availability}`)}
           </span>
           <span className="metadata" role="status">
-            {t('mission:workspace.noRun')}
+            {t(execution?.stateKey ?? 'workspace.noRun')}
           </span>
         </div>
       </header>
@@ -71,7 +102,7 @@ export function Workspace({ mission }: { mission: Mission }) {
         <span className="notice-icon" aria-hidden="true">
           i
         </span>
-        <p>{t(mission.preview.noteKey)}</p>
+        <p>{t(execution?.noticeKey ?? mission.preview.noteKey)}</p>
       </div>
       <div className="workspace-grid">
         <aside className="panel mission-panel" aria-labelledby="mission-panel-title">
@@ -83,6 +114,34 @@ export function Workspace({ mission }: { mission: Mission }) {
             <p className="eyebrow">{t('mission:workspace.objective')}</p>
             <p>{t(mission.objectiveKey)}</p>
           </div>
+          {execution && (
+            <section
+              className="objective runtime-status"
+              aria-label={t('workspace.runStatus')}
+              role="status"
+              aria-atomic="true"
+            >
+              {execution.messages.map((key) => (
+                <p key={key}>{t(key)}</p>
+              ))}
+              {execution.runId && (
+                <dl className="provenance">
+                  <div>
+                    <dt>{t('workspace.runId')}</dt>
+                    <dd>
+                      <code>{execution.runId}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t('workspace.runExpiry')}</dt>
+                    <dd>
+                      <time dateTime={execution.runExpiresAt}>{execution.runExpiresAt}</time>
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </section>
+          )}
           <div className="checkpoint-heading">
             <h3>{t('mission:workspace.checkpoints')}</h3>
             <span>
@@ -144,7 +203,7 @@ export function Workspace({ mission }: { mission: Mission }) {
           </div>
           <ActorCanvas
             groups={mission.groups}
-            channels={mission.channels}
+            channels={channels}
             events={events}
             event={event}
             highlightedActorIds={highlightedActorIds}
@@ -155,6 +214,7 @@ export function Workspace({ mission }: { mission: Mission }) {
               selectActor(id);
             }}
             onSelectEvent={selectEvent}
+            presentation={execution ? 'observed' : 'fixture'}
           />
           <div className="canvas-explanation" data-selected={Boolean(event)}>
             <span
@@ -174,8 +234,22 @@ export function Workspace({ mission }: { mission: Mission }) {
               )}
             </p>
           </div>
-          <div className="workspace-actions">
-            {mission.preview.kind === 'fixture' && (
+          <div className="workspace-actions" ref={actionsRef}>
+            {execution?.actions.map((action) => (
+              <button
+                key={action.id}
+                data-runtime-action={action.id}
+                className={`button ${action.primary ? 'primary' : 'secondary'}`}
+                disabled={action.disabled}
+                onClick={() => {
+                  invokedAction.current = action.id;
+                  action.invoke();
+                }}
+              >
+                {t(action.labelKey)}
+              </button>
+            ))}
+            {!execution && mission.preview.kind === 'fixture' && (
               <button className="button primary" disabled={hasLoadedSamples} onClick={loadSamples}>
                 {t(hasLoadedSamples ? 'workspace.loaded' : mission.preview.loadLabelKey)}
               </button>
@@ -193,13 +267,19 @@ export function Workspace({ mission }: { mission: Mission }) {
           </div>
         </section>
         <Inspector
+          presentation={execution ? 'observed' : 'fixture'}
           event={event}
           actor={actor}
           contextTitle={checkpoint ? t(checkpoint.titleKey) : undefined}
           contextExplanation={checkpoint ? t(checkpoint.explanationKey) : undefined}
           actors={actors}
         />
-        <Timeline events={events} selectedEventId={event?.id ?? null} onSelectEvent={selectEvent} />
+        <Timeline
+          events={events}
+          selectedEventId={event?.id ?? null}
+          onSelectEvent={selectEvent}
+          presentation={execution ? 'observed' : 'fixture'}
+        />
       </div>
       <p className="sr-only" role="status">
         {announcement ? t(`announcements.${announcement}`) : ''}

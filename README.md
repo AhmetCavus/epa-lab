@@ -158,6 +158,8 @@ Only exact GET/HEAD liveness/readiness probes are anonymous and return status on
 
 The existing `epa-demo` realm now also contains confidential client `playground-oidc`, with an exact `/api/oauth/callback`, required PKCE S256 and direct Authorization Code flow without PAR. Standard Access Tokens carry audience `playground-fhir`; the optional `demo.fhir.read` scope permits a separate valid narrower grant. The existing ePA client and required-PAR policy are preserved. See the [Keycloak guide](infrastructure/keycloak/README.md) for fresh setup, idempotent migration, rollback and isolated verification. Credentials remain server-side. The [auth-client profiles and backend browser lifecycle](services/auth-client/README.md) are verified in temporary private test processes. The standard profile stays disabled by default; the existing deployed containers and fixture UI have not been updated.
 
+The SPA now has an [explicit private Vite binding](apps/playground/README.md#explicit-private-execution) for session restoration, authentication navigation, the synthetic read, local logout and safe owned observations. Default builds and the public deployment remain fixture-only. Catalog availability stays unverified until group 9; see [task 8 evidence](openspec/changes/001-oidc-pkce/spa-runtime-verification.md).
+
 ## Status and authority
 
 `001-oidc-pkce` is APPROVED for local/private implementation; ADR-0001/ADR-0002 and its reconciled UX/security/spec baseline are accepted. Broader draft documents and unrelated changes retain their own status. Runtime implementation and verification are separate stages. In this project:

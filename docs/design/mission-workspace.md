@@ -112,6 +112,24 @@ Preserve mission/protocol-flow ownership and public imports under Accepted ADR-0
 
 ### Verification and approval boundary
 
+**Implementation alignment, 2026-11-13 (tasks 8.1–8.6):** the existing Workspace now has an
+explicit private Vite binding. Start/Retry uses top-level navigation; return/refresh reads
+only owned session/events. Resource and local logout remain separate actions, with native
+Origin and context-bound CSRF. Authoritative signed-out state commits before event retrieval;
+capacity/recording failure keeps eligible safe history visibly incomplete. Late results do
+not restore signed-out UI state. Pending/failed current attempts disable resource execution
+without relabeling an earlier retained application authentication as a success for that run.
+Replay/Reset/checkpoints/selection remain presentation-only. German/English switching
+preserves run/event identity, learning selection and map scale. The renderer accepts a
+neutral observed variant, including arrowless BFF-local observations and separately reported
+HAPI decisions; runtime and fixture records are never merged.
+
+The existing stylesheet/artwork and panel hierarchy are preserved. The private state/action
+copy occupies existing status/objective/action areas. Default builds and public hosting
+remain fixture-only, and catalog availability stays unverified. See the [private runtime
+guide](../../apps/playground/README.md#explicit-private-execution) and [task 8 verification](../../openspec/changes/001-oidc-pkce/spa-runtime-verification.md).
+This alignment does not start group 9 or change the accepted design/ADRs.
+
 The [revised acceptance specs](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) cover restoration, owned evidence, lifecycle/recording failures and the unchanged visual contract. Verify keyboard/focus, actor/event/checkpoint selection, reduced motion, diagram text alternative, Fit/scrolling, German/English at narrow widths and actual 100%/200% browser zoom when runtime behavior is implemented. Language changes translate presentation only and retain navigation, run identity, event selection and map scale.
 
 The [consolidated readiness and owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) records the accepted baseline and local/private authorization. It does not replace future browser/security acceptance execution. The public static site remains fixture-only; no public authentication deployment is authorized.
