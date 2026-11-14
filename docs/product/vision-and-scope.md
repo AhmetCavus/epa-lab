@@ -20,6 +20,13 @@ Primary: software developers and architects who need to understand protocols and
 
 ## First deliverable
 
+**Preparation approval, 2026-11-13:** the owner authorized tasks 1.1–5.2 of
+`public-playground-oauth-deployment`, preserving existing HAPI data, creating the public
+realm/accounts fresh and verifying legacy ePA storage preservation separately. The
+[approval record](../../openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization)
+permits implementation and isolated verification, while public availability, routing and
+live database ownership/credential changes remain subject to separate authorization.
+
 **Owner approval, 2026-11-11:** the first-mission scope in `001-oidc-pkce`, its reconciled UX/visual baseline, security architecture and revised specifications are accepted for local/private implementation of tasks 2–9. See the [owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). This recording step starts no implementation. The existing ePA/PAR demonstration is preserved; a comparison UI remains outside scope. Public real authentication is not authorized and the current public Playground remains fixture-only. Broader future product scope retains its draft status.
 
 The owner authorized **UI Slice 001** as a fixture-only precursor: Catalog and a shared Workspace with OAuth sample explanations and a conceptual ePA layout preview. It lives in isolated `apps/playground` alongside existing repository services. It offers no real protocol execution and does not fulfill or approve the end-to-end deliverable below.

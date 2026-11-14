@@ -1,10 +1,12 @@
 # Proposal
 
-**Status: DRAFT revision — planning only; no live changes or public deployment.**
+**Status: APPROVED for preparation tasks 1.1–5.2 only; public release NOT APPROVED.**
 Date: 2026-11-13. Depends on the implemented, unarchived `001-oidc-pkce` baseline.
 
-The earlier preparation approval is limited to tasks 1.1–5.2. Tasks 6.1/6.2 and live database
-ownership/credential changes require separate authorization. This revision performs no implementation.
+The owner renewed the bounded apply request after the planning simplification. Preparation
+may proceed through tasks 1.1–5.2 subject to their prerequisites. Tasks 6.1/6.2 and live
+database ownership/credential changes require separate authorization. See the
+[approval and verification record](repository-verification.md#preparation-authorization).
 
 ## Why
 

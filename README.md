@@ -1,5 +1,12 @@
 # Auth Protocol Playground
 
+**Public-release preparation:** the owner approved `public-playground-oauth-deployment`
+tasks 1.1–5.2 for implementation and isolated verification. HAPI retains its database/data;
+the public realm/accounts are fresh, with legacy ePA storage preservation handled separately.
+See the [scope and verification record](openspec/changes/public-playground-oauth-deployment/repository-verification.md).
+This approval excludes live database ownership/credential changes and tasks 6.1/6.2;
+the public deployment remains fixture-only until separately approved rollout.
+
 > **Project state:** `001-oidc-pkce` is **50/50 complete for local/private operation**, with the verified persistent runtime at <http://192.168.178.131:5173/missions>. Real login, resource access, observations, logout/history and restart recovery pass; reviewed patched backends and the private frontend remain healthy. Default builds and the public [`apps/playground`](apps/playground/README.md) remain fixture-only. The change is not archived. Privileged firewall ordering/duplicate and backup-integrity inspection remains an administrative follow-up. See the [owner approval](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary), [integrated acceptance](openspec/changes/001-oidc-pkce/integrated-acceptance-verification.md), [dependency remediation](openspec/changes/001-oidc-pkce/dependency-remediation-verification.md), [approved private deployment plan](openspec/changes/001-oidc-pkce/private-deployment-plan.md), [historical deployment/rollback](openspec/changes/001-oidc-pkce/private-deployment-verification.md), [firewall evaluation](openspec/changes/001-oidc-pkce/firewall-verification.md) and [persistent-runtime acceptance/runbook](openspec/changes/001-oidc-pkce/private-deployment-acceptance.md).
 
 Run the UI from this repository root with `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`, then open <http://127.0.0.1:5173/missions>. The `playground:*` root scripts manage the hosted UI; existing backend commands retain their behavior. See the [UI package guide](apps/playground/README.md) for build, deployment and browser checks.

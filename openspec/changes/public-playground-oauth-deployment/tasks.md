@@ -1,14 +1,16 @@
 # Tasks
 
-**DRAFT revision — all tasks unstarted.** Earlier owner approval covers preparation tasks
-1.1–5.2 only; this planning update resumes no implementation. Live ownership/credential
-changes and public rollout require separate authorization. Follow the [design](design.md) and
+**Preparation tasks 1.1–5.2 are APPROVED; public release is NOT APPROVED.** The owner renewed
+the apply request after the planning simplification. Live ownership/credential changes and
+tasks 6.1/6.2 require separate authorization. See the
+[approval and verification record](repository-verification.md#preparation-authorization).
+Follow the [design](design.md) and
 [acceptance specification](specs/public-playground-runtime/spec.md). Preserve change 001's
 completed tasks and historical evidence; do not archive it as part of this work.
 
 ## 1. Confirm release scope and operating prerequisites
 
-- [ ] 1.1 Record the existing preparation approval for tasks 1.1–5.2 and the separate live-database/public-release authorization gates. Align active scope/ADR/UX/hosting notes with HAPI reuse and targeted `hapi_app` privileges, fresh public realm/accounts and a separate legacy Keycloak storage transition. Preserve task IDs, change 001 history, bootstrap administrator recovery and the current fixture-only public deployment; this revision is planning only.
+- [x] 1.1 Record the existing preparation approval for tasks 1.1–5.2 and the separate live-database/public-release authorization gates. Align active scope/ADR/UX/hosting notes with HAPI reuse and targeted `hapi_app` privileges, fresh public realm/accounts and a separate legacy Keycloak storage transition. Preserve task IDs, change 001 history, bootstrap administrator recovery and the current fixture-only public deployment; approval recording does not authorize live cutover or public deployment.
 - [ ] 1.2 Record actual Tunnel/peer values and existing PostgreSQL container/volume/image identity. Recheck bootstrap recovery, HAPI ownership/extensions/grants and credential consumers; review exact privilege/access deltas without planning HAPI data movement. Measure combined pools/CPU/RAM/disk/WAL/I/O, backup headroom and shared-failure implications. Identify a consistent legacy dev-file source copy or a separately approved backup window. Set recovery objectives, monitoring ownership/scheduler/alerts; obtain privileged UFW and external direct-origin evidence. Stop on unknown dependencies or insufficient capacity.
 
 ## 2. Prepare production provider and isolated public realm

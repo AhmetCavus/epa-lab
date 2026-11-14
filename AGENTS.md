@@ -1,5 +1,13 @@
 # Agent Guidelines — Auth Protocol Playground
 
+**Additional owner authorization (2026-11-13):** `public-playground-oauth-deployment` is
+approved for preparation and isolated verification of **tasks 1.1–5.2** under its revised
+plan. See the [preparation approval record](openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization).
+Reuse HAPI data with a targeted privilege transition, provision the public realm/accounts
+fresh, and verify legacy ePA preservation separately. Tasks 6.1/6.2, live database
+ownership/credential changes and public OAuth activation require separate authorization.
+Keep the public Playground fixture-only and stop on unmet operational/security prerequisites.
+
 **Current authorization (2026-11-11):** the project owner approved OpenSpec change `001-oidc-pkce` for **local/private implementation of tasks 2–9**, accepted ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications, and completed readiness task 1.4. See the [consolidated owner approval record](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). The approval-recording step must not start implementation; tasks 2–9 remain unstarted. Subsequent implementation must follow the accepted scope and dependencies.
 
 **Public deployment boundary:** do not deploy real authentication publicly. Keep the existing public Playground fixture-only. Local/private implementation approval does not authorize public auth-client, Keycloak, HAPI or API routing.
@@ -55,7 +63,7 @@ Follow Accepted [ADR-0004](docs/architecture/decisions/ADR-0004-localization-and
 1. Read `README.md`, `docs/product/vision-and-scope.md`, both UX documents, and architecture ADRs before proposing modifications.
 2. When details are unknown, write an **Open Decision** in the relevant file; do not silently invent the answer.
 3. Update architecture, UX, and OpenSpec consistently when a decision changes.
-4. Implement only explicitly `APPROVED` OpenSpec changes with accepted conditions. `001-oidc-pkce` is approved for local/private tasks 2–9; preserve the existing UI baseline and public fixture-only deployment. Other changes still require their own authorization.
+4. Implement only explicitly `APPROVED` OpenSpec changes with accepted conditions. `001-oidc-pkce` is approved for local/private tasks 2–9; `public-playground-oauth-deployment` is approved only for preparation tasks 1.1–5.2 as recorded above. Preserve the existing UI baseline and public fixture-only deployment. Other changes still require their own authorization.
 5. Prefer a complete small vertical slice over creating infrastructure for many future missions.
 6. Never edit existing `epa-auth-lab` code or configuration based on assumptions; first verify the chosen repository boundary.
 

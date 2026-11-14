@@ -14,6 +14,14 @@ fresh setup, idempotent migration and rollback evidence. See the [Keycloak guide
 and [verification record](../../openspec/changes/001-oidc-pkce/keycloak-verification.md).
 The auth-client profiles and backend standard browser lifecycle are verified under tasks 4.1–5.5. See the [backend contract](../../services/auth-client/README.md), [profile verification](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md) and [browser lifecycle evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md). The [HAPI policy](../../services/res-server/SECURITY.md) now verifies independent Access Token/permission enforcement for the synthetic read; see [Resource Server evidence](../../openspec/changes/001-oidc-pkce/resource-server-verification.md). Tasks 7.1–7.6 connect the fixed BFF resource operation and owned safe event API with [private integration evidence](../../openspec/changes/001-oidc-pkce/resource-observability-verification.md). Tasks 8.1–8.6 add the [explicit private SPA binding](../../apps/playground/README.md#explicit-private-execution), neutral observed-event presentation and focused browser verification. Full group-9 acceptance and runnable availability remain pending; the deployed fixture UI and backend containers are unchanged.
 
+**Public-release preparation, 2026-11-13:** approved tasks 1.1–5.2 reuse these component and
+ADR boundaries. The [current change](../../openspec/changes/public-playground-oauth-deployment/design.md)
+keeps HAPI data in place, prepares scoped runtime privileges and fresh public realm/accounts,
+and verifies the legacy Keycloak storage transition independently. The
+[preparation authorization](../../openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization)
+does not authorize live cutover, public routing or tasks 6.1/6.2. Existing private and public
+fixture bindings retain their current operation during preparation.
+
 ## Components and current implementation boundary
 
 | Component                 | Current repository state                                                                                                                 | Proposed local integration responsibility                                                              |

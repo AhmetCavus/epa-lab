@@ -1,6 +1,9 @@
 # Design
 
-**Status: DRAFT revision — planning only; no live changes or public deployment.**
+**Status: APPROVED for preparation tasks 1.1–5.2 only; public release NOT APPROVED.**
+
+The [preparation authorization](repository-verification.md#preparation-authorization)
+permits isolated implementation/verification and retains the separate live-cutover gates.
 
 ## Context
 
@@ -102,11 +105,11 @@ global issuer or start a second provider silently.
 `res-server-db` service/container and its existing `res-server-data` persistent volume.
 This retains the shared-instance decision and resolves B1 through runtime-account separation.
 Add no PostgreSQL container or production database volume, and publish no PostgreSQL port.
-This DRAFT revision separates fresh setup, an in-place privilege transition and legacy
+The approved preparation separates fresh setup, an in-place privilege transition and legacy
 provider storage replacement. Preserve the existing HAPI database, data, logical schema and
 volume. HAPI needs reviewed ownership/grant/credential changes, not a data migration. No
 replacement HAPI database, live dump/reload, ETL or data transformation belongs in rollout.
-No live change is authorized by this planning request.
+The preparation approval does not authorize the live privilege/credential transition.
 
 | Consumer       | Database / login role               | Required boundary                                                                                                                       |
 | -------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -429,12 +432,12 @@ requirement to retain HAPI's runtime credential/permissions while claiming isola
 does not demote the bootstrap role or accept application superuser access as an exception.
 The live application still uses that administrator. The targeted privilege transition, exact ownership/grant/HBA
 deltas, real Hibernate/Keycloak operation, denied cross-database logins and recovery must all
-pass tasks 2.1/5.1/5.2 before task 6.1 may release. The scoped planning update is not evidence
-of a completed security remediation or implementation/deployment approval.
+pass tasks 2.1/5.1/5.2 before task 6.1 may release. Preparation approval is not evidence of
+completed security remediation and does not authorize live cutover or public deployment.
 
 Legacy provider preservation, ordinary backup/recovery checks, shared capacity/failure tests and
 the existing public-ingress/operational gates remain unverified implementation work. No
-new database, role, rule, backup, container or volume was created during this revision.
+new database, role, rule, backup, container or volume was created during the planning revision.
 Earlier B1 catalog inspection used `BEGIN READ ONLY`; the new provider check read only
 container/storage metadata. Existing verification history is retained.
 
