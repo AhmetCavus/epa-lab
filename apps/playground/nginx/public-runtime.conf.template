@@ -1,0 +1,137 @@
+log_format playground_safe escape=json '{"operation":"$playground_operation","status":$status,"duration":$request_time}';
+
+geo $realip_remote_addr $playground_trusted_peer {
+  default 0;
+  ${PLAYGROUND_TRAEFIK_ADDRESS}/32 1;
+}
+map "$playground_trusted_peer:$http_x_forwarded_proto:$http_x_forwarded_host:$http_x_forwarded_port" $playground_trusted_ingress {
+  default 0;
+  "1:https:auth-playground.yappai.de:443" 1;
+}
+map $http_cf_visitor $playground_edge_https {
+  default 0;
+  '~^\s*\{\s*"scheme"\s*:\s*"https"\s*\}\s*$' 1;
+}
+map $request_uri $playground_operation {
+  default static;
+  ~^/api/oauth/login(?:\?.*)?$ login;
+  ~^/api/oauth/callback(?:\?.*)?$ callback;
+  ~^/api/oauth/session(?:\?.*)?$ session;
+  ~^/api/oauth/resource(?:\?.*)?$ resource;
+  ~^/api/oauth/logout(?:\?.*)?$ logout;
+  "~^/api/oauth/runs/[0-9a-fA-F-]{36}/events(?:\?.*)?$" events;
+  ~^/realms/playground-public/\.well-known/openid-configuration(?:\?.*)?$ discovery;
+  ~^/realms/playground-public/protocol/openid-connect/auth(?:\?.*)?$ authorization;
+  ~^/realms/playground-public/protocol/openid-connect/token(?:\?.*)?$ token;
+  ~^/realms/playground-public/protocol/openid-connect/certs(?:\?.*)?$ keys;
+  ~^/realms/playground-public/login-actions/(authenticate|required-action|restart)(?:\?.*)?$ provider_login;
+  ~^/resources/[A-Za-z0-9_-]+/(login/keycloak\.v2|common/keycloak)/[A-Za-z0-9_./-]+(?:\?.*)?$ provider_asset;
+}
+map "$request_method:$playground_operation" $playground_method_allowed {
+  default 0;
+  ~^GET:(login|callback|session|resource|events|discovery|authorization|keys|provider_login|provider_asset)$ 1;
+  ~^POST:(logout|token|provider_login)$ 1;
+}
+map $request_uri $playground_reserved_path {
+  default 0;
+  ~*^/(api|realms|resources|admin|account|management|actuator|fhir|mcp|authorize|callback|session|health/)(/|\?|$) 1;
+}
+map "$playground_reserved_path:$playground_operation" $playground_unknown_path {
+  default 0;
+  "1:static" 1;
+}
+
+limit_req_zone $binary_remote_addr zone=playground_login:1m rate=6r/m;
+limit_req_zone $binary_remote_addr zone=playground_resource:1m rate=30r/m;
+limit_req_zone $binary_remote_addr zone=playground_reads:1m rate=120r/m;
+limit_req_zone $binary_remote_addr zone=playground_provider_reads:1m rate=120r/m;
+limit_req_zone $binary_remote_addr zone=playground_provider_assets:1m rate=120r/m;
+limit_req_zone $binary_remote_addr zone=playground_logout:1m rate=60r/m;
+limit_req_zone $binary_remote_addr zone=playground_provider:1m rate=12r/m;
+limit_req_zone $binary_remote_addr zone=playground_tokens:1m rate=30r/m;
+limit_req_zone $server_name zone=playground_aggregate:1m rate=60r/s;
+limit_conn_zone $binary_remote_addr zone=playground_connections:1m;
+limit_conn_zone $server_name zone=playground_total_connections:1m;
+
+server {
+  listen 80;
+  server_name auth-playground.yappai.de;
+  server_tokens off;
+  root /usr/share/nginx/html;
+  index index.html;
+  set_real_ip_from ${PLAYGROUND_TRAEFIK_ADDRESS};
+  real_ip_header CF-Connecting-IP;
+  real_ip_recursive off;
+
+  access_log /dev/stdout playground_safe;
+  # Nginx upstream error messages include raw URLs. Safe status/duration diagnostics
+  # above are the only request log; provider/BFF retain their bounded diagnostics.
+  error_log /dev/null;
+  add_header X-Content-Type-Options nosniff always;
+  add_header Referrer-Policy no-referrer always;
+  add_header X-Frame-Options DENY always;
+  add_header Cache-Control no-store always;
+  client_max_body_size 16k;
+  client_body_timeout 10s;
+  client_header_timeout 10s;
+  keepalive_timeout 15s;
+  limit_req_status 429;
+  limit_conn_status 429;
+  limit_req zone=playground_aggregate burst=60 nodelay;
+  limit_conn playground_connections 10;
+  limit_conn playground_total_connections 100;
+
+  if ($playground_unknown_path) { return 404; }
+  if ($request_uri ~ "^[^?]*(%|//|\.\.)") { return 404; }
+
+  location = /health {
+    access_log off;
+    default_type text/plain;
+    return 200 "ok\n";
+  }
+  location = /api/oauth/login {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_login burst=2 nodelay;
+    proxy_pass http://${PLAYGROUND_BFF_UPSTREAM};
+  }
+  location = /api/oauth/logout {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_logout burst=10 nodelay;
+    proxy_pass http://${PLAYGROUND_BFF_UPSTREAM};
+  }
+  location = /api/oauth/resource {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_resource burst=5 nodelay;
+    proxy_pass http://${PLAYGROUND_BFF_UPSTREAM};
+  }
+  location ~ "^/api/oauth/(callback|session|runs/[0-9a-fA-F-]{36}/events)$" {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_reads burst=20 nodelay;
+    proxy_pass http://${PLAYGROUND_BFF_UPSTREAM};
+  }
+  location /api { return 404; }
+  location = /realms/playground-public/protocol/openid-connect/token {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_tokens burst=5 nodelay;
+    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+  }
+  location ~ ^/realms/playground-public/(protocol/openid-connect/auth|login-actions/(authenticate|required-action|restart))$ {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_provider burst=5 nodelay;
+    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+  }
+  location /realms/playground-public/ {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_provider_reads burst=20 nodelay;
+    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+  }
+  location /resources/ {
+    include /opt/playground-nginx/boundary.conf;
+    limit_req zone=playground_provider_assets burst=20 nodelay;
+    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+  }
+  location /realms { return 404; }
+  location = /index.html { try_files $uri =404; }
+  location /assets/ { try_files $uri =404; }
+  location / { try_files $uri $uri/ /index.html; }
+}

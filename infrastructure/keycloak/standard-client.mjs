@@ -86,7 +86,7 @@ export async function standardDefinition(settings) {
   };
 }
 
-export async function adminApi(settings) {
+export async function adminApi(settings, targetRealm = realmName) {
   const response = await fetch(`${settings.server}/realms/master/protocol/openid-connect/token`, {
     method: 'POST',
     redirect: 'error',
@@ -107,7 +107,8 @@ export async function adminApi(settings) {
   requireCondition(typeof token === 'string', 'Keycloak administrator response has no token');
 
   return async function request(path, method = 'GET', body) {
-    const result = await fetch(`${settings.server}/admin/realms/${realmName}${path}`, {
+    const realmPath = targetRealm === null ? '' : `/${encodeURIComponent(targetRealm)}`;
+    const result = await fetch(`${settings.server}/admin/realms${realmPath}${path}`, {
       method,
       redirect: 'error',
       signal: AbortSignal.timeout(10000),
@@ -127,8 +128,8 @@ export async function adminApi(settings) {
   };
 }
 
-export function owns(resource) {
-  return resource?.attributes?.[ownerAttribute] === ownerValue;
+export function owns(resource, expectedOwner = ownerValue) {
+  return resource?.attributes?.[ownerAttribute] === expectedOwner;
 }
 
 export function matchesFields(actual, expected) {
@@ -162,10 +163,10 @@ export async function readStandardResources(api, definition) {
   };
 }
 
-export async function verifyStandardClient(api, definition, resources) {
+export async function verifyStandardClient(api, definition, resources, expectedOwner = ownerValue) {
   const client = resources.client;
   requireCondition(
-    owns(client) && matchesFields(client, definition.client),
+    owns(client, expectedOwner) && matchesFields(client, definition.client),
     'Standard client configuration conflicts with the managed definition',
   );
   const roles = await api(`/clients/${client.id}/roles`);

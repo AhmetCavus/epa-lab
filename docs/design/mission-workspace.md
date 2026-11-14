@@ -4,11 +4,10 @@
 
 ## Goal
 
-**Public-release preparation:** approved `public-playground-oauth-deployment` tasks 1.1–5.2
-prepare isolated production execution using the existing Workspace, actions and safe
-observations. Preserve layout, accessibility, localization and fixture/conceptual behavior;
-this authorizes no public activation or live backend cutover. See the
-[scope record](../../openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization).
+**Public-release preparation:** the narrowed approved tasks 1.1–5.2 reuse this visual,
+localization and accessibility baseline for an explicit production OAuth build. Public
+activation remains excluded; fixtures and conceptual ePA stay intact. See the
+[current preparation scope](../../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
 
 Localization follows Accepted ADR-0004. The global Deutsch/English control updates all workspace copy and accessible text without resetting the mission, retained checkpoint, loaded samples, inspection selection or map scale. Technical evidence values remain literal; translated annotations preserve fixture/conceptual/not-observable provenance. Longer labels wrap with existing responsive layout and diagram-local scrolling.
 

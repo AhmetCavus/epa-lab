@@ -7,12 +7,15 @@ import { ActorCanvas, Inspector, Timeline } from '../../protocol-flow';
 
 export function Workspace({
   mission,
-  privateRuntime = false,
+  runtimeEnabled = false,
+  publicRuntime = false,
 }: {
   mission: Mission;
-  privateRuntime?: boolean;
+  runtimeEnabled?: boolean;
+  publicRuntime?: boolean;
 }) {
   const { t } = useTranslation('mission');
+  const context = publicRuntime ? 'public' : undefined;
   const {
     checkpointId,
     checkpoint,
@@ -33,7 +36,7 @@ export function Workspace({
     replayExplanation,
     resetWorkspace,
     announce,
-  } = useMissionWorkspace(mission, privateRuntime);
+  } = useMissionWorkspace(mission, runtimeEnabled);
   const [scale, setScale] = useState(1);
   const mapViewportRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -84,17 +87,19 @@ export function Workspace({
         <div>
           <p className="eyebrow">
             {t('mission:workspace.eyebrow')}{' '}
-            <span>{t(execution ? 'workspace.execution' : 'workspace.preview')}</span>
+            <span>{t(execution ? 'workspace.execution' : 'workspace.preview', { context })}</span>
           </p>
           <h1>{t(mission.titleKey)}</h1>
-          <p>{t(execution?.subtitleKey ?? mission.subtitleKey)}</p>
+          <p>{t(execution?.subtitleKey ?? mission.subtitleKey, { context })}</p>
         </div>
         <div className="workspace-status">
           <span className={`badge ${mission.preview.kind}`}>
-            {t(execution ? 'workspace.privateRuntime' : `availability.${mission.availability}`)}
+            {t(execution ? 'workspace.privateRuntime' : `availability.${mission.availability}`, {
+              context,
+            })}
           </span>
           <span className="metadata" role="status">
-            {t(execution?.stateKey ?? 'workspace.noRun')}
+            {t(execution?.stateKey ?? 'workspace.noRun', { context })}
           </span>
         </div>
       </header>
@@ -102,7 +107,7 @@ export function Workspace({
         <span className="notice-icon" aria-hidden="true">
           i
         </span>
-        <p>{t(execution?.noticeKey ?? mission.preview.noteKey)}</p>
+        <p>{t(execution?.noticeKey ?? mission.preview.noteKey, { context })}</p>
       </div>
       <div className="workspace-grid">
         <aside className="panel mission-panel" aria-labelledby="mission-panel-title">
@@ -122,7 +127,7 @@ export function Workspace({
               aria-atomic="true"
             >
               {execution.messages.map((key) => (
-                <p key={key}>{t(key)}</p>
+                <p key={key}>{t(key, { context })}</p>
               ))}
               {execution.runId && (
                 <dl className="provenance">

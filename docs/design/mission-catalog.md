@@ -4,11 +4,10 @@
 
 ## Purpose
 
-**Public-release preparation:** approved `public-playground-oauth-deployment` tasks 1.1–5.2
-may prepare and verify the production candidate in isolation. They preserve this Catalog
-baseline, German/English copy and conceptual ePA preview. Public runnable promotion remains
-excluded until separately approved tasks 6.1/6.2; see the
-[scope record](../../openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization).
+**Public-release preparation:** the narrowed approved tasks 1.1–5.2 reuse this visual,
+localization and accessibility baseline for an explicit production OAuth build. Public
+activation remains excluded; fixtures and conceptual ePA stay intact. See the
+[current preparation scope](../../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
 
 Localization follows Accepted ADR-0004: German is the default regardless of browser language, with English available through the accessible global language control. Both mission cards and availability/preview actions use external translation resources. Brand/protocol names and mission IDs remain stable; language selection does not start a mission.
 

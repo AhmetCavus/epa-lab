@@ -5,8 +5,8 @@ import { useOAuthMission } from './useOAuthMission';
 
 type WorkspaceAnnouncement = 'loaded' | 'replayed' | 'reset' | 'fitted';
 
-export function useMissionWorkspace(mission: Mission, privateRuntime = false) {
-  const execution = useOAuthMission(privateRuntime && mission.execution === 'oauth-standard');
+export function useMissionWorkspace(mission: Mission, runtimeEnabled = false) {
+  const execution = useOAuthMission(runtimeEnabled && mission.execution === 'oauth-standard');
   const [checkpointId, setCheckpointId] = useState(mission.checkpoints[0]?.id ?? null);
   const [hasLoadedSamples, setHasLoadedSamples] = useState(false);
   const [announcement, setAnnouncement] = useState<WorkspaceAnnouncement | null>(null);

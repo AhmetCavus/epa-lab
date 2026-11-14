@@ -16,6 +16,16 @@ USER node
 EXPOSE 5173
 CMD ["npm", "run", "dev:private", "--", "--host", "0.0.0.0", "--port", "5173"]
 
+FROM builder AS public-builder
+RUN npm run build -- --mode public-oauth
+
+FROM nginx:alpine AS public-runtime
+ENV NGINX_ENVSUBST_FILTER=^PLAYGROUND_
+COPY nginx/boundary.conf /opt/playground-nginx/boundary.conf
+COPY nginx/public-runtime.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=public-builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+
 FROM nginx:alpine AS runtime
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf

@@ -99,6 +99,10 @@ const environmentSchema = z
       .enum(['true', 'false'])
       .default('false')
       .transform((flag) => flag === 'true'),
+    PLAYGROUND_PUBLIC_RUNTIME: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((flag) => flag === 'true'),
   })
   .refine(
     (environment) =>
@@ -126,6 +130,9 @@ const environmentSchema = z
   });
 
 const standardEnvironmentSchema = z.object({
+  PLAYGROUND_OIDC_ISSUER: configuredUrl
+    .refine((issuer) => !new URL(issuer).search && !issuer.endsWith('/'))
+    .optional(),
   PLAYGROUND_OIDC_CLIENT_ID: z.literal('playground-oidc'),
   PLAYGROUND_OIDC_CLIENT_SECRET: z.string().min(32).max(1024),
   PLAYGROUND_OIDC_REDIRECT_URI: configuredUrl,
@@ -151,7 +158,10 @@ export function validateEnvironment(environment: Record<string, unknown>) {
   const base = result.data;
 
   if (!base.PLAYGROUND_OIDC_ENABLED) {
-    return { ...base, standardProfile: undefined };
+    if (base.PLAYGROUND_PUBLIC_RUNTIME) {
+      return invalidConfiguration(['PLAYGROUND_OIDC_ENABLED']);
+    }
+    return { ...base, standardProfile: undefined, publicProxyAddresses: undefined };
   }
 
   const standard = standardEnvironmentSchema.safeParse(environment);
@@ -161,6 +171,53 @@ export function validateEnvironment(environment: Record<string, unknown>) {
 
   const settings = standard.data;
   const invalidFields: string[] = [];
+  const issuer = settings.PLAYGROUND_OIDC_ISSUER ?? base.OIDC_ISSUER;
+  if (!isSafeConfiguredUrl(issuer, base.OIDC_ALLOW_PRIVATE_NETWORK_HTTP)) {
+    invalidFields.push('PLAYGROUND_OIDC_ISSUER');
+  }
+  let publicProxyAddresses: readonly string[] | undefined;
+  if (base.PLAYGROUND_PUBLIC_RUNTIME) {
+    if (base.OIDC_ISSUER === 'https://auth-playground.yappai.de/realms/playground-public') {
+      invalidFields.push('OIDC_ISSUER');
+    }
+    const peers = environment.PLAYGROUND_PUBLIC_PROXY_ADDRESSES;
+    const addresses = typeof peers === 'string' ? peers.split(',') : [];
+    if (
+      addresses.length === 0 ||
+      addresses.length > 8 ||
+      addresses.some((address) => isIP(address) === 0) ||
+      new Set(addresses).size !== addresses.length
+    ) {
+      invalidFields.push('PLAYGROUND_PUBLIC_PROXY_ADDRESSES');
+    } else {
+      publicProxyAddresses = Object.freeze(addresses);
+    }
+    for (const [key, value, expected] of [
+      [
+        'PLAYGROUND_OIDC_ISSUER',
+        settings.PLAYGROUND_OIDC_ISSUER,
+        'https://auth-playground.yappai.de/realms/playground-public',
+      ],
+      [
+        'PLAYGROUND_APP_ORIGIN',
+        settings.PLAYGROUND_APP_ORIGIN,
+        'https://auth-playground.yappai.de',
+      ],
+      [
+        'PLAYGROUND_OIDC_REDIRECT_URI',
+        settings.PLAYGROUND_OIDC_REDIRECT_URI,
+        'https://auth-playground.yappai.de/api/oauth/callback',
+      ],
+    ] as const) {
+      if (value !== expected) invalidFields.push(key);
+    }
+  } else if (
+    settings.PLAYGROUND_APP_ORIGIN === 'https://auth-playground.yappai.de' ||
+    issuer === 'https://auth-playground.yappai.de/realms/playground-public'
+  ) {
+    // The fixed public binding must never silently fall back to private-mode trust.
+    invalidFields.push('PLAYGROUND_PUBLIC_RUNTIME');
+  }
   if (settings.PLAYGROUND_OIDC_CLIENT_ID === base.OIDC_CLIENT_ID) {
     invalidFields.push('PLAYGROUND_OIDC_CLIENT_ID');
   }
@@ -190,7 +247,7 @@ export function validateEnvironment(environment: Record<string, unknown>) {
   const standardProfile: StandardClientProfile = Object.freeze({
     id: 'playground-standard',
     authorizationMode: 'direct',
-    issuer: base.OIDC_ISSUER,
+    issuer,
     clientId: settings.PLAYGROUND_OIDC_CLIENT_ID,
     clientSecret: settings.PLAYGROUND_OIDC_CLIENT_SECRET,
     defaultRedirectUri: settings.PLAYGROUND_OIDC_REDIRECT_URI,
@@ -199,5 +256,5 @@ export function validateEnvironment(environment: Record<string, unknown>) {
     applicationOrigin: settings.PLAYGROUND_APP_ORIGIN,
     resourceUrl: settings.PLAYGROUND_FHIR_RESOURCE_URL,
   });
-  return { ...base, ...settings, standardProfile };
+  return { ...base, ...settings, standardProfile, publicProxyAddresses };
 }

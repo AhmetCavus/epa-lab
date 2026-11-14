@@ -1,0 +1,22 @@
+# Apply only with docker-compose.host.yml after withdrawal approval. The original
+# fixture image is restored with a closed, safe-log config for late auth callbacks.
+services:
+  auth-client:
+    image: ${PRIVATE_AUTH_CLIENT_IMAGE:?Use the saved BFF image identity}
+    environment:
+      PLAYGROUND_PUBLIC_RUNTIME: 'false'
+      PLAYGROUND_OIDC_ISSUER: ${PRIVATE_STANDARD_ISSUER:?Use the saved standard issuer}
+
+  res-server:
+    image: ${PRIVATE_HAPI_IMAGE:?Use the saved HAPI image identity}
+    environment:
+      FHIR_OIDC_ISSUER: ${PRIVATE_FHIR_ISSUER:?Use the saved HAPI issuer}
+      FHIR_OIDC_JWKS_URI: ${PRIVATE_FHIR_JWKS_URI:?Use the saved HAPI JWKS URL}
+      PLAYGROUND_SECURITY_ALLOW_PRIVATE_HTTP: ${PRIVATE_FHIR_ALLOW_HTTP:?Use the saved HAPI transport setting}
+
+  playground:
+    image: ${PUBLIC_FIXTURE_IMAGE:?Use the saved fixture image identity}
+    build:
+      target: runtime
+    volumes:
+      - ../apps/playground/nginx/fixture-withdrawal.conf:/etc/nginx/conf.d/default.conf:ro

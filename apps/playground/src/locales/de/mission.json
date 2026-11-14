@@ -265,7 +265,9 @@
     "privateRuntime": "Privater Integrationstest",
     "runStatus": "Aktueller Ausführungsstatus",
     "runId": "Durchlauf-ID",
-    "runExpiry": "Historie läuft ab um"
+    "runExpiry": "Historie läuft ab um",
+    "execution_public": "DEMO-AUSFÜHRUNG",
+    "privateRuntime_public": "Synthetische Demo"
   },
   "announcements": {
     "loaded": "Beispiele geladen. Es wurde kein Live-Vorgang ausgeführt.",
@@ -283,7 +285,8 @@
       "ready": "Private Integration",
       "navigating": "Weiterleitung zu Keycloak…",
       "resource": "Synthetische Ressource wird angefordert…",
-      "logout": "Lokale Sitzung wird beendet…"
+      "logout": "Lokale Sitzung wird beendet…",
+      "ready_public": "Demo bereit"
     },
     "authentication": {
       "authenticated": "Anwendungsanmeldung: angemeldet.",
@@ -315,7 +318,8 @@
       "ownership-lost": "Der eigene Durchlauf ist nicht verfügbar oder abgelaufen. Starte einen neuen Versuch.",
       "capacity": "Die Durchlaufkapazität ist nicht verfügbar. Starte einen neuen Versuch; lokales Abmelden bleibt unabhängig.",
       "request-rejected": "Die Anfrage wurde abgelehnt. Aktualisiere den Status, um den aktuellen Browserkontext wiederherzustellen.",
-      "timeout": "Die Anfrage hat das Zeitlimit überschritten. Ihr Abschluss ist unbekannt; aktualisiere vor dem Fortfahren den Status."
+      "timeout": "Die Anfrage hat das Zeitlimit überschritten. Ihr Abschluss ist unbekannt; aktualisiere vor dem Fortfahren den Status.",
+      "unavailable_public": "Das Backend ist nicht erreichbar. Aktualisiere den Status oder starte neu, sobald es erreichbar ist."
     },
     "resource": {
       "allowed": "Letztes Ressourcenergebnis: synthetischer Lesezugriff auf Basic/playground-demo erlaubt.",
@@ -470,6 +474,12 @@
     },
     "subtitle": "Authorization Code + PKCE S256 · private Integration",
     "catalogIntro": "Erkunde die bestehenden Lernvorschauen oder öffne die ausdrücklich konfigurierte private Integration zur Prüfung. Ausführbare Verfügbarkeit bleibt ausstehend.",
-    "catalogNoticeTitle": "Private Prüfung · Verfügbarkeit unverändert"
+    "catalogNoticeTitle": "Private Prüfung · Verfügbarkeit unverändert",
+    "notice_public": "Demo mit synthetischen Daten und individuell bereitgestellten Konten. Das BFF hält die OAuth-Zugangsdaten; Keycloak zeigt die Anmeldung. Interne Passwortprüfung, PKCE-Vergleich und Token-Erstellung sind erklärt, nicht beobachtbar.",
+    "catalogAction_public": "OAuth-Mission starten",
+    "catalogNotice_public": "Die OAuth-Mission verwendet echte Protokolloperationen mit synthetischen Daten. Individuelle Demokonten werden vom Betreiber bereitgestellt; es gibt keine öffentliche Registrierung. Beispiel- und Konzeptvorschauen bleiben verfügbar.",
+    "catalogIntro_public": "Erkunde die Lernvorschauen oder starte die OAuth-Mission mit deinem Demokonto.",
+    "catalogNoticeTitle_public": "Synthetische Demo · sichere Beobachtungen",
+    "subtitle_public": "Authorization Code + PKCE S256 · synthetische Demo"
   }
 }

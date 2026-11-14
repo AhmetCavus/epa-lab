@@ -13,8 +13,15 @@ const catalogArtwork = {
   },
 } as const;
 
-export function Catalog({ privateRuntime = false }: { privateRuntime?: boolean }) {
+export function Catalog({
+  runtimeEnabled = false,
+  publicRuntime = false,
+}: {
+  runtimeEnabled?: boolean;
+  publicRuntime?: boolean;
+}) {
   const { t } = useTranslation('mission');
+  const context = publicRuntime ? 'public' : undefined;
   useEffect(() => {
     document.title = t('common:titles.catalog');
   }, [t]);
@@ -32,7 +39,7 @@ export function Catalog({ privateRuntime = false }: { privateRuntime?: boolean }
             <span>{t('mission:catalog.headingAccent')}</span>
           </h1>
           <p className="intro-copy">
-            {t(privateRuntime ? 'runtime.catalogIntro' : 'catalog.intro')}
+            {t(runtimeEnabled ? 'runtime.catalogIntro' : 'catalog.intro', { context })}
           </p>
         </div>
         <div className="catalog-hero" aria-hidden="true">
@@ -65,7 +72,8 @@ export function Catalog({ privateRuntime = false }: { privateRuntime?: boolean }
             key={mission.id}
             mission={mission}
             index={index}
-            privateRuntime={privateRuntime}
+            runtimeEnabled={runtimeEnabled}
+            publicRuntime={publicRuntime}
           />
         ))}
       </div>
@@ -75,9 +83,9 @@ export function Catalog({ privateRuntime = false }: { privateRuntime?: boolean }
         </span>
         <div>
           <strong>
-            {t(privateRuntime ? 'runtime.catalogNoticeTitle' : 'catalog.noticeTitle')}
+            {t(runtimeEnabled ? 'runtime.catalogNoticeTitle' : 'catalog.noticeTitle', { context })}
           </strong>
-          <p>{t(privateRuntime ? 'runtime.catalogNotice' : 'catalog.notice')}</p>
+          <p>{t(runtimeEnabled ? 'runtime.catalogNotice' : 'catalog.notice', { context })}</p>
         </div>
       </aside>
       <section className="learning-principles" aria-label={t('mission:catalog.principles.label')}>
@@ -104,14 +112,16 @@ export function Catalog({ privateRuntime = false }: { privateRuntime?: boolean }
 function MissionCard({
   mission,
   index,
-  privateRuntime,
+  runtimeEnabled,
+  publicRuntime,
 }: {
   mission: Mission;
   index: number;
-  privateRuntime: boolean;
+  runtimeEnabled: boolean;
+  publicRuntime: boolean;
 }) {
   const { t } = useTranslation('mission');
-  const paths = workspacePaths(mission, privateRuntime);
+  const paths = workspacePaths(mission, runtimeEnabled);
   return (
     <article className={`mission-card ${mission.illustration}`}>
       <div className="mission-art" aria-hidden="true">
@@ -151,7 +161,7 @@ function MissionCard({
         </Link>
         {paths.execution && (
           <Link className="button secondary" to={paths.execution}>
-            {t('runtime.catalogAction')}
+            {t('runtime.catalogAction', { context: publicRuntime ? 'public' : undefined })}
           </Link>
         )}
       </div>

@@ -4,6 +4,7 @@ import type { ConfigType } from '@nestjs/config';
 import type { CookieOptions, Request, Response } from 'express';
 import { configuration } from '../../config/configuration';
 import { AuthorizationError } from '../../common/errors/authorization-error';
+import { requirePublicProxy } from '../../common/http/public-proxy';
 import { readOpaqueCookie } from '../browser-login/opaque-cookie';
 import { StandardBrowserService } from './standard-browser.service';
 import type { StandardContext } from './standard-browser-state';
@@ -130,6 +131,9 @@ export class StandardBrowserController {
     const profile = this.config.standardProfile;
     if (!profile) {
       throw new NotFoundException();
+    }
+    if (this.config.publicProxyAddresses) {
+      requirePublicProxy(request, this.config.publicProxyAddresses);
     }
     if (request.get('host')?.toLowerCase() !== new URL(profile.applicationOrigin).host) {
       throw new AuthorizationError(

@@ -2,362 +2,224 @@
 
 ## Purpose
 
-Make the existing synthetic OAuth learning mission publicly runnable through a controlled
-HTTPS production deployment, preserving legacy ePA behavior, private resource authorization
-and honest protocol evidence.
+Make the existing OAuth/OIDC mission runnable from the existing public production SPA,
+preserving ePA/PAR, private FHIR authorization, data and safe protocol observations.
 
-The accepted non-deployment authorization, lifecycle, resource and mission contracts from
-`001-oidc-pkce` remain the regression baseline. This capability changes its public deployment
-boundary only after approval; it does not waive those existing security or UX guarantees.
+This 2026-11-14 revision removes database/privilege migrations and broad readiness work.
+Change 001 remains the implemented component/security/UX baseline. Owner-confirmed site and
+private-mission availability do not substitute for acceptance of the new public OAuth binding.
 
 ## ADDED Requirements
 
 ### Requirement: Explicit production execution binding
 
-The hosted OAuth mission SHALL execute only through an explicitly configured production
-build at `https://auth-playground.yappai.de`. It MUST preserve the existing fixture build
-and conceptual ePA preview and MUST NOT use a development server for public production.
+The existing SPA SHALL support an explicitly enabled production OAuth build on
+`https://auth-playground.yappai.de`, served by Nginx. The fixture build MUST remain available
+for rollback. Public production MUST NOT run Vite/HMR or expose credentials in browser code/storage.
 
-#### Scenario: Enabled public release
+#### Scenario: Enabled production candidate
 
-- **WHEN** an approved, verified public release is selected
-- **THEN** the existing catalog opens the real OAuth Workspace with account-required demo availability
-- **AND** static production assets are served without a development server, HMR or private listener URLs.
+- **WHEN** the approved public build is selected
+- **THEN** the existing Workspace offers the implemented mission through same-origin cookie-based requests
+- **AND** static production assets contain no development-server binding, bearer token or client secret.
 
-#### Scenario: Disabled or invalid configuration
+#### Scenario: Fixture or invalid binding
 
-- **WHEN** the default fixture build is used or public origin/trust settings are invalid
-- **THEN** fixtures remain non-executing or the public release fails closed
-- **AND** URL parameters, browser storage and caller-selected settings cannot enable execution.
+- **WHEN** the fixture target is selected or the execution origin/configuration is invalid
+- **THEN** fixture behavior remains available or execution fails closed
+- **AND** URL parameters and browser storage cannot enable authentication.
 
 ### Requirement: Narrow same-origin public routing
 
-While public execution is enabled, the public origin SHALL route only the declared OAuth
-browser API and required demo-realm login/OIDC paths to their existing services. It MUST keep legacy ePA endpoints, other realms,
-Keycloak administration/management and direct FHIR access outside public ingress.
+Nginx SHALL proxy only the declared `/api/oauth` operations and required public demo-realm
+login/OIDC/assets through existing services. Unknown API methods/paths MUST fail closed.
+Legacy ePA, other realms, administration/management and direct FHIR MUST remain outside public ingress.
 
-#### Scenario: Allowed browser API
+#### Scenario: Browser API and callback
 
-- **WHEN** the browser uses declared `/api/oauth` methods and owned-run routes
-- **THEN** requests reach the existing BFF on the application origin with bounded time/body limits
-- **AND** callback redirects return 303 to `/missions/oauth-oidc/workspace` without query data.
+- **WHEN** the browser calls declared login/callback/session/resource/logout/owned-events operations
+- **THEN** method, status, redirect and cookie semantics reach the existing BFF unchanged
+- **AND** callback returns clean HTTP 303 to `/missions/oauth-oidc/workspace` without query data.
 
-#### Scenario: Forbidden or ambiguous routes
+#### Scenario: Route and origin bypass
 
-- **WHEN** public requests target `/admin`, the administrative realm, `epa-demo`, legacy `/login`, `/callback`, `/session`, `/epa`, FHIR, management paths, unknown API operations or encoded variants
-- **THEN** they are denied without forwarding to protected services or falling through to a misleading API HTML response
-- **AND** unsupported methods cannot invoke the corresponding operation.
+- **WHEN** requests target unknown/encoded API paths, wrong methods, admin/management, legacy ePA, another realm or direct FHIR/service access
+- **THEN** they cannot reach protected upstreams or bypass the intended public-authentication boundary
+- **AND** API denials do not fall through to misleading SPA HTML.
 
 ### Requirement: Canonical public OIDC authority
 
-Public login SHALL use a confidential, server-selected standard client with a canonical
-HTTPS issuer and exact callback. It MUST enforce Code + PKCE S256 without PAR and keep
-credentials server-side. Issuer/JWKS same-origin checks and transaction-bound validation
-MUST remain enforced.
+The standard profile SHALL use a server-selected confidential client, fixed HTTPS issuer
+and exact callback, with Authorization Code + PKCE S256 without PAR. Credentials MUST stay
+server-side. Discovery/JWKS same-origin, TLS and stored-transaction validation MUST remain enforced.
 
-#### Scenario: Real public authentication
+#### Scenario: Real standard authentication
 
-- **WHEN** an eligible browser starts authentication and the demo user signs in at Keycloak
-- **THEN** authorization uses Code/S256 without a PAR request or `request_uri`
-- **AND** validated exchange completes the existing fixed Workspace return.
+- **WHEN** a provisioned user starts authentication from the public Workspace
+- **THEN** Keycloak performs Code/S256 without PAR or `request_uri`, and the BFF validates the correlated exchange
+- **AND** successful return restores the same owned run after refresh without repeating authentication.
 
-#### Scenario: Public discovery and keys
+#### Scenario: Authority and profile substitution
 
-- **WHEN** browsers, the BFF and HAPI resolve the configured authority from their actual runtime networks
-- **THEN** advertised issuer, authorization, token and JWKS URLs use the intended HTTPS authority
-- **AND** no private address, alternate issuer, cross-origin key URL or disabled TLS validation is substituted.
+- **WHEN** browser/BFF/HAPI resolve the public authority, or a caller substitutes issuer/client/callback/profile material
+- **THEN** valid requests use canonical HTTPS metadata/keys and substituted or inconsistent configuration is rejected
+- **AND** no private issuer, cross-origin JWKS, arbitrary redirect or disabled TLS check is substituted to obtain success.
 
-#### Scenario: Invalid authorization evidence
+### Requirement: Preserve existing ePA and data
 
-- **WHEN** PKCE is missing/invalid, a code is unusable, or issuer/client/callback/token claims are substituted
-- **THEN** authentication is rejected and no authenticated application session is committed.
+The public binding MUST preserve the private ePA issuer, users, signing keys, clients,
+credentials, PAR requirement and legacy endpoints/sessions. Existing data and volumes MUST
+remain intact. Database architecture, ownership/credential migration and legacy data transfer
+SHALL NOT be performed by this change.
 
-### Requirement: Independently verified ePA compatibility
+#### Scenario: ePA regression
 
-The release MUST preserve the existing private ePA issuer, users, signing keys, client identity, credentials,
-required-PAR policy and legacy browser/header contracts. Public execution SHALL NOT depend
-on an unverified change to those settings or expose the conceptual ePA mission as runnable.
+- **WHEN** the public candidate and its necessary service settings are verified
+- **THEN** existing ePA header/browser operations and mandatory PAR still work, with PAR bypass rejected
+- **AND** legacy identity/configuration and data are preserved; conceptual ePA remains non-executing.
 
-#### Scenario: Compatibility before and after cutover
+#### Scenario: Cross-profile isolation
 
-- **WHEN** provider migration, public proxy settings and the public release are tested
-- **THEN** the existing stateless header operation and browser `/login` → `/callback` → `/session` complete through PAR
-- **AND** ePA PAR bypass is rejected, private discovery/issuer and preservation fingerprints match, and the conceptual preview remains non-executing.
+- **WHEN** ePA/private-standard tokens, codes or cookies are substituted into the public mission or conversely
+- **THEN** existing profile/issuer/client/browser ownership checks reject substitution without modifying another context.
 
-#### Scenario: Cross-context substitution
+### Requirement: Public browser session security
 
-- **WHEN** private ePA or private-standard codes, cookies or tokens are substituted into the public mission, or public material is substituted into ePA
-- **THEN** profile/issuer/client binding rejects the substitution without mutating another context.
+Public cookies MUST be host-only, Secure, HttpOnly and SameSite=Lax. Logout SHALL enforce
+exact Origin and context-bound CSRF. Existing state/PKCE/correlation, expiry, replay protection,
+browser/run isolation and asynchronous logout cancellation MUST remain effective.
 
-### Requirement: Controlled individual demo access
+#### Scenario: Restore and local logout
 
-The public realm SHALL be provisioned from scratch with new individual synthetic demo accounts
-provisioned by the owner. Public setup MUST NOT require importing existing demo users or private-realm data.
-Public registration, shared published credentials and administrative privileges MUST be
-absent. Existing issued demo access SHALL expire within five minutes; disabling an account
-MUST block new authentication without claiming immediate revocation of issued bearer tokens.
+- **WHEN** a browser logs in, refreshes and performs valid local logout
+- **THEN** refresh restores the same run, logout invalidates old authentication and cancels pending/in-flight attempts
+- **AND** eligible bounded safe history remains inspectable only by its viewing context and cannot restore resource authority.
 
-#### Scenario: Fresh public setup independent of existing demo data
+#### Scenario: Invalid state, race or CSRF
 
-- **WHEN** the public realm and its accounts are provisioned initially and the procedure is repeated
-- **THEN** its owned definition, fresh realm keys/client credentials and new synthetic accounts support the standard mission without copied legacy/demo users or history
-- **AND** repetition verifies the existing owned configuration without rotating credentials, resetting users or adopting a conflicting realm; legacy ePA state remains separate and intact.
+- **WHEN** callbacks are mismatched/replayed/expired or race with logout, or Origin/CSRF/cookies are forged
+- **THEN** authentication cannot be committed or restored improperly
+- **AND** cleanup succeeds even when event recording fails or storage is exhausted.
 
-#### Scenario: Eligible demo user
+### Requirement: Private synthetic FHIR access
 
-- **WHEN** the owner provides an individual fictional demo identity through a private delivery process
-- **THEN** that user can authenticate at Keycloak and obtain only the synthetic exercise grant
-- **AND** no password, account identifier or raw identity claim is published in the learning surface.
+HAPI SHALL remain private and retain its implemented Access Token checks, `playground-fhir`
+audience, `demo.fhir.read` permission, fixed `Basic/playground-demo` read and deny-by-default
+FHIR policy. Only necessary issuer/JWKS configuration SHALL change; data/privileges/security
+implementation MUST remain unchanged.
 
-#### Scenario: Unprovisioned or disabled access
+#### Scenario: Protected read
 
-- **WHEN** an unprovisioned/disabled user attempts authentication, registration or an unsupported grant
-- **THEN** no new demo authentication/grant is created
-- **AND** previously issued access cannot outlive its configured five-minute maximum.
+- **WHEN** the public BFF calls the fixed resource with a valid server-held standard Access Token and permission
+- **THEN** the existing HAPI independently authorizes the synthetic read and returns 200
+- **AND** the SPA receives only the existing safe result/evidence DTOs, never the token.
 
-### Requirement: Public browser and proxy security
+#### Scenario: Invalid grant or undeclared access
 
-Public session cookies MUST be host-only, Secure, HttpOnly and appropriately scoped with
-SameSite=Lax. The system SHALL enforce its canonical HTTPS host, exact logout Origin and
-context-bound CSRF value, accepting proxy identity only through explicitly trusted peers.
-Existing one-time, ownership, expiry and logout cancellation guarantees MUST survive.
+- **WHEN** authentication is missing/invalid/expired, issuer/audience/algorithm/key/nbf is unsuitable, an ID Token is used, or permission/operation is wrong
+- **THEN** the existing 401/403 boundaries remain effective and other resources/operations are denied
+- **AND** callers cannot choose arbitrary upstreams, access real patient data or reach HAPI/admin/management through public routing.
 
-#### Scenario: Secure session and logout
+### Requirement: Controlled synthetic demo access
 
-- **WHEN** the actual public HTTPS browser completes login, reload and local logout
-- **THEN** cookies have the required flags, refresh restores the same owned run, and valid Origin/CSRF logout invalidates old authentication
-- **AND** eligible safe history remains owned and cannot authorize resource access.
+Public execution SHALL use owner-provisioned individual synthetic accounts, with no public
+registration, shared published password or administrative grant. The owned public realm/client
+SHALL be configured without importing legacy users. Demo Access Tokens MUST expire within five minutes.
 
-#### Scenario: Forged origin or proxy input
+#### Scenario: Provision and repeat
 
-- **WHEN** callers forge Host, Forwarded, X-Forwarded-*, client-IP headers, CSRF or Origin, or bypass the trusted ingress
-- **THEN** public canonical-host/HTTPS/ownership protections cannot be bypassed and no attacker-selected redirect is produced.
+- **WHEN** the owned public realm/client and synthetic users are configured, then checked again
+- **THEN** Code/S256, audience/permission and individual access work without copying legacy data
+- **AND** repeated setup preserves owned credentials/users and rejects conflicting configuration.
 
-#### Scenario: Callback races and lost state
+#### Scenario: Unprovisioned or disabled account
 
-- **WHEN** callbacks have invalid/missing correlation, replay, race, expire, arrive after restart or complete asynchronously during logout
-- **THEN** no stale or foreign callback can restore authentication or overwrite the replacement viewing context
-- **AND** cleanup succeeds even when event storage is exhausted or recording fails.
+- **WHEN** an unknown/disabled account, registration or unsupported grant is attempted
+- **THEN** no new demo access is granted
+- **AND** issued bearer validity remains bounded by expiry without claiming immediate revocation.
 
-### Requirement: Private synthetic FHIR authorization
+### Requirement: Trusted proxy and bounded requests
 
-HAPI SHALL remain privately reachable only and allow solely the declared fictional
-`Basic/playground-demo` read with a valid public Access Token and `demo.fhir.read`.
-Its existing independent token checks, deny-by-default operation policy and data-free
-health exceptions MUST remain intact.
+New public authentication routes SHALL accept canonical host/protocol/client identity only
+through verified proxy peers. Finite operation/aggregate/in-flight limits MUST resist forged
+forwarded headers. Login/resource pressure MUST NOT consume the separate logout cleanup budget.
 
-#### Scenario: Authorized synthetic read
+#### Scenario: Spoofed forwarding or direct ingress
 
-- **WHEN** an authenticated public browser requests the fixed resource through the BFF
-- **THEN** HAPI independently authorizes its server-held Access Token and the BFF returns the bounded synthetic result
-- **AND** no patient/clinical data or arbitrary destination can be selected.
+- **WHEN** Host, Forwarded, X-Forwarded or Cloudflare identity headers are forged or the trusted path is bypassed
+- **THEN** callers cannot change authority/redirects, spoof trusted identity or bypass public-auth controls.
 
-#### Scenario: Invalid credentials or undeclared operation
+#### Scenario: Request pressure
 
-- **WHEN** a token is absent, malformed, forged, expired, not-yet-valid, an ID Token or from the wrong issuer/audience, or permission/operation is unsuitable
-- **THEN** authentication failures yield 401 and authenticated permission/operation failures yield 403
-- **AND** alternative FHIR interfaces, writes and bypass routes stay denied; private liveness/readiness remain data-free.
+- **WHEN** operation limits are exceeded or teaching-event capacity is exhausted
+- **THEN** bounded responses provide safe retry behavior and a valid logout within its separate budget can still remove credentials
+- **AND** a proxy/BFF rejection is never presented as a HAPI denial.
 
-#### Scenario: Public resource-server bypass
+### Requirement: Safe evidence and cache isolation
 
-- **WHEN** an external caller attempts direct resource-server, database, health-management or alternate proxy access
-- **THEN** no public route or public service port reaches those interfaces.
+Existing schema-1 typed events and observer/reporter distinctions MUST remain truthful.
+Tokens, codes, verifiers, secrets, cookies, identity dumps, raw callbacks and complete HTTP
+bodies MUST NOT appear in SPA projections or routine/error logs. Authentication/session/history
+responses MUST NOT be shared-cached.
 
-### Requirement: Bounded abuse controls
+#### Scenario: Provenance and disclosure
 
-Public execution SHALL enforce finite per-client and aggregate request/concurrency budgets
-using verified ingress identity, plus provider login-abuse protection. Resource/login
-exhaustion MUST NOT consume the independent logout cleanup budget or bypass the existing
-context/run/event collection limits.
+- **WHEN** real successful/denied/unavailable events and upstream failures are inspected
+- **THEN** actual BFF observations and explicit HAPI reports stay distinct from conceptual Keycloak explanations
+- **AND** unsupported evidence has no raw fallback, with no secret-sentinel disclosure in controlled responses, bundles, storage or logs.
 
-#### Scenario: Exceeding configured limits
+#### Scenario: Two browsers and caching
 
-- **WHEN** real requests exceed an operation's configured budget
-- **THEN** bounded 429 responses provide a safe retry indication without additional provider/resource work
-- **AND** changing forged IP headers or arbitrary cookies cannot evade the limit.
+- **WHEN** two browsers read sessions/history and exercise login/resource/logout through the candidate proxy
+- **THEN** ownership and cache rules prevent replaying another context's authentication, CSRF material or events.
 
-#### Scenario: Cleanup under pressure
+### Requirement: Genuine public-authentication activation gates
 
-- **WHEN** login/resource quotas or teaching-event capacity are exhausted
-- **THEN** an otherwise valid logout within its separate budget still removes credentials and cancels attempts
-- **AND** the UI does not invent successful logout or a Resource Server denial for an edge rejection.
+Public authentication MUST remain disabled until the existing provider has a production-suitable
+configuration and the new HTTPS/proxy/token/session/private-service boundaries pass. Unresolved
+out-of-scope security prerequisites MUST be reported separately, without bypass or automatic
+inclusion of database/infrastructure projects. Isolated preparation MAY proceed meanwhile.
 
-### Requirement: Safe public evidence and caching
+#### Scenario: Unsuitable provider configuration
 
-Public APIs/events SHALL retain strict schema-version-1 evidence and truthful observer/reporter
-semantics. Credentials, raw callbacks, identity dumps and full protocol bodies MUST be absent
-from teaching responses and routine logs across the controlled ingress stack. Authentication,
-session and owned-history responses MUST NOT be shared-cached.
+- **WHEN** the deployment still relies on unsupported development-only provider settings or a required auth boundary fails
+- **THEN** public authentication activation is blocked with the specific evidence and a separately reviewed minimal resolution
+- **AND** the working public site remains available; no database migration or security exception is silently introduced.
 
-#### Scenario: Actual protocol observations
+#### Scenario: Isolated Cloudflare probe
 
-- **WHEN** successful, denied, unavailable or rate-limited public operations are inspected
-- **THEN** actual BFF observations and explicit HAPI reports remain distinct from explanation
-- **AND** unknown schemas or unavailable reports never produce fabricated provider-internal evidence.
-
-#### Scenario: Disclosure and cache isolation
-
-- **WHEN** two browsers exercise callback, login errors, session/events, resource failures and logout through the actual public path
-- **THEN** secret-sentinel scans of controlled logs, API projections, UI and storage pass
-- **AND** caches cannot replay another browser's session, anti-CSRF value, history or authentication response.
-
-### Requirement: Reproducible production provider and HAPI lifecycle
-
-Public ingress MUST remain disabled until the provider uses supported production startup
-and verified legacy-state transfer into private database `keycloak`. Public realm/accounts
-SHALL be created fresh. HAPI SHALL retain its existing database/data through a targeted
-privilege transition, without data migration or transformation. The canonical lifecycle
-MUST retain HAPI trust, limits and conflict-safe initialization without an optional overlay.
-
-#### Scenario: Legacy provider storage transition and failure
-
-- **WHEN** the pinned provider version's offline CLI export/import is rehearsed from a consistent legacy dev-file copy and later applied in the separately approved maintenance window
-- **THEN** the ePA realm/users/credentials/client identities, signing keys, issuer and PAR policies remain intact, administrative recovery works, and new ePA signatures verify against the original public keys
-- **AND** masked/partial export, copying running H2 files, overwritten target realms or unproven key preservation cannot pass; failure keeps ingress closed and permits tested original-volume recovery before writes resume, without promising session continuity.
-
-#### Scenario: Ordinary host restart and fresh setup
-
-- **WHEN** the documented canonical host/Yoster lifecycle or fresh recursive setup is exercised
-- **THEN** reviewed images, public/provider trust, HAPI memory/heap settings and conflict-safe fixture policy are reproduced
-- **AND** restart never silently removes required settings or overwrites conflicting data.
-
-### Requirement: Shared PostgreSQL instance with separate databases
-
-HAPI and Keycloak SHALL reuse the existing PostgreSQL 16 container and persistent volume,
-with databases `hapi` and `keycloak` respectively. No second PostgreSQL container, production
-database volume or public PostgreSQL port SHALL be introduced. Database communication MUST
-remain private.
-
-#### Scenario: Shared-instance database separation
-
-- **WHEN** the production configuration is verified before and after the storage/privilege transitions
-- **THEN** the same existing PostgreSQL container/volume serves both named databases through private endpoints
-- **AND** HAPI retains its database, logical schema and data, uses `hapi_app`, and Keycloak uses `keycloak_app` for `keycloak`, with separate runtime credentials and only reviewed ownership/grant changes.
-
-### Requirement: Least-privileged application database access
-
-HAPI and Keycloak SHALL use non-superuser accounts `hapi_app` and `keycloak_app`, limited to
-their own schema/runtime needs. Runtime access to other databases and administrative
-privileges MUST be denied. Existing bootstrap administrator `hapi` MUST remain available
-only for administration/recovery, absent from applications. HAPI logical data/schema and
-the persistent volume MUST be preserved during the targeted privilege/credential transition.
-
-#### Scenario: Restricted runtime credentials
-
-- **WHEN** each application uses its actual runtime credentials from its configured private peers
-- **THEN** required own-database schema/data operations succeed, while `hapi_app` to `keycloak` and `keycloak_app` to `hapi` connections fail
-- **AND** neither role has superuser, database/role-creation, replication, row-security-bypass, database ownership or elevated membership/SET ROLE privileges; other database targets are denied.
-
-#### Scenario: Bootstrap administrator separation and recovery
-
-- **WHEN** the restricted runtime and operator recovery path are verified, including ordinary application recreation
-- **THEN** bootstrap `hapi` remains OID 10 with its administrator credential and system/database ownership intact, and independent operator recovery succeeds
-- **AND** no application receives or uses the bootstrap credential, bootstrap TCP access is denied, and neither restart nor recovery silently restores administrator application access.
-
-#### Scenario: Targeted privilege transition without HAPI data migration
-
-- **WHEN** restricted roles are rehearsed on representative synthetic schemas and the approved HAPI privilege transition is later applied in place
-- **THEN** necessary table/sequence/index/constraint privileges and application startup work, while live HAPI retains its original database, data, logical schema and sequence state at the frozen transition boundary
-- **AND** the privilege transition performs only approved owner/grant/credential/access changes, without HAPI dataset copy, replacement database, ETL or schema conversion; system/extension ownership and administrative boundaries stay intact and ordinary backup tests remain separate.
-
-#### Scenario: Default grants and authentication-rule bypass attempts
-
-- **WHEN** real runtime logins attempt other databases, local/loopback or alternate network paths, replication or password-free authentication
-- **THEN** explicit own-database grants and ordered private authentication rules enforce the same boundary without fallback to broad PUBLIC/trust rules
-- **AND** denied connections, peer-role/administrator escalation and system/extension administration remain denied without weakening the independent operator recovery path.
-
-### Requirement: Idempotent database provisioning and safe rollback
-
-Provisioning SHALL create only missing owned runtime roles and database `keycloak`, and
-apply only reviewed, recorded application ownership/grant/access changes. Reruns MUST
-verify a no-op without rotating credentials. Conflicts MUST fail closed. Rollback MUST
-preserve data and administrative recovery, without dropping objects/roles/databases,
-resetting volumes, restarting shared PostgreSQL or restoring application superuser use.
-
-#### Scenario: First run and repeat verification
-
-- **WHEN** provisioning runs initially, is rechecked after an interruption and runs again
-- **THEN** only the required owned resources and scoped access controls are created once, then verified without duplicate grants or secret rotation
-- **AND** HAPI logical data/schema/sequence values remain intact, owner/ACL states match the recorded privilege changes, and no data-migration or generic resumable migration framework is required.
-
-#### Scenario: Conflict or partial provisioning failure
-
-- **WHEN** a resource name has conflicting ownership/settings/credentials or provisioning fails partially
-- **THEN** public ingress stays disabled and only safely owned changes can be withdrawn using the reviewed change record
-- **AND** unrelated objects/credentials are untouched, retained data is not deleted and shared PostgreSQL is not reset, recreated or restored.
-
-#### Scenario: Privilege transition recovery
-
-- **WHEN** an ownership/grant or application credential transition fails, or a later provider/public release is withdrawn
-- **THEN** transactional or recorded owner/ACL/config reversal retains data and independently verified administrator access; a successful privilege transition remains in place during provider/public rollback
-- **AND** affected applications stay stopped if recovery would require bootstrap credentials; restoring application superuser use is never an automatic fallback and an unverified recovery path blocks release.
-
-### Requirement: Separate verified database backups and restores
-
-Each database MUST have a separate private logical backup and verified restore procedure,
-including required ownership/permission and protected role metadata. A database-specific
-restore MUST NOT overwrite the other database. Restoring the shared physical volume or
-cluster-wide roles MUST NOT be treated as provider-only rollback.
-
-#### Scenario: HAPI backup restoration
-
-- **WHEN** the `hapi` backup is fully restored into a guarded empty verification database
-- **THEN** ordinary recovery checks match the backup's schema/owner/grant/sequence baseline and any explicit rehearsal-role mapping, including synthetic-resource reads
-- **AND** this backup assurance does not require a HAPI data-migration or pre/post migration restore matrix; live HAPI/Keycloak data, credentials and the existing volume are not reset or overwritten.
-
-#### Scenario: Keycloak backup restoration
-
-- **WHEN** the separate `keycloak` backup is restored into its guarded empty verification target
-- **THEN** realm/user/client/credential/signing-key/ePA-policy checks and provider startup/login tests pass
-- **AND** restored runtime privileges remain restricted, live HAPI access/data remain unchanged, and neither shared-volume/global-role replay nor broadened live runtime database access is used for that restore.
-
-### Requirement: Verified shared-instance capacity and failure behavior
-
-The release SHALL verify combined connection, memory, storage, I/O and recovery capacity,
-bound both runtime-role connection budgets and application pools, and reserve administrative
-and recovery headroom without silently changing global/HAPI pool settings. Monitoring and
-maintenance procedures MUST reflect that shared PostgreSQL failure affects both applications.
-
-#### Scenario: Mixed workload and recovery budgets
-
-- **WHEN** measured HAPI/provider load, backups/restores and connection-pressure tests are assessed
-- **THEN** bounded non-superuser application settings fit the verified server budget, including HAPI's loss of superuser-reserved access and protected administrative/recovery headroom
-- **AND** insufficient capacity or unacceptable interference blocks release rather than triggering implicit global/HAPI changes.
-
-#### Scenario: Shared outage and targeted provider recovery
-
-- **WHEN** a controlled shared-server outage/recovery and a separate provider-only rollback are rehearsed
-- **THEN** monitoring reports the shared impact and both application/database contracts recover through the documented maintenance procedure
-- **AND** provider-only rollback does not stop/recreate shared PostgreSQL, restore `hapi` or replace/delete the persistent volume.
+- **WHEN** an isolated server-side request returns 403 while the owner confirms the website works
+- **THEN** the vantage/path/result is retained without treating it as an infrastructure outage or gating unrelated build/proxy work
+- **AND** actual runtime discovery/JWKS/API failures, if reproduced on required OAuth paths, remain genuine integration failures.
 
 ### Requirement: Preserve Mission Control presentation
 
-The public release SHALL preserve approved artwork, layout, capability boundaries, keyboard
-and reduced-motion behavior, German-default/English localization and literal technical
-evidence. Runtime status MUST distinguish demo availability, authentication, resource
-authorization, rate limiting and unavailable dependencies without fake progress.
+The public build SHALL preserve the existing layout/artwork, mission/capability boundaries,
+German-default/English localization, keyboard/focus/reduced-motion behavior, Inspector and
+timeline accessibility. Protocol identifiers/evidence MUST remain literal; language changes
+MUST preserve mission/run selection without repeating protocol operations.
 
-#### Scenario: Localized accessible execution
+#### Scenario: Existing experience in both locales
 
-- **WHEN** both locales are tested at 1366, 1024, 390 and 320 CSS pixels and actual 100%/200% browser zoom
-- **THEN** actions, focus, timeline, actor map, Inspector and text alternative remain usable
-- **AND** locale changes preserve mission/run/event/selection identity without repeating protocol operations.
+- **WHEN** the production candidate is exercised in both locales, responsive layouts and existing accessibility checks
+- **THEN** the established mission controls, diagram, timeline and Inspector remain usable without redesign
+- **AND** authentication success, resource authorization and unavailable outcomes remain distinct and truthful.
 
-### Requirement: Verified release monitoring and targeted withdrawal
+### Requirement: Targeted deployment verification and rollback
 
-Public promotion SHALL require recorded real-component acceptance, security negatives,
-production dependency checks, monitoring and an exercised targeted rollback. Failures or
-missing required evidence MUST block promotion or withdraw public execution while preserving
-legacy functionality, unrelated projects and existing data.
+The release SHALL reuse existing infrastructure, replace the public SPA and apply only
+necessary reviewed binding/security settings. Promotion MUST require real-component public
+acceptance, focused regressions and a tested targeted rollback. Existing data, ePA and
+unrelated services MUST survive; broad stack/database recreation MUST NOT be used.
 
-#### Scenario: Public release acceptance
+#### Scenario: Public acceptance
 
-- **WHEN** the candidate traverses actual public DNS/HTTPS/Tunnel/Traefik/Nginx with Keycloak and HAPI
-- **THEN** login, fixed return, same-run refresh, synthetic read, truthful Inspector, CSRF logout, old-session rejection and owned safe history pass
-- **AND** public negative security, ePA regressions, fresh checkout, restart/recovery, quality and scoped production audit results are recorded without substituting isolated harness success.
+- **WHEN** the separately authorized candidate runs through actual public HTTPS/Tunnel/Traefik/Nginx with Keycloak and HAPI
+- **THEN** login without PAR, fixed return, refresh, protected read, truthful Inspector, CSRF logout, old-auth rejection and safe history pass
+- **AND** public auth-path negatives, production advisory checks and ePA regressions are recorded without substituting private/staged success.
 
-#### Scenario: Monitoring and rollback
+#### Scenario: Targeted withdrawal
 
-- **WHEN** public availability, provider/resource readiness, denial/rate-limit rates or capacity errors cross documented thresholds, or release acceptance fails
-- **THEN** existing operations tooling detects the condition with safe diagnostics and an identified response owner
-- **AND** tested withdrawal restores the recorded fixture-only public release, removes public OAuth/provider ingress and preserves data and ePA behavior without a shared-stack teardown.
+- **WHEN** rollout or acceptance fails
+- **THEN** saved fixture image/project configuration and necessary previous standard/HAPI trust settings restore fixture-only behavior and private ePA/PAR
+- **AND** new OAuth forwarding is withdrawn, affected sessions are invalidated and data/volumes/unrelated services remain intact without a database restore.

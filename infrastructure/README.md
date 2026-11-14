@@ -1,14 +1,12 @@
 # Private HAPI integration verification
 
-**Public-release preparation:** tasks 1.1–5.2 of `public-playground-oauth-deployment` have
-[bounded approval](../openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization).
-For that change, use guarded synthetic/verification databases on the existing PostgreSQL
-instance, as its [design](../openspec/changes/public-playground-oauth-deployment/design.md)
-specifies. **Do not run the integration Compose profile below for public-release preparation:**
-it starts an additional PostgreSQL container. Preserve current services, data and public
-fixtures; live privilege/credential changes, provider cutover and public activation need
-separate authorization. The existing private-integration instructions remain available for
-their separately scoped workflow.
+**Public-release preparation:** narrowed tasks 1.1–5.2 reuse the existing services/images
+and prepare the production SPA/proxy without touching live routing or data. See the
+[current design](../openspec/changes/public-playground-oauth-deployment/design.md) and
+[preparation evidence](../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
+Do not run the legacy integration Compose profile below for this change: it starts another
+PostgreSQL container. Use isolated verification with existing images; no database/privilege
+migration or public activation is authorized.
 
 Run these commands from the repository root. [`docker-compose.integration.yml`](docker-compose.integration.yml)
 extends the existing canonical HAPI and PostgreSQL definitions. Its separate

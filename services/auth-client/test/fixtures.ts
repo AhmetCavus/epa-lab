@@ -16,6 +16,7 @@ export const testConfiguration: ConfigType<typeof configuration> = {
   httpTimeoutMs: 100,
   discoveryCacheTtlMs: 1000,
   standardProfile: undefined,
+  publicProxyAddresses: undefined,
 };
 
 export const testMetadata: OidcMetadata = {

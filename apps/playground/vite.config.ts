@@ -40,6 +40,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
     define: {
       __PLAYGROUND_PRIVATE_OAUTH__: JSON.stringify(enabled),
       __PLAYGROUND_PRIVATE_ORIGIN__: JSON.stringify(origin),
+      __PLAYGROUND_PUBLIC_OAUTH__: JSON.stringify(command === 'build' && mode === 'public-oauth'),
     },
     // Vite's default proxy error logger includes request URLs and exception stacks.
     // Private callback traffic must never reach that diagnostic surface.

@@ -265,7 +265,9 @@
     "privateRuntime": "Private integration test",
     "runStatus": "Current execution status",
     "runId": "Run ID",
-    "runExpiry": "History expires at"
+    "runExpiry": "History expires at",
+    "execution_public": "DEMO EXECUTION",
+    "privateRuntime_public": "Synthetic demo"
   },
   "announcements": {
     "loaded": "Fixture samples loaded. No live operation occurred.",
@@ -283,7 +285,8 @@
       "ready": "Private integration",
       "navigating": "Leaving for Keycloak…",
       "resource": "Requesting the synthetic resource…",
-      "logout": "Ending the local session…"
+      "logout": "Ending the local session…",
+      "ready_public": "Demo ready"
     },
     "authentication": {
       "authenticated": "Application authentication: authenticated.",
@@ -315,7 +318,8 @@
       "ownership-lost": "The owned run is unavailable or expired. Start a fresh attempt.",
       "capacity": "Run capacity is unavailable. Start a fresh attempt; local sign-out remains independent.",
       "request-rejected": "The request was rejected. Refresh status to recover the current browser context.",
-      "timeout": "The request timed out. Its completion is unknown; refresh status before continuing."
+      "timeout": "The request timed out. Its completion is unknown; refresh status before continuing.",
+      "unavailable_public": "The backend is unavailable. Refresh status or start again when it is reachable."
     },
     "resource": {
       "allowed": "Last resource outcome: synthetic Basic/playground-demo read allowed.",
@@ -470,6 +474,12 @@
     },
     "subtitle": "Authorization Code + PKCE S256 · private integration",
     "catalogIntro": "Explore the existing learning previews or open the explicitly configured private integration for verification. Runnable availability remains pending.",
-    "catalogNoticeTitle": "Private verification · availability unchanged"
+    "catalogNoticeTitle": "Private verification · availability unchanged",
+    "notice_public": "Demo with synthetic data and individually provisioned accounts. The BFF holds OAuth credentials; Keycloak supplies the login screen. Internal password checks, PKCE comparison and token creation are explained, not observable.",
+    "catalogAction_public": "Start OAuth mission",
+    "catalogNotice_public": "The OAuth mission uses real protocol operations with synthetic data. The owner supplies individual demo accounts; public registration is disabled. Fixture and conceptual previews remain available.",
+    "catalogIntro_public": "Explore the learning previews or start the OAuth mission with your demo account.",
+    "catalogNoticeTitle_public": "Synthetic demo · safe observations",
+    "subtitle_public": "Authorization Code + PKCE S256 · synthetic demo"
   }
 }

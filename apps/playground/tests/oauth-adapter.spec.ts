@@ -247,6 +247,7 @@ test('API requests use same-origin cookies, fixed operations and context-bound C
   await withResponse(json(session), async (calls) => {
     await endOAuthSession(csrfSentinel, new AbortController().signal);
     expect(calls[0]?.method).toBe('POST');
+    expect(calls[0]?.referrerPolicy).toBe('strict-origin');
     expect(new Headers(calls[0]?.headers).get('X-Playground-CSRF')).toBe(csrfSentinel);
     expect(new Headers(calls[0]?.headers).has('origin')).toBe(false);
     expect(calls[0]?.body).toBeUndefined();
@@ -352,6 +353,22 @@ test('private configuration rejects public origins and never enables production 
   ] as const) {
     const resolved = await config(environment);
     expect(resolved.define?.__PLAYGROUND_PRIVATE_OAUTH__).toBe('false');
+    expect(resolved.define?.__PLAYGROUND_PUBLIC_OAUTH__).toBe('false');
     expect(resolved.server?.proxy).toBeUndefined();
+  }
+});
+
+test('only an explicit production public build enables the fixed-origin runtime', async () => {
+  if (typeof config !== 'function') throw new Error('Expected Vite configuration');
+  const production = await config({ command: 'build', mode: 'public-oauth' });
+  expect(production.define?.__PLAYGROUND_PUBLIC_OAUTH__).toBe('true');
+  expect(production.define?.__PLAYGROUND_PRIVATE_OAUTH__).toBe('false');
+  expect(production.server?.proxy).toBeUndefined();
+  for (const environment of [
+    { command: 'build', mode: 'production' },
+    { command: 'serve', mode: 'public-oauth' },
+    { command: 'serve', mode: 'public-oauth', isPreview: true },
+  ] as const) {
+    expect((await config(environment)).define?.__PLAYGROUND_PUBLIC_OAUTH__).toBe('false');
   }
 });

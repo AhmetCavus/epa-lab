@@ -74,7 +74,9 @@ async function call(
       mode: 'same-origin',
       redirect: 'error',
       cache: 'no-store',
-      referrerPolicy: 'no-referrer',
+      // Firefox serializes Origin as null for a same-origin POST with no-referrer.
+      // An origin-only policy preserves exact Origin/CSRF validation without a URL.
+      referrerPolicy: csrfToken === undefined ? 'no-referrer' : 'strict-origin',
       headers:
         csrfToken === undefined
           ? { accept: 'application/json' }

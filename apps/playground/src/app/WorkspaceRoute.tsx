@@ -1,13 +1,13 @@
 import { useParams } from 'react-router-dom';
 import { findMission, Workspace } from '../features/mission';
 import { NotFound } from './NotFound';
-import { privateOAuthRuntime } from './runtime';
+import { executionRuntime, publicOAuthRuntime } from './runtime';
 import { useSearchParams } from 'react-router-dom';
 
 export function WorkspaceRoute() {
   const { missionId } = useParams();
   const [parameters] = useSearchParams();
-  const privateRuntime = privateOAuthRuntime && parameters.get('view') !== 'fixture';
+  const runtimeEnabled = executionRuntime && parameters.get('view') !== 'fixture';
   const mission = findMission(missionId);
 
   if (!mission) {
@@ -16,9 +16,10 @@ export function WorkspaceRoute() {
 
   return (
     <Workspace
-      key={`${mission.id}:${privateRuntime}`}
+      key={`${mission.id}:${runtimeEnabled}`}
       mission={mission}
-      privateRuntime={privateRuntime}
+      runtimeEnabled={runtimeEnabled}
+      publicRuntime={publicOAuthRuntime}
     />
   );
 }

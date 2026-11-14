@@ -1,88 +1,57 @@
 # Proposal
 
-**Status: APPROVED for preparation tasks 1.1–5.2 only; public release NOT APPROVED.**
-Date: 2026-11-13. Depends on the implemented, unarchived `001-oidc-pkce` baseline.
-
-The owner renewed the bounded apply request after the planning simplification. Preparation
-may proceed through tasks 1.1–5.2 subject to their prerequisites. Tasks 6.1/6.2 and live
-database ownership/credential changes require separate authorization. See the
-[approval and verification record](repository-verification.md#preparation-authorization).
+**APPROVED narrowed preparation: 2026-11-14 — no live deployment.**
+Existing preparation approval covers tasks 1.1–5.2; tasks 6.1/6.2 still require release approval.
 
 ## Why
 
-The public Playground still serves fixtures although its real OAuth mission works privately.
-Publishing that mission requires an explicit production build, a safe public login boundary
-and reproducible deployment controls; enabling the private Vite binding is insufficient.
+The owner confirms that the public site at `https://auth-playground.yappai.de` and the private
+OAuth mission at `http://192.168.178.131:5173` work. Connect the existing production SPA to
+that implemented mission through the current infrastructure.
+
+The earlier isolated Cloudflare 403 is a probe result, not evidence of an infrastructure
+outage. Historical [verification](repository-verification.md) remains unchanged. This scope
+supersedes its database, HAPI privilege and broad readiness prerequisites, including earlier
+preparation guidance; the completed task 1.1 remains an approval-history record.
 
 ## What Changes
 
-- **BREAKING public behavior:** replace the hosted fixture-only release with an explicitly
-  enabled, production-built OAuth mission at `https://auth-playground.yappai.de`. Preserve
-  the fixture build and conceptual ePA preview as deliberate modes and rollback artifacts.
-- Reuse the existing Nginx, BFF, Keycloak, HAPI, Cloudflare Tunnel and Traefik. Route
-  `/api/oauth` on the SPA origin; expose only the public demo realm's required Keycloak
-  login/OIDC paths and assets. Keep legacy ePA routes, administration and FHIR private.
-- Propose a dedicated `playground-public` realm in the existing Keycloak instance and a
-  separately configured standard-profile issuer. Provision this realm, its keys/client secret
-  and new individual synthetic demo accounts from scratch; do not copy existing demo users
-  or private-realm data into it. Preserve the existing `epa-demo` issuer, users, signing keys,
-  clients and mandatory PAR policy through independently verified legacy compatibility.
-- Reuse the existing PostgreSQL 16 container/volume and existing `hapi` database/data, with
-  separate database `keycloak` and non-superuser runtime accounts `hapi_app`/`keycloak_app`.
-  Retain bootstrap administrator `hapi` (confirmed OID 10) for administration/recovery only;
-  remove its credential from application use. No second PostgreSQL container, new production
-  database volume or public database port is planned.
-- Treat `hapi_app` as a targeted in-place privilege/credential transition: reviewed application
-  ownership/grant changes, no HAPI data transfer, replacement database or data transformation.
-  Rehearse permissions using an isolated synthetic schema; retain ordinary backup/recovery tests.
-- Review Keycloak's dev-file storage separately. Use a one-time, pinned-version offline CLI
-  export/import of legacy provider state into PostgreSQL, with a consistent stopped-state
-  backup, exact ePA key/user/client/policy checks and rollback. Production storage is a
-  prerequisite, but public-realm creation does not require migrating existing demo-user data.
-- Define idempotent provisioning, independent verified logical backups/restores, bounded
-  connection/capacity budgets and shared-instance failure/rollback procedures. Preserve
-  HAPI data and logical schema, the existing volume and administrative recovery. Resolve B1
-  in the plan through separate runtime secrets, narrowly inventoried application-object
-  ownership/grant changes and verified cross-database denial. Use existing PostgreSQL and
-  Keycloak tools with short project-specific procedures and change records; add no generic
-  migration framework, resumable migration engine or unrelated schema/data conversions.
-- Use **owner-provisioned individual demo accounts, with no public registration**, as
-  confirmed by the owner. Only the fixed fictional `Basic/playground-demo` is accessible.
-- Add public HTTPS/proxy validation, secure cookies, exact-Origin/CSRF enforcement, bounded
-  abuse controls, safe logging and monitoring. Preserve existing protocol/event contracts.
-- Resolve the verified HAPI configuration drift in the canonical host/Yoster lifecycle;
-  prove public acceptance, ePA regressions, restart recovery and targeted rollback.
+- **BREAKING public behavior:** add an explicit production OAuth build of the existing React
+  SPA served by Nginx. Keep the fixture build as the rollback release; use no public Vite server.
+- Proxy the declared `/api/oauth` operations on the SPA origin to the existing NestJS BFF.
+- Configure the public HTTPS origin, fixed callback, standard-profile issuer and secure cookies.
+  Reuse Code + PKCE S256, sessions, resource access and observed-event contracts.
+- Make only the required demo-realm Keycloak login/OIDC paths reachable over HTTPS through
+  the existing route. Preserve the private ePA issuer, users, signing keys, clients and PAR.
+- Prepare targeted replacement of the public SPA plus only necessary reviewed service settings.
+  Reuse Cloudflare Tunnel, Traefik, Nginx, BFF, Keycloak and private HAPI unchanged in purpose.
+- Verify the real browser journey, new ingress security boundaries and targeted rollback.
+  Keep synthetic-only access and owner-provisioned individual demo accounts.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `public-playground-runtime`: controlled public execution of the existing synthetic OAuth
-  mission, including ingress, demo access, compatibility, production operations and rollback.
+- `public-playground-runtime`: public execution of the existing OAuth mission with secure
+  same-origin routing, legacy compatibility, acceptance and rollback.
 
 ### Modified Capabilities
 
-None in the current main-spec inventory (`openspec list --specs` is empty). The authorization
-and mission contracts remain in change 001's deltas. This proposal explicitly supersedes
-their public-fixture-only deployment restriction **only for the subsequently approved public
-release**; it preserves their security/UX behavior and historical verification records.
+None in the current main-spec inventory. Change 001's OAuth/security/UX contracts remain
+the baseline; only a separately approved release replaces its public fixture-only binding.
 
 ## Impact
 
-`apps/playground` build/configuration/localized runtime status; existing auth-client
-configuration and public request guards; fresh public-realm setup and legacy Keycloak storage
-transition; canonical host Compose
-and `yappai.host.json`; project-scoped Nginx/Traefik/Tunnel policy and operational runbooks.
-The watched Traefik file is outside this repository at
-`/srv/yappai/hosting/infra/traefik/dynamic/epa-lab.yml` and needs a reviewed, reproducible source.
-HAPI needs deployment configuration rather than a new authorization implementation.
-Keycloak will connect privately to `res-server-db:5432/keycloak`; HAPI continues using
-`res-server-db:5432/hapi`. Existing database bootstrap identity/password and the shared volume
-remain. Planned host/environment/operations updates separate HAPI's runtime credential from
-`RES_SERVER_DB_PASSWORD`, preserve bootstrap ownership of databases/system objects, and give
-each application only its own schema/runtime privileges.
+Limited to SPA build/runtime configuration, its Nginx proxy, BFF public profile/cookie/proxy
+settings, demo-realm HTTPS configuration, necessary HAPI issuer/JWKS settings and the targeted
+release packet. Existing design, DE/EN localization, accessibility and application logic stay.
 
-No second BFF/Resource Server, public Vite, new protocol/migration framework, real patient data,
-self-service identity system, public ePA execution or unrelated dependency upgrade is planned.
-Existing databases/volumes and other hosted projects must survive. Legacy provider maintenance
-and reauthentication are explicit release considerations, not claims of session continuity.
+PostgreSQL architecture, database/role/ownership/credential migrations, legacy data transfer,
+generic migration tooling, fleet restructuring and repeated broad readiness reviews are out
+of scope. Existing data and volumes are preserved. No new service or dependency is planned.
+
+Genuine public-authentication blockers are listed separately in [design.md](design.md):
+provider production suitability, trustworthy HTTPS/proxy handling, private administration/FHIR,
+and actual discovery/JWKS/token/session security. Resolve those gates without bypasses; any
+necessary out-of-scope provider/storage work needs its own reviewed authorization, not automatic
+inclusion here. SPA/proxy implementation and isolated tests can proceed before activation.

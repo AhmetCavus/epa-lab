@@ -16,6 +16,7 @@ export function readConfiguration(values: Record<string, unknown>) {
     httpTimeoutMs: environment.OIDC_HTTP_TIMEOUT_MS,
     discoveryCacheTtlMs: environment.OIDC_DISCOVERY_CACHE_TTL_MS,
     standardProfile: environment.standardProfile,
+    publicProxyAddresses: environment.publicProxyAddresses,
   };
 }
 

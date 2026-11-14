@@ -15,11 +15,14 @@
     "slice": "UI SLICE 001",
     "preview": "PREVIEW",
     "private": "Local",
-    "integration": "Verification"
+    "integration": "Verification",
+    "public": "Mission Control",
+    "demo": "Demo"
   },
   "footer": {
     "notice": "Fixture-only learning preview · no live protocol execution",
-    "privateNotice": "Private verification environment · fixtures and observations remain separate"
+    "privateNotice": "Private verification environment · fixtures and observations remain separate",
+    "publicNotice": "Synthetic demo · individual demo accounts · no patient data"
   },
   "notFound": {
     "eyebrow": "UNKNOWN DESTINATION",
@@ -35,5 +38,6 @@
     "workspace": "{{mission}} · Mission Control",
     "notFound": "Page not found · Auth Protocol Playground"
   },
-  "description": "Explore protocol roles and safe evidence in a fixture-only learning workspace."
+  "description": "Explore protocol roles and safe evidence in a fixture-only learning workspace.",
+  "description_public": "Explore OAuth with synthetic data and safe protocol observations."
 }

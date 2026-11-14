@@ -1,12 +1,13 @@
 # Agent Guidelines — Auth Protocol Playground
 
-**Additional owner authorization (2026-11-13):** `public-playground-oauth-deployment` is
-approved for preparation and isolated verification of **tasks 1.1–5.2** under its revised
-plan. See the [preparation approval record](openspec/changes/public-playground-oauth-deployment/repository-verification.md#preparation-authorization).
-Reuse HAPI data with a targeted privilege transition, provision the public realm/accounts
-fresh, and verify legacy ePA preservation separately. Tasks 6.1/6.2, live database
-ownership/credential changes and public OAuth activation require separate authorization.
-Keep the public Playground fixture-only and stop on unmet operational/security prerequisites.
+**Additional owner authorization (2026-11-14):** `public-playground-oauth-deployment`
+is approved for the narrowed preparation tasks **1.1–5.2**. See the current
+[scope and evidence](openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
+Reuse the existing mission and services; prepare production SPA/Nginx, public HTTPS bindings
+and targeted rollout/rollback. Database architecture, HAPI privilege/data migration and
+broad readiness reviews are excluded. Genuine activation gates remain separate; the old
+isolated 403 is not an outage prerequisite. Preserve public fixtures and existing ePA/data.
+Tasks 6.1/6.2 and public activation still need separate release approval.
 
 **Current authorization (2026-11-11):** the project owner approved OpenSpec change `001-oidc-pkce` for **local/private implementation of tasks 2–9**, accepted ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications, and completed readiness task 1.4. See the [consolidated owner approval record](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). The approval-recording step must not start implementation; tasks 2–9 remain unstarted. Subsequent implementation must follow the accepted scope and dependencies.
 

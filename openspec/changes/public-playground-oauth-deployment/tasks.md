@@ -1,46 +1,44 @@
 # Tasks
 
-**Preparation tasks 1.1–5.2 are APPROVED; public release is NOT APPROVED.** The owner renewed
-the apply request after the planning simplification. Live ownership/credential changes and
-tasks 6.1/6.2 require separate authorization. See the
-[approval and verification record](repository-verification.md#preparation-authorization).
-Follow the [design](design.md) and
-[acceptance specification](specs/public-playground-runtime/spec.md). Preserve change 001's
-completed tasks and historical evidence; do not archive it as part of this work.
+**APPROVED narrowed preparation, 2026-11-14 — no live deployment.** Preparation approval
+remains bounded to 1.1–5.2; public rollout tasks 6.1/6.2 still require separate approval.
+Follow the narrowed [proposal](proposal.md), [design](design.md) and [specification](specs/public-playground-runtime/spec.md).
 
-## 1. Confirm release scope and operating prerequisites
+All 13 IDs and checkbox states are retained. Completed task 1.1 below is preserved verbatim
+as earlier approval history; its database/privilege references are superseded and are not
+instructions for new work. Keep historical [verification](repository-verification.md) and
+change 001 unchanged. The isolated 403 is not an infrastructure-outage prerequisite.
+
+## 1. Confirm the public binding
 
 - [x] 1.1 Record the existing preparation approval for tasks 1.1–5.2 and the separate live-database/public-release authorization gates. Align active scope/ADR/UX/hosting notes with HAPI reuse and targeted `hapi_app` privileges, fresh public realm/accounts and a separate legacy Keycloak storage transition. Preserve task IDs, change 001 history, bootstrap administrator recovery and the current fixture-only public deployment; approval recording does not authorize live cutover or public deployment.
-- [ ] 1.2 Record actual Tunnel/peer values and existing PostgreSQL container/volume/image identity. Recheck bootstrap recovery, HAPI ownership/extensions/grants and credential consumers; review exact privilege/access deltas without planning HAPI data movement. Measure combined pools/CPU/RAM/disk/WAL/I/O, backup headroom and shared-failure implications. Identify a consistent legacy dev-file source copy or a separately approved backup window. Set recovery objectives, monitoring ownership/scheduler/alerts; obtain privileged UFW and external direct-origin evidence. Stop on unknown dependencies or insufficient capacity.
+- [x] 1.2 Record only public origin/callback/issuer, existing upstreams/peers and affected settings; align outdated scope pointers. Verify the packet excludes database/privilege migrations. List concrete activation gates separately; retain privileged UFW inspection as an operational follow-up without repeating broad readiness reviews.
 
-## 2. Prepare production provider and isolated public realm
+## 2. Bind the existing Keycloak securely
 
-Dependency: approved scope. Use isolated copies until the cutover task.
+- [x] 2.1 Configure the owned public realm/client HTTPS authority and exact callback without changing legacy issuer/policies. Test real discovery, Code/S256 without PAR and ePA compatibility. Record provider production suitability as a separate activation gate; do not implement a storage migration here.
+- [x] 2.2 Configure individual synthetic demo accounts, disabled registration, required password change, audience/permission and five-minute tokens using existing tooling. Verify fresh/repeat/conflict behavior and rejected missing/invalid PKCE; document private credential delivery without importing legacy users.
 
-- [ ] 2.1 Prepare a short project-specific PostgreSQL privilege/provisioning procedure and the pinned Keycloak offline CLI transfer. Rehearse `hapi_app` owner/grant/credential changes on an isolated representative synthetic schema, with no HAPI dataset migration or generic migration engine. Verify repeat/conflict/partial-failure behavior, restricted startup/own-schema DDL, real cross-database/admin denial, bootstrap recovery and recorded reversal. Decouple runtime secrets in canonical configuration/env initialization without live changes. Separately rehearse legacy dev-file export/import into guarded PostgreSQL targets; preserve ePA realm/users/signing keys/clients/credentials/PAR and prove actual signatures and header/browser regressions. Verify ordinary independent database backups/restores and retained-volume rollback; no extra PostgreSQL container.
-- [ ] 2.2 Provision `playground-public`, its owned client/scopes, fresh keys/secret and new individual synthetic accounts from scratch using existing Keycloak tooling. Do not import existing demo users or private realm/history. Test fresh setup, repeat/no-op and conflict refusal, HTTPS metadata, Code/S256 without PAR, missing/invalid PKCE, five-minute tokens, disabled registration and required password change. Document private credential delivery/reset/deactivation and unchanged legacy ePA issuer/policies.
+## 3. Enable the existing production mission
 
-## 3. Extend the existing application binding
+- [x] 3.1 Add minimal standard-only public issuer/origin/cookie/trusted-proxy settings and necessary HAPI issuer/JWKS binding. Test profile isolation, HTTPS/CSRF/validation failures and existing ePA/PAR regressions; change no database settings or HAPI security implementation.
+- [x] 3.2 Add the explicit OAuth-enabled production SPA/Nginx target, keeping default fixtures and private development mode. Verify production assets, origin/default-off guards, existing adapter/session restoration, both locales and focused visual/accessibility regressions; include no browser secrets or UI redesign.
 
-- [ ] 3.1 Add standard-only issuer configuration with legacy fallback and explicit fail-closed public HTTPS/proxy validation. Reuse transaction/session/token modules. Add focused configuration, spoofing, signed-token, profile-substitution, cookie/CSRF, replay/race/expiry and full/failed-event-storage cleanup regressions; verify existing unit/ePA tests and document the new settings without exposing values.
-- [ ] 3.2 Add the explicit production OAuth build/Nginx target and public mission availability/recovery copy while preserving the fixture target and existing mission adapter/renderer. Test default-off and public opt-in, no secret/browser persistence, normal login navigation, typed 429 recovery including top-level navigation, fixture/conceptual ePA and DE/EN key parity. Document public versus private build commands and verify existing visual/capability/accessibility behavior.
+## 4. Connect Nginx and prepare targeted replacement
 
-## 4. Make project ingress and host operation reproducible
+- [x] 4.1 Proxy the six declared BFF operations and required public-realm login/OIDC/assets. Test methods, encoded/alternate routes, private admin/ePA/FHIR denial, trusted headers, independent logout limits, cache isolation and secret-safe upstream failures using actual proxy configuration.
+- [x] 4.2 Prepare only necessary existing SPA/BFF/Keycloak/HAPI binding and project-route changes, preserving the working Tunnel/Traefik infrastructure. Validate merged configuration and connectivity from candidate Nginx and HAPI, including HTTPS discovery/JWKS; document exact service/settings diffs and preserve live fixtures/data during staging.
+- [x] 4.3 Save the current fixture image/configuration and necessary previous standard/HAPI settings. Document and rehearse exact targeted apply/withdraw/rollback commands; verify fixture navigation, ePA/PAR and data preservation. Require no shared-stack shutdown, database restore, volume reset or migration tooling.
 
-- [ ] 4.1 Add reviewed project-scoped Nginx/Traefik/Tunnel policy sources and deployment commands for narrow API/provider routes, exact methods, trusted peers, cache/header rules, independent rate/cleanup budgets and safe diagnostics. Validate configuration and exercise actual proxy containers with forged headers, encoded/alternate paths, admin/legacy/FHIR denial, cache isolation, throttling and secret-sentinel upstream failures; document the route/trust/logging allowlists and any unavailable edge controls.
-- [ ] 4.2 Correct HAPI issuer/JWKS, loopback BFF reachability, memory/heap and conflict-safe initialization in the canonical host/Yoster lifecycle while retaining the existing HAPI database/data. Bind restricted runtime accounts and production Keycloak PostgreSQL storage in the staged configuration. Validate application recreation, JWKS, 200/401/403 and seed repeat/conflict behavior; ensure fresh public setup and unchanged legacy ePA. Verify provisioning order, no bootstrap secret in applications and no new PostgreSQL service/volume/port; preserve bootstrap identity/password/system ownership without restarting shared PostgreSQL.
-- [ ] 4.3 Version short guarded SQL/CLI procedures, monitoring, ordinary per-database backup/recovery and targeted withdrawal/reapply commands in existing operations. Record exact created resources/owner/ACL/HBA/config deltas; add no migration framework, resumable engine or data transformations. Test admin recovery, separate restores, fixture recovery, privilege reversal and legacy provider rollback before writes resume. Provider/public rollback retains successful restricted HAPI access; never restore HAPI data, replay global roles, replace/restart shared PostgreSQL or fall back to application superuser credentials.
+## 5. Verify integration and deliver the release packet
 
-## 5. Complete staged acceptance and release evidence
+- [x] 5.1 Run focused NestJS, SPA build/typecheck/browser/accessibility, HAPI trust/security integration and proxy tests relevant to changed bindings. Reuse change 001 evidence, check production advisories/disclosure, and run lint/format and strict OpenSpec validation; record failures without unrelated upgrades or broad infrastructure testing.
+- [x] 5.2 Verify the staged real login/return/refresh/read/Inspector/CSRF logout/old-auth/history journey and new auth-path negatives. Deliver exact images, settings, gate results, test evidence and targeted rollout/rollback commands for owner review. Identify unresolved activation gates; do not label staged success as public acceptance.
 
-- [ ] 5.1 Run combined NestJS unit/real integration, HAPI Gradle/security/JPA, SPA TypeScript/build/browser/architecture/localization/accessibility, lint/format and strict OpenSpec checks. Map scenarios to evidence: targeted HAPI privileges and retained data, fresh public accounts, preserved legacy ePA identities/signatures/PAR, cross-database/admin negatives, repeat/conflict handling, ordinary restore assurance, observer truth, ownership/caching/cleanup and rollback. Run scoped production advisory checks, retaining development findings separately; block unresolved production findings without unrelated upgrades.
-- [ ] 5.2 Reproduce from a fresh recursive checkout; rehearse startup/restart, mixed-load/connection pressure, authorized shared-outage recovery, targeted privilege reversal and both public/provider rollback stages. Verify one ordinary guarded restore per database with explicit rehearsal-role mappings; no HAPI data-migration restore matrix. Prove legacy Keycloak preservation from a consistent source copy and fresh public provisioning independently. Compare DE/EN/native-zoom screenshots. Deliver exact images/configurations, protected backups, concise change records, restore/monitoring results and the release packet; distinguish staged from public evidence and retain failures/skips.
+## 6. Release only after separate approval
 
-## 6. Perform only the authorized targeted public rollout
+These tasks remain unapproved. Close actual public-authentication gates before activation;
+do not infer release approval from prior preparation authorization or planning completion.
 
-Dependency: all preceding gates pass and public deployment authorization is recorded. Reuse
-existing authorization when it explicitly covers this exact packet; do not infer it from
-planning completion or apply tooling status.
-
-- [ ] 6.1 After separate live ownership/credential and public-release approval, recheck privilege/legacy-preservation evidence, shared-instance capacity, verified backups and ingress/firewall/logging guards. Apply the rehearsed HAPI privilege transition in place without data copy/restore/conversion. Perform the legacy Keycloak offline storage transfer in its approved write-freeze window, verify ePA identities/keys/PAR, then provision the public realm/accounts fresh. Preserve bootstrap/system ownership, current database data and volumes. Deploy only reviewed public application/SPA changes and withdraw private Vite; on failure use recorded targeted recovery without database reset/recreation or application superuser fallback.
-- [ ] 6.2 Verify the actual public DNS/HTTPS/Tunnel/Traefik/Nginx browser journey through real Keycloak and HAPI: login, fixed return, same-run refresh, synthetic read, Inspector provenance, CSRF logout, old-authentication denial and owned history. Run public spoof/bypass/cache/rate/security negatives, external port isolation, ePA regressions, restart/recovery and monitoring checks. Promote verified demo availability only on full pass; otherwise execute the targeted rollback and verify fixture-only public behavior, private ePA and preserved data. Record requirement-to-test evidence and remaining operational findings honestly.
+- [ ] 6.1 After explicit approval of the exact tested packet and closure of activation gates, target the public SPA replacement and necessary reviewed binding settings only. Preserve existing services/data and private ePA; verify readiness and execute targeted rollback on failure.
+- [ ] 6.2 Verify the complete actual public HTTPS browser journey, proxy/security negatives and ePA/PAR after cutover. Confirm private HAPI/admin boundaries and safe observations; record public acceptance or restore the fixture release. Do not claim provider-internal observations or archive this change.

@@ -11,9 +11,16 @@ function randomValue() {
   return randomBytes(32).toString('base64url');
 }
 
-export async function verifyStandardFlow(settings, env = process.env, secrets = new Set()) {
-  const issuer = `${settings.server}/realms/epa-demo`;
-  const metadataResponse = await fetch(`${issuer}/.well-known/openid-configuration`, {
+export async function verifyStandardFlow(
+  settings,
+  env = process.env,
+  secrets = new Set(),
+  transport = {},
+) {
+  const issuer = transport.issuer ?? `${settings.server}/realms/epa-demo`;
+  const request = transport.request ?? fetch;
+  const legacy = issuer === `${settings.server}/realms/epa-demo`;
+  const metadataResponse = await request(`${issuer}/.well-known/openid-configuration`, {
     redirect: 'error',
     signal: AbortSignal.timeout(10000),
   });
@@ -24,10 +31,24 @@ export async function verifyStandardFlow(settings, env = process.env, secrets = 
     'authorization_endpoint',
     'token_endpoint',
     'jwks_uri',
-    'pushed_authorization_request_endpoint',
+    ...(legacy ? ['pushed_authorization_request_endpoint'] : []),
   ]) {
-    privateUrl(metadata[name]);
+    if (legacy) {
+      privateUrl(metadata[name]);
+    } else {
+      const endpoint = new URL(metadata[name]);
+      requireCondition(
+        issuer === 'https://auth-playground.yappai.de/realms/playground-public' &&
+          endpoint.origin === new URL(issuer).origin &&
+          !endpoint.username &&
+          !endpoint.password &&
+          !endpoint.search &&
+          !endpoint.hash,
+        'Public metadata must use the fixed HTTPS authority',
+      );
+    }
   }
+  requireCondition(metadata.issuer === issuer, 'Discovery issuer mismatch');
   const checks = [];
   const remember = (value) => {
     if (typeof value === 'string' && value.length > 12) {
@@ -44,7 +65,7 @@ export async function verifyStandardFlow(settings, env = process.env, secrets = 
     remember(value);
   }
   async function call(url, options = {}) {
-    return fetch(url, { ...options, redirect: 'manual', signal: AbortSignal.timeout(10000) });
+    return request(url, { ...options, redirect: 'manual', signal: AbortSignal.timeout(10000) });
   }
   function expect(condition, name) {
     requireCondition(condition, `Verification failed: ${name}`);
@@ -209,6 +230,17 @@ export async function verifyStandardFlow(settings, env = process.env, secrets = 
     expect(exchanged.status === 200, `authorization code exchange succeeds (${scope})`);
     const access = claims(exchanged.result.access_token);
     const identity = claims(exchanged.result.id_token);
+    await transport.onTokens?.({
+      accessToken: exchanged.result.access_token,
+      idToken: exchanged.result.id_token,
+      scope,
+    });
+    if (!legacy) {
+      expect(
+        access.exp - access.iat <= 300,
+        'public Access Token lifetime is at most five minutes',
+      );
+    }
     expect(
       audience(access.aud).includes('playground-fhir') &&
         access.azp === standardClientId &&
@@ -296,6 +328,9 @@ export async function verifyStandardFlow(settings, env = process.env, secrets = 
       [400, 401].includes(response.status) && result.error === 'unauthorized_client',
       `${grantType} grant is disabled`,
     );
+  }
+  if (!legacy) {
+    return { passed: checks.length, checks };
   }
   const epa = transaction('openid', env.OIDC_CLIENT_ID);
   const bypass = await call(epa.url);
