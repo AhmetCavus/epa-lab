@@ -9,6 +9,15 @@ This 2026-11-14 revision removes database/privilege migrations and broad readine
 Change 001 remains the implemented component/security/UX baseline. Owner-confirmed site and
 private-mission availability do not substitute for acceptance of the new public OAuth binding.
 
+**DRAFT extension, 2026-11-16:** planning confirmation adds only the Keycloak production
+startup/storage prerequisite below. Implementation, database provisioning, maintenance and
+public cutover still require explicit authorization. Completed preparation evidence remains
+historical; the draft does not reinstate HAPI/database restructuring.
+
+**Subsequent preparation authorization, 2026-11-16:** implementation of 5.3–5.5 is now
+owner-authorized. The requirements below still require specific database/maintenance
+approvals and verified preservation before execution or live release, respectively.
+
 ## ADDED Requirements
 
 ### Requirement: Explicit production execution binding
@@ -69,8 +78,9 @@ server-side. Discovery/JWKS same-origin, TLS and stored-transaction validation M
 
 The public binding MUST preserve the private ePA issuer, users, signing keys, clients,
 credentials, PAR requirement and legacy endpoints/sessions. Existing data and volumes MUST
-remain intact. Database architecture, ownership/credential migration and legacy data transfer
-SHALL NOT be performed by this change.
+remain intact. HAPI database/schema/data/ownership/credentials/permissions MUST NOT change.
+The only proposed storage exception is the explicitly reviewed Keycloak-only production
+prerequisite below; planning confirmation MUST NOT authorize executing that transition.
 
 #### Scenario: ePA regression
 
@@ -176,9 +186,10 @@ responses MUST NOT be shared-cached.
 ### Requirement: Genuine public-authentication activation gates
 
 Public authentication MUST remain disabled until the existing provider has a production-suitable
-configuration and the new HTTPS/proxy/token/session/private-service boundaries pass. Unresolved
-out-of-scope security prerequisites MUST be reported separately, without bypass or automatic
-inclusion of database/infrastructure projects. Isolated preparation MAY proceed meanwhile.
+configuration and the new HTTPS/proxy/token/session/private-service boundaries pass. The draft
+Keycloak prerequisite MUST receive implementation and required maintenance/database approvals
+before execution. Other unresolved security prerequisites MUST be reported separately,
+without bypass or automatic inclusion of database/infrastructure projects.
 
 #### Scenario: Unsuitable provider configuration
 
@@ -191,6 +202,52 @@ inclusion of database/infrastructure projects. Isolated preparation MAY proceed 
 - **WHEN** an isolated server-side request returns 403 while the owner confirms the website works
 - **THEN** the vantage/path/result is retained without treating it as an infrastructure outage or gating unrelated build/proxy work
 - **AND** actual runtime discovery/JWKS/API failures, if reproduced on required OAuth paths, remain genuine integration failures.
+
+### Requirement: Keycloak production storage prerequisite
+
+The production candidate SHALL reuse the existing Keycloak service and PostgreSQL 16
+instance/volume, with database `keycloak` and separate non-superuser role `keycloak_app`.
+It MUST use supported production startup, private database/admin/management access and
+verified hostname/proxy/TLS configuration. No additional PostgreSQL container or volume,
+HAPI privilege transition or generic migration framework SHALL be introduced.
+
+#### Scenario: Isolated production candidate
+
+- **WHEN** separately authorized preparation starts the production-mode candidate on an isolated Keycloak target
+- **THEN** readiness, restart/recovery, public-realm HTTPS metadata/keys and the unchanged legacy issuer/ePA PAR flow pass with real components
+- **AND** the Keycloak database role has only its required schema privileges, cannot read/write HAPI data or assume HAPI roles, and uses a verified shared-instance connection budget.
+
+#### Scenario: Unsafe provisioning or conflicting state
+
+- **WHEN** provisioning finds conflicting ownership, requires excessive privileges/HAPI changes, lacks specific database-mutation approval or cannot satisfy the private access boundary
+- **THEN** it fails closed and reports the blocker without overwriting data, broadening grants or changing HAPI
+- **AND** repeat provisioning verifies owned state; existing volumes/databases are never reset or recreated to make tests pass.
+
+### Requirement: Preserve Keycloak state through production transition
+
+The transition SHALL use a consistent protected source backup and preserve legacy realm/user
+identities, credential behavior, signing keys, client secrets/configuration, administrative
+recovery, the ePA issuer and PAR policy. Transfer exports MUST NOT be treated as complete
+backups. Maintenance/session/revocation impact and targeted recovery MUST be reviewed
+explicitly before live approval. Existing preservation/security requirements are not waived.
+
+#### Scenario: Legacy state preservation rehearsal
+
+- **WHEN** a consistent source is restored into the isolated production-storage target
+- **THEN** private comparisons verify identity/configuration/key preservation and real legacy login/token/PAR regressions pass without printing sensitive material
+- **AND** no legacy realm is recreated from fixtures, keys/passwords are not reset to conceal loss, and public synthetic accounts remain separate from legacy users.
+
+#### Scenario: Incomplete backup or unresolved maintenance impact
+
+- **WHEN** the available source is inconsistent, only a masked/partial export exists, or session/revocation and maintenance implications remain unresolved
+- **THEN** live transition stays blocked pending verified preservation and explicit owner decisions
+- **AND** no live pause, database creation, container recreation or authentication activation is inferred from planning confirmation.
+
+#### Scenario: Provider recovery and application withdrawal
+
+- **WHEN** a separately approved provider transition or acceptance fails
+- **THEN** the rehearsed Keycloak-only recovery preserves administrative access and accounts for post-cutover writes before switching storage back
+- **AND** public forwarding can be withdrawn independently, with no HAPI restore, shared-volume reset, silent stale-identity restore or deletion of retained provider data.
 
 ### Requirement: Preserve Mission Control presentation
 

@@ -4,6 +4,22 @@ Preparation only, 2026-11-14. **Do not execute live rollout from this packet yet
 Tasks 6.1/6.2 remain unapproved. The production-provider gate below is open;
 staged success is not public acceptance. Keep the existing fixture release running.
 
+**2026-11-16 refresh — preparation blocked, not a release approval.** The owner authorized
+only tasks 5.3–5.5. [Current prerequisite evidence](keycloak-production-verification.md)
+records unavailable shared PostgreSQL (missing Docker task and refused private TCP), no
+verified consistent Keycloak backup in the inspected saved artifacts, pending specific
+DDL/maintenance/session decisions and a pinned-provider security finding. No provider
+recovery, database provisioning, live pause, new production rehearsal or deployment ran.
+The provider gate remains open; tasks 5.3–5.5 and 6.1/6.2 remain unchecked.
+
+The preparation source is now committed at `77e65d54524253b84e46f422c9854021517d4f06`;
+the preceding planning revision and this execution record are local changes. The old
+base-plus-patch reproduction instructions below describe the dated 2026-11-14 run, not
+the procedure to apply to the current commit. SPA/BFF candidate identities and all seven
+recorded backup hashes were rechecked and match. The saved SPA rollback/configuration
+backup is not a Keycloak state backup. No fresh production-provider/recovery acceptance
+or recursive-checkout reproduction is claimed in this refresh.
+
 ## Exact candidate and saved release
 
 | Component             | Local image identity                                                      |

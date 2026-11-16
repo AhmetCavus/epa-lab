@@ -4,10 +4,24 @@
 remains bounded to 1.1–5.2; public rollout tasks 6.1/6.2 still require separate approval.
 Follow the narrowed [proposal](proposal.md), [design](design.md) and [specification](specs/public-playground-runtime/spec.md).
 
-All 13 IDs and checkbox states are retained. Completed task 1.1 below is preserved verbatim
+**DRAFT prerequisite extension, 2026-11-16:** the owner confirmed these planning revisions
+only. New tasks 5.3–5.5 require implementation authorization; any required live source-backup
+pause or shared-instance database provisioning also needs specific approval. No deployment,
+database creation, maintenance or public activation is authorized by that confirmation.
+
+**Preparation implementation authorized, 2026-11-16:** the owner's subsequent explicit
+apply request authorizes tasks 5.3–5.5 only. Their specific database-mutation and live
+maintenance gates remain in force. The [current execution evidence](keycloak-production-verification.md)
+records partial task 5.3 and blockers; none of 5.3–5.5 is complete. Public activation and
+tasks 6.1/6.2 remain unapproved.
+
+All 13 existing IDs and checkbox states are retained; draft 5.3–5.5 add three unchecked tasks.
+Completed task 1.1 below is preserved verbatim
 as earlier approval history; its database/privilege references are superseded and are not
-instructions for new work. Keep historical [verification](repository-verification.md) and
-change 001 unchanged. The isolated 403 is not an infrastructure-outage prerequisite.
+instructions to revive HAPI privilege/data work. The narrow Keycloak exception applies only
+to the new draft tasks. Keep historical [verification](repository-verification.md), completed
+[preparation evidence](preparation-verification.md) and change 001 unchanged. The isolated
+403 is not an infrastructure-outage prerequisite.
 
 ## 1. Confirm the public binding
 
@@ -35,10 +49,16 @@ change 001 unchanged. The isolated 403 is not an infrastructure-outage prerequis
 - [x] 5.1 Run focused NestJS, SPA build/typecheck/browser/accessibility, HAPI trust/security integration and proxy tests relevant to changed bindings. Reuse change 001 evidence, check production advisories/disclosure, and run lint/format and strict OpenSpec validation; record failures without unrelated upgrades or broad infrastructure testing.
 - [x] 5.2 Verify the staged real login/return/refresh/read/Inspector/CSRF logout/old-auth/history journey and new auth-path negatives. Deliver exact images, settings, gate results, test evidence and targeted rollout/rollback commands for owner review. Identify unresolved activation gates; do not label staged success as public acceptance.
 
+### Authorized preparation — resolve the Keycloak production prerequisite
+
+- [ ] 5.3 After explicit preparation authorization, inspect only the pinned Keycloak/PostgreSQL compatibility, current provider binding/state and available consistent backup needed for the transition. Prepare the production startup/private proxy model, idempotent `keycloak`/`keycloak_app` provisioning, bounded connection settings, exact isolated-target names and targeted recovery plan. Resolve source-consistency, grants and maintenance/session/revocation open decisions; obtain specific approval before any shared-instance DDL or live backup pause. Preserve HAPI and avoid broad readiness work.
+- [ ] 5.4 After the required preparation/operational approvals, rehearse only on isolated Keycloak copies and approved disposable Keycloak databases/roles in the existing PostgreSQL 16 instance; create no additional PostgreSQL container or volume. Verify production readiness/restart, least privilege and no HAPI data access, preservation of users/credential behavior/signing keys/clients/issuer/PAR, real standard OAuth and ePA regressions, disclosure protection and targeted provider recovery. Keep live provider data, public fixtures and HAPI unchanged; report preservation/isolation blockers instead of resetting state or weakening security.
+- [ ] 5.5 Record the prerequisite evidence and refresh the release packet with exact current source/image identities, production settings, preserved-state comparisons, maintenance/session/revocation decisions, approval boundaries and tested provider/SPA cutover/withdrawal commands. Revalidate Compose, relevant integration/security checks and strict OpenSpec; keep the provider gate open wherever evidence or approval is missing. Preserve prior task/evidence history. Do not perform live cutover or public activation during preparation.
+
 ## 6. Release only after separate approval
 
 These tasks remain unapproved. Close actual public-authentication gates before activation;
 do not infer release approval from prior preparation authorization or planning completion.
 
-- [ ] 6.1 After explicit approval of the exact tested packet and closure of activation gates, target the public SPA replacement and necessary reviewed binding settings only. Preserve existing services/data and private ePA; verify readiness and execute targeted rollback on failure.
+- [ ] 6.1 After explicit approval of the exact tested packet and any Keycloak maintenance/database provisioning, perform only its reviewed Keycloak production cutover privately and verify provider gate closure before targeting the public SPA replacement and necessary binding settings. Preserve existing services/data and private ePA; verify readiness and execute the appropriate targeted provider recovery or SPA withdrawal on failure. Public activation remains blocked until all its gates pass.
 - [ ] 6.2 Verify the complete actual public HTTPS browser journey, proxy/security negatives and ePA/PAR after cutover. Confirm private HAPI/admin boundaries and safe observations; record public acceptance or restore the fixture release. Do not claim provider-internal observations or archive this change.

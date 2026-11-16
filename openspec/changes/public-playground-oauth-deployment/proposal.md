@@ -3,6 +3,15 @@
 **APPROVED narrowed preparation: 2026-11-14 — no live deployment.**
 Existing preparation approval covers tasks 1.1–5.2; tasks 6.1/6.2 still require release approval.
 
+**DRAFT Keycloak prerequisite extension: 2026-11-16.** The owner confirmed revision of
+these planning artifacts only. Proposed tasks 5.3–5.5 are not authorized for implementation;
+database creation, maintenance, container recreation and public activation are not approved.
+The 11 completed tasks and their dated evidence remain unchanged.
+
+**Subsequent preparation authorization, 2026-11-16:** the owner explicitly authorized
+implementation of tasks 5.3–5.5. Specific shared-database DDL/live-maintenance approvals
+and public release remain separate; see [current execution evidence](keycloak-production-verification.md).
+
 ## Why
 
 The owner confirms that the public site at `https://auth-playground.yappai.de` and the private
@@ -27,6 +36,10 @@ preparation guidance; the completed task 1.1 remains an approval-history record.
   Reuse Cloudflare Tunnel, Traefik, Nginx, BFF, Keycloak and private HAPI unchanged in purpose.
 - Verify the real browser journey, new ingress security boundaries and targeted rollback.
   Keep synthetic-only access and owner-provisioned individual demo accounts.
+- **DRAFT prerequisite:** prepare production startup/storage for the existing Keycloak,
+  using a separate `keycloak` database and non-superuser `keycloak_app` role on the existing
+  PostgreSQL 16 instance. Rehearse preservation of legacy users, signing keys, clients,
+  credentials and ePA/PAR before any separately approved live transition.
 
 ## Capabilities
 
@@ -46,12 +59,22 @@ Limited to SPA build/runtime configuration, its Nginx proxy, BFF public profile/
 settings, demo-realm HTTPS configuration, necessary HAPI issuer/JWKS settings and the targeted
 release packet. Existing design, DE/EN localization, accessibility and application logic stay.
 
-PostgreSQL architecture, database/role/ownership/credential migrations, legacy data transfer,
-generic migration tooling, fleet restructuring and repeated broad readiness reviews are out
-of scope. Existing data and volumes are preserved. No new service or dependency is planned.
+The draft exception is limited to Keycloak's own production database/role and the necessary
+legacy Keycloak state transfer. It adds no PostgreSQL container or persistent volume.
+HAPI database/data/schema/ownership/credentials/permissions remain unchanged; its historical
+privilege findings are not reopened. General database restructuring, generic migration
+tooling, fleet changes and broad readiness reviews remain excluded. No new service or
+application dependency is planned.
+
+The prerequisite covers a consistent protected backup, isolated production rehearsal,
+maintenance/session-impact review, exact targeted rollback and release-packet refresh.
+Missing backup consistency, preservation evidence or required operational approvals keep
+the transition blocked. Planning confirmation does not authorize live database work.
 
 Genuine public-authentication blockers are listed separately in [design.md](design.md):
 provider production suitability, trustworthy HTTPS/proxy handling, private administration/FHIR,
 and actual discovery/JWKS/token/session security. Resolve those gates without bypasses; any
-necessary out-of-scope provider/storage work needs its own reviewed authorization, not automatic
-inclusion here. SPA/proxy implementation and isolated tests can proceed before activation.
+work beyond this Keycloak-only exception needs its own reviewed scope. The subsequent
+authorization covers preparation tasks 5.3–5.5; specific live maintenance/database work
+and all live cutover still need explicit authorization.
+The existing public site remains fixture-only until the release gates pass.

@@ -3,12 +3,22 @@
 **APPROVED narrowed preparation: 2026-11-14 — public deployment is not authorized.**
 See [proposal.md](proposal.md) for scope and [tasks.md](tasks.md) for preserved tracking.
 
+**DRAFT extension, 2026-11-16:** the owner confirmed planning revisions for the Keycloak
+production prerequisite only. Tasks 5.3–5.5 require separate implementation authorization;
+no database creation, source-backup maintenance, live recreation or public release is approved.
+
+**Subsequent preparation authorization, 2026-11-16:** the owner authorized implementation
+of 5.3–5.5. Specific DDL and live-maintenance approval remains required under decision 7;
+public cutover stays unapproved. See [current execution evidence](keycloak-production-verification.md).
+
 ## Context
 
 The owner confirms the public site and private OAuth integration work. The repository
 already has the React mission adapter, NestJS OAuth lifecycle/events, Keycloak and secured
-HAPI. The remaining gap is their production public binding: `app/runtime.ts` currently
-compiles execution off for production, and `nginx.conf` serves static files only.
+HAPI. Preparation tasks 1.1–5.2 now have verified production SPA/Nginx and backend candidates;
+default builds and the deployed public site remain fixture-only. The remaining provider
+gate was confirmed in the [2026-11-14 evidence](preparation-verification.md): the existing
+Keycloak runs `start-dev` with `dev-file`. The draft below addresses only that prerequisite.
 
 The historical [preflight report](repository-verification.md) is retained. Its isolated
 Cloudflare 403 does not establish an infrastructure outage or override owner-confirmed
@@ -22,9 +32,11 @@ Publish the implemented mission through existing Cloudflare Tunnel → Traefik �
 with the existing BFF, Keycloak and private HAPI. Follow ADR-0001 through ADR-0004; preserve
 Mission Control visuals, DE/EN behavior, accessibility and truthful observations.
 
-Exclude PostgreSQL topology/roles, HAPI privilege or data migration, legacy storage transfer,
-generic frameworks, new services/dependencies, fleet restructuring and broad readiness,
-backup/restore or shared-outage programmes. Existing ePA/PAR functionality and data remain.
+The draft permits only a Keycloak database/role on the existing PostgreSQL instance and
+the necessary preservation of legacy Keycloak state. Exclude HAPI privilege/data/ownership/
+credential changes, an additional PostgreSQL container or volume, generic migration tooling,
+new services/dependencies, fleet restructuring and broad readiness/backup programmes.
+Existing ePA/PAR functionality, issuer, security policies and data remain the baseline.
 
 ## Decisions
 
@@ -72,7 +84,8 @@ Use these fixed bindings; credentials remain server-side:
 Configure the dedicated demo realm in the existing Keycloak instance using owned settings,
 fresh credentials and owner-provisioned individual synthetic accounts; registration stays
 disabled. Reuse existing client tooling with repeat/conflict checks. Do not copy legacy
-users or recreate `epa-demo`. Keep demo Access Tokens at most five minutes.
+users into the public realm or recreate `epa-demo` from fixtures. Keep demo Access Tokens
+at most five minutes.
 
 Add standard-only `PLAYGROUND_OIDC_ISSUER` with legacy fallback. Bind origin/callback/issuer
 and cookies to the server-selected profile; retain transaction/token validation. Preserve
@@ -117,7 +130,8 @@ schema 1, actual BFF observer/time and explicit HAPI reports; no invented Keyclo
 Build/test privately first. The release packet contains exact SPA/BFF image identities,
 necessary settings/realm/proxy diffs, affected service names, acceptance results and exact
 apply/rollback commands. Preserve the current fixture image and only the configuration
-values being replaced. No full-stack `compose down`, volume reset or migration rollback.
+values being replaced. No full-stack `compose down`, volume reset or HAPI database rollback;
+provider recovery is limited to the separately reviewed procedure below.
 
 After separate release approval, replace the public SPA with the production target and
 apply only reviewed, necessary BFF/Keycloak/HAPI binding changes. Keep unrelated services,
@@ -127,22 +141,79 @@ claiming OAuth is available; staged/private success is supporting evidence, not 
 On failure restore the saved fixture image/project routing and previous standard/HAPI trust
 settings as needed, invalidate affected BFF sessions and withdraw new OAuth/provider forwarding.
 Keep ePA and data intact; disable rather than delete owned public configuration. Restore the saved fixture image with the reviewed withdrawal configuration: close OAuth/provider forwarding and suppress raw URL/error logs, including late callbacks. Verify
-fixture navigation and private ePA/PAR after rollback. A provider/storage transition is not
-part of this rollback, and no database restore is required.
+fixture navigation and private ePA/PAR after rollback. Ordinary SPA withdrawal requires
+no database restore and does not automatically reverse provider storage. A provider
+transition needs the separately approved Keycloak-only recovery procedure below; never
+restore/reset the shared PostgreSQL volume or HAPI database for application rollback.
+
+### 7. DRAFT: minimal Keycloak production prerequisite
+
+Reuse the existing Keycloak service/version, subject to a focused compatibility/security
+check. Prepare its supported production startup (`start`, or `start --optimized` after a
+matching build), PostgreSQL binding, health and trusted-proxy settings. Keep administration,
+management and database traffic private. Prove the existing private legacy hostname/issuer
+and the public realm's HTTPS authority work together in production mode; do not change the
+ePA issuer, relax hostname/TLS/JWKS validation or weaken PAR to obtain a passing test.
+
+Use the existing PostgreSQL 16 instance and volume. HAPI keeps database `hapi`, its current
+credentials, schema, ownership and permissions. Provision only database `keycloak` with
+dedicated non-superuser role `keycloak_app`, separate server-held credentials and privileges
+needed for Keycloak's own schema lifecycle. Grant no superuser, role/database creation,
+replication, bypass-RLS or HAPI-role membership. Verify it cannot read/write HAPI data.
+Check only the shared-instance connection budget and isolation needed for this addition;
+do not reopen the historical HAPI privilege transition. Repeated provisioning must verify
+owned resources and reject conflicts rather than resetting databases or broadening grants.
+
+Rehearse on a consistent protected legacy Keycloak copy and isolated Keycloak targets.
+Any disposable rehearsal databases/roles must also use the existing PostgreSQL instance;
+no additional PostgreSQL container is introduced. Prepare exact names/grants/cleanup and
+obtain specific database-mutation authorization before creating them, even for rehearsal.
+Keep HAPI and unrelated databases untouched. Preserve the original Keycloak volume and
+its recovery configuration; never initialize the legacy realm from the demo fixture.
+The public realm/accounts remain separately provisioned synthetic resources.
+
+A hot file copy or masked Admin Console export is not sufficient preservation evidence.
+Retain a consistent source backup as well as any transfer export, with restricted access
+and no secret material in Git/reports/logs. Compare realm/user identities, credential
+behavior, client configuration/secrets, signing-key fingerprints and ePA/PAR policy before
+and after restore; verify real ePA and standard OAuth flows and provider restart/recovery.
+Do not rotate keys, reset passwords or recreate legacy users to conceal lost state.
+
+CLI exports omit some state, including persisted sessions and revoked-token records; they
+are not a complete backup. Determine the exact pinned-version impact and block cutover
+until preservation/re-authentication and revocation safety are explicitly reviewed. Any
+required live Keycloak pause for a consistent source or final cutover needs a separately
+approved maintenance window; it is not authorized by this planning confirmation.
+[Keycloak export limitations](https://www.keycloak.org/server/importExport)
+
+Rehearse targeted recovery using the saved Keycloak image/configuration and retained
+source volume, with administrative recovery access intact. Retain the new Keycloak target
+for investigation instead of resetting the shared volume. Account for post-cutover writes
+before switching back; do not silently restore stale identity state. Public SPA withdrawal
+and provider recovery are distinct decisions, both documented in the refreshed release
+packet. Verify the provider privately before enabling public authentication.
+
+**Open decisions, resolved by 5.3–5.5 before live approval:** consistent source availability
+and any backup pause; exact database/schema grants, connection budget and disposable-target
+names; session/revocation impact and maintenance/rollback conditions. If safe isolation or
+state preservation requires changing HAPI or expanding this scope, report the blocker for
+owner review. Do not silently adopt that extra work.
 
 ## Public-authentication activation gates
 
 These gates block unsafe activation, not unrelated SPA/proxy preparation:
 
-| Gate                         | Focused evidence / action                                                                                                                                                                                                                                                                                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Production-suitable Keycloak | The checked-in Compose still declares `start-dev` and `KC_DB=dev-file`. Verify actual suitability before public login. Keycloak documents dev-file as unsuitable for production. If still present, resolve this separately with owner-reviewed scope; do not publish it as production-ready or bundle PostgreSQL architecture/migration into this change. |
-| Correct public authority     | Real browser/BFF/HAPI discovery, callback and JWKS requests use the fixed HTTPS authority; issuer, signature, audience, expiry and permission checks pass. No TLS bypass, alternate issuer or unauthenticated fallback.                                                                                                                                   |
-| Safe public boundary         | New auth routes enforce trusted proxy/canonical host, secure cookies, CSRF, bounded requests, cache isolation and secret-safe logs. Keycloak administration, legacy ePA and HAPI remain outside public ingress/direct access.                                                                                                                             |
-| Compatibility and recovery   | Real ePA/PAR regressions and targeted fixture rollback pass. If public realm/hostname settings affect ePA, stop for a narrowly reviewed correction rather than changing legacy policy.                                                                                                                                                                    |
+| Gate                         | Focused evidence / action                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production-suitable Keycloak | The last verified deployment uses `start-dev`/`dev-file`. Authorized preparation tasks 5.3–5.5 address only the production-mode/Keycloak-storage exception above; their required operational approvals remain separate. Close preservation, maintenance and operational approvals before the live provider transition; verify the production provider privately before public activation. No HAPI migration or broad PostgreSQL restructuring is included. |
+| Correct public authority     | Real browser/BFF/HAPI discovery, callback and JWKS requests use the fixed HTTPS authority; issuer, signature, audience, expiry and permission checks pass. No TLS bypass, alternate issuer or unauthenticated fallback.                                                                                                                                                                                                                                    |
+| Safe public boundary         | New auth routes enforce trusted proxy/canonical host, secure cookies, CSRF, bounded requests, cache isolation and secret-safe logs. Keycloak administration, legacy ePA and HAPI remain outside public ingress/direct access.                                                                                                                                                                                                                              |
+| Compatibility and recovery   | Real ePA/PAR regressions and targeted fixture rollback pass. If public realm/hostname settings affect ePA, stop for a narrowly reviewed correction rather than changing legacy policy.                                                                                                                                                                                                                                                                     |
 
-Provider database choice and any required legacy transfer are explicitly outside this plan.
-The production-provider gate remains open until verified; exclusion is not a security waiver.
+The proposed provider database is now `keycloak` on the existing instance, with only the
+Keycloak state transfer described above. This narrow draft supersedes the earlier blanket
+provider-storage exclusion; it does not reinstate the removed HAPI/database programmes.
+The production-provider gate remains open until verified and explicitly authorized.
 [Keycloak database guidance](https://www.keycloak.org/server/db)
 
 ## Operational follow-ups and verification
