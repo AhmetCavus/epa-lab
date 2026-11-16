@@ -59,6 +59,9 @@ server {
   server_tokens off;
   root /usr/share/nginx/html;
   index index.html;
+  resolver 127.0.0.11 valid=5s ipv6=off;
+  resolver_timeout 5s;
+  set $playground_keycloak_origin http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
   set_real_ip_from ${PLAYGROUND_TRAEFIK_ADDRESS};
   real_ip_header CF-Connecting-IP;
   real_ip_recursive off;
@@ -113,22 +116,22 @@ server {
   location = /realms/playground-public/protocol/openid-connect/token {
     include /opt/playground-nginx/boundary.conf;
     limit_req zone=playground_tokens burst=5 nodelay;
-    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+    proxy_pass $playground_keycloak_origin;
   }
   location ~ ^/realms/playground-public/(protocol/openid-connect/auth|login-actions/(authenticate|required-action|restart))$ {
     include /opt/playground-nginx/boundary.conf;
     limit_req zone=playground_provider burst=5 nodelay;
-    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+    proxy_pass $playground_keycloak_origin;
   }
   location /realms/playground-public/ {
     include /opt/playground-nginx/boundary.conf;
     limit_req zone=playground_provider_reads burst=20 nodelay;
-    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+    proxy_pass $playground_keycloak_origin;
   }
   location /resources/ {
     include /opt/playground-nginx/boundary.conf;
     limit_req zone=playground_provider_assets burst=20 nodelay;
-    proxy_pass http://${PLAYGROUND_KEYCLOAK_UPSTREAM};
+    proxy_pass $playground_keycloak_origin;
   }
   location /realms { return 404; }
   location = /index.html { try_files $uri =404; }

@@ -2,94 +2,96 @@
 
 2026-11-16, `/srv/yappai/hosting/epa-lab`.
 
-The owner explicitly approved the reviewed [release packet](release-packet.md) for tasks
-6.1 and 6.2, including bounded Keycloak maintenance, public experimental beta activation
-and the documented targeted withdrawal/recovery on any acceptance failure. This supersedes
-the earlier preparation-only authorization. Identity/key/session/token discontinuity is
-already accepted. No database reset, H2 migration, volume deletion, HAPI data/configuration
-change or unrelated-service replacement is authorized. The change must not be archived.
+The public site at <https://auth-playground.yappai.de/missions> now runs the live OAuth/OIDC
+mission in place of the fixture deployment. The owner approved tasks 6.1/6.2 and explicitly
+instructed replacement of the existing public site. Yoster and root lifecycle commands use
+the same live configuration; there is one public playground container and hostname.
 
-The attempt ended **withdrawn/recovered, 14/16 complete**. Tasks 6.1/6.2 are approved but
-remain unchecked: fresh private acceptance did not complete and public activation was
-never attempted. The owner explicitly required withdrawal/recovery on an acceptance failure;
-the release was not resumed after recovery. The corrected verification input is ready for
-review, not evidence that either release task passed.
+Actual HTTPS technical acceptance passes. Task 6.1 is complete. Task 6.2's technical work
+is complete; its checkbox remains open only for the owner's acceptance record after trying
+the new installation. The change is not archived and makes no production-readiness claim.
 
-The beta uses owner-provisioned individual demo accounts and synthetic-only data. Supported
-production startup/storage and passing checks are not a production-readiness claim.
+## Running configuration
 
-## Verified preflight
+- `infrastructure/docker-compose.host.yml` includes the shared base, public bindings and
+  PostgreSQL-backed Keycloak. `yappai.host.json` supplies private `.env.live` (0600).
+- The SPA uses immutable image `sha256:1f7ca67c465492385666cd9ce3ab459b2f5faa065af251d4d90e1a6ef0a608c3`;
+  the BFF remains reviewed image `sha256:213618efa90f9f91dfbaa35c736f9de3aa299278a95e7da32eeb47c453a3c302`.
+  Live Compose build overrides are disabled, including Yoster rebuild requests.
+- Keycloak 26.8.2 runs production mode on the previously prepared `keycloak` database and
+  least-privilege `keycloak_app` role in the existing PostgreSQL instance. The original H2
+  volume is retained offline; no container attaches it.
+- Nginx reserves backend IP `172.24.0.6` and re-resolves the provider through Docker DNS
+  every five seconds, so provider recreation does not leave its old address cached.
+  Existing source/HTTPS trust restrictions remain enforced.
+- All five live services are healthy, their configuration hashes match the canonical host
+  model, and their Compose ownership labels match Yoster's manifest. Yoster can read the
+  protected environment file. A future Start selects the live configuration.
 
-- All six reviewed current/candidate/recovery image identities are present. Saved fixture
-  and original-provider image archives, configuration manifests and private binding hashes
-  verify. Ten protected configuration files match preparation.
-- Existing PostgreSQL is healthy and answers SQL. The prepared fresh schema has 101 tables
-  owned by `keycloak_app`, no excessive role privileges/memberships and no active candidate
-  connections. No PostgreSQL restart or DDL was performed during this release attempt.
-- Actual ingress peers match the packet: Traefik `172.18.0.20`, cloudflared `172.18.0.6`.
-  Current public HTTPS is reachable with normal TLS validation.
-- Original administrator recovery credentials were verified privately. The private,
-  public and application-withdrawal models render; the public peer placeholder was never
-  applied to a live service. State for all 49 existing containers was captured.
+The secured HAPI application payload is unchanged. The old reviewed multi-platform index
+and the subsequently rebuilt local index refer to the same `linux/amd64` platform manifest,
+`sha256:f15d09f928f2040e0c214b1aa719d4f60ec6b34c636afc90502849ce89ed3466`.
+That descriptor, config and root filesystem identities were verified and archived privately;
+the live deployment pins this platform manifest. No HAPI source rebuild was performed.
 
-## Handoff and stopped acceptance
+## Actual acceptance
 
-Maintenance began at `2026-11-16T15:24:36.232033+00:00`. The original provider logged its
-transaction-recovery shutdown and **"Keycloak stopped in 1.073s"**. It exited 143 after
-SIGTERM, with no OOM or runtime error. A helper initially expected exit 0; inspection of
-the actual shutdown evidence corrected that helper assumption without changing Keycloak.
+The new SPA/proxy first passed the isolated production-provider runtime suite. After a clean
+original-provider shutdown and fresh-provider handoff, private acceptance passed before
+public activation:
 
-The existing `keycloak` service then started the reviewed immutable 26.8.2 image in
-production mode on the prepared PostgreSQL database. Health passed; the sole mount was
-the read-only versioned JSON. The original H2 volume existed with **no attached container**.
-Only the necessary private BFF/HAPI containers were recreated for fresh credentials and
-cache reset; their existing images and HAPI datasource inputs were preserved.
+- 27 standard/ePA-PAR protocol checks and the existing six-test real ePA integration suite.
+- Real private browser `/login` → provider → `/callback` 303 → authenticated `/session`.
+- Actual HAPI responses 200 with permission, 403 without permission, 401 without a token
+  or when an ID Token is supplied.
+- Original administrator bearer and refresh rejected; original signing key IDs absent.
 
-Fresh private administrator authentication and reading `epa-demo` passed. The next
-verification step failed with **`Invalid public setting: PLAYGROUND_APP_ORIGIN`**. The
-private acceptance helper incorrectly passed the private app origin into the public-realm
-settings validator. This was an agent verification-input error, **not evidence of a
-Keycloak defect**. The helper now explicitly uses the fixed public origin for that validator,
-and its corrected settings construction passes locally. No application or provider policy
-was weakened. Fresh private protocol/browser acceptance, old-authentication checks and
-actual public acceptance were not completed; prior staged results do not substitute.
+The complete actual public HTTPS journey then passed in Firefox with normal TLS validation:
 
-## Reviewed recovery executed
+- Catalog **OAuth-Mission starten**, Code + S256 without PAR, first-login password change,
+  clean callback 303, workspace reload retaining the run, protected fictional read and safe
+  Inspector/events.
+- Secure/HttpOnly/Lax credential cookies, CSRF rejection, local logout, rejection of old
+  authentication and retention of owned history. No credentials or protocol tokens in
+  JavaScript storage or learning observations.
+- Independent HAPI denial checks, undeclared paths 404, wrong methods 405, direct Nginx and
+  spoofed Traefik requests 403, API no-store, login rate limiting 429 and recovery.
+- Four zero-violation accessibility scans: German/English at 1366/390px, reduced motion,
+  no viewport overflow and stable run identity when switching language.
 
-The release stopped at the private verification failure. Public SPA/BFF/provider routing
-was never activated. The saved project route was restored, the saved fixture image was
-recreated with the reviewed safe withdrawal configuration, and the fresh provider was
-cleanly stopped. The existing Keycloak service was returned to the saved original 26.8.0
-image/settings and original H2 volume. Only affected private BFF/HAPI containers were
-recreated with matching original credentials/trust inputs.
+An individual synthetic owner account is provisioned. Its initial credentials are in private
+`.env.live-demo` (0600, excluded from Git/build contexts); the provider requires a password
+change on first login. No shared public password or open registration was added.
 
-Recovery completed at `2026-11-16T15:27:47.350538+00:00`. The original H2 volume is now
-**reattached to the recovered original private provider**, as allowed by the approved
-recovery procedure; it is no longer offline. The fresh PostgreSQL database/schema/users/keys
-remain retained separately, without an active provider connection. Neither store was
-merged, imported, reset or deleted. No volume was deleted.
+## Preservation
 
-Actual recovery acceptance passes:
+All 60 HAPI table counts/content fingerprints match before and after acceptance. The HAPI
+datasource and original `.env` are unchanged. PostgreSQL retains its container identity,
+image, mounts, start time and configuration; it was not restarted during this replacement.
+All 45 untargeted containers are unchanged. No temporary verifier containers remain.
+No database was reset, no volume deleted, and no H2 transfer or HAPI privilege/data change
+was performed. Intentional deployment changes include the manifest, shared host composition,
+public bindings and this project's Traefik route; the previous ten-file preservation claim
+does not apply to those owner-authorized edits.
 
-- Original private administrator access and **27 private standard/ePA-PAR protocol checks**.
-- Real browser `/login` → Keycloak → `/callback` → authenticated `/session`, with tokens
-  held by the BFF; the existing **six-test real ePA integration suite** also passes.
-- Live HAPI synthetic read: **200** with permission, **403** without permission, **401**
-  without authentication. HAPI data/configuration/credentials/permissions are preserved.
-- Actual public HTTPS fixture/Catalog/conceptual ePA returns 200. Public OAuth login,
-  session, provider discovery and synthetic late callback return **404**, with no TLS bypass.
-- All 60 HAPI table counts/content fingerprints match before/after the attempt and after
-  recovery acceptance. PostgreSQL and unrelated services retain their original identities,
-  images, start times and mounts; ten protected configuration hashes still match.
+## Earlier failures and corrections
 
-Sanitized machine evidence is in [live-release-results.json](live-release-results.json).
-Private operator scripts, models, credentials and diagnostics remain in the 0700 directory
-`.local-backups/public-playground-oauth-deployment/20261116-live-release-4aqf2djv`;
-credential/diagnostic files are 0600 and excluded from Git. No real credentials or protocol
-tokens are included in the retained report.
+The first release attempt stopped before public activation because its helper supplied a
+private app origin to the public settings validator. Original private 26.8.0/H2 and fixtures
+were recovered and verified. A subsequent attempt reached public activation but public
+discovery returned 401 after provider recreation; original services/fixtures were recovered.
+The current Nginx build corrects stale provider DNS resolution.
 
-## Remaining concrete gate
+During final acceptance, a direct-IP probe expected 403 but received 404. Node's `fetch`
+ignored the supplied Host header, so the probe did not target the intended Traefik router.
+The reviewed application withdrawal was completed while retaining fresh PostgreSQL and
+original H2 offline. Historical withdrawal image IDs had become unavailable; the verified
+identical HAPI platform and the verified current private BFF supplied the recovery images.
+The helper now sends an explicit HTTP Host header. Both exact 403 probes and the complete
+public acceptance suite pass after reactivation; no access policy was weakened.
 
-Complete the fresh-provider private acceptance with the corrected helper before any public
-activation, then run the full actual public HTTPS acceptance. This attempt supplies no
-public beta acceptance. Tasks 6.1/6.2 remain unchecked; the change is not archived.
+Sanitized results: [live-release-results.json](live-release-results.json). Private scripts,
+models, backups and diagnostics remain in versioned 0700 operator directories under
+`.local-backups/public-playground-oauth-deployment`; files containing credentials are 0600.
+Prior failed evidence is retained separately. Owner acceptance remains the sole open part
+of task 6.2; do not archive or delete original H2 without a separate owner decision.

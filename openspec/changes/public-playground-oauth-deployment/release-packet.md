@@ -1,13 +1,14 @@
 # Public OAuth candidate — owner review packet
 
-**Owner approved this reviewed packet for 6.1/6.2 on 2026-11-16. The attempt was stopped
-and recovered before public activation.** The private verification helper passed the
-private app origin into the public-realm settings validator. The original private 26.8.0/H2
-provider and fixture-only public access are restored; the fresh PostgreSQL state is retained.
-Tasks 6.1/6.2 are approved but unchecked. See the [actual execution record](live-release-verification.md)
-and [sanitized results](live-release-results.json). The remaining packet is the reviewed
-pre-release snapshot: its earlier pending-approval statements describe preparation history,
-not the owner's subsequent grant or completed live acceptance.
+**Current deployment, 2026-11-16:** the owner-approved replacement is live at
+<https://auth-playground.yappai.de>. Private and actual public HTTPS technical acceptance
+pass; Yoster and root scripts use the permanent live host profile with private `.env.live`.
+Task 6.1 is complete; 6.2 awaits only the owner acceptance record. See
+[current execution evidence](live-release-verification.md) and
+[sanitized results](live-release-results.json) for current immutable image identities.
+The packet below is the dated preparation snapshot; its earlier approval gates and image
+index IDs are historical. Explicit overlay/recovery commands use the shared base file;
+ordinary live lifecycle uses `docker-compose.host.yml`.
 
 Preparation packet updated 2026-11-16. **Do not execute live rollout from this packet yet.**
 Tasks 6.1/6.2 remain unapproved. The production candidate has passed; live handoff and
@@ -226,7 +227,7 @@ is a distinct approved recovery operation, without data transfer or shared-volum
    ```sh
    docker compose --env-file .env --env-file /secure/public-runtime.env \
      --env-file /secure/keycloak-postgres.env \
-     -f infrastructure/docker-compose.host.yml -f infrastructure/docker-compose.public.yml \
+     -f infrastructure/docker-compose.base.yml -f infrastructure/docker-compose.public.yml \
      -f infrastructure/docker-compose.keycloak-postgres.yml \
      config --quiet
    ```
@@ -239,7 +240,7 @@ is a distinct approved recovery operation, without data transfer or shared-volum
 
    ```sh
    docker compose --env-file .env --env-file /secure/keycloak-postgres.env \
-     -f infrastructure/docker-compose.host.yml \
+     -f infrastructure/docker-compose.base.yml \
      -f infrastructure/docker-compose.keycloak-postgres.yml config --quiet
    # Only after specific handoff approval and a clean original-provider stop:
    # same model ... up -d --no-deps --no-build --pull never keycloak
@@ -285,7 +286,7 @@ is a distinct approved recovery operation, without data transfer or shared-volum
    ```sh
    docker compose --env-file .env --env-file /secure/previous-bindings.env \
      --env-file /secure/keycloak-postgres.env \
-     -f infrastructure/docker-compose.host.yml -f infrastructure/docker-compose.public-rollback.yml \
+     -f infrastructure/docker-compose.base.yml -f infrastructure/docker-compose.public-rollback.yml \
      -f infrastructure/docker-compose.keycloak-postgres.yml \
      config --quiet
    # Only after reviewed withdrawal approval, target playground/auth-client/res-server:
@@ -320,7 +321,7 @@ only if needed, then validate the original private provider model:
 ```sh
 docker compose --env-file .env \
   --env-file /secure/original-provider/original-provider.env \
-  -f infrastructure/docker-compose.host.yml \
+  -f infrastructure/docker-compose.base.yml \
   -f /secure/original-provider/original-image.json \
   config --quiet
 ```

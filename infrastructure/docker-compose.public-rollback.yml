@@ -1,4 +1,4 @@
-# Apply only with docker-compose.host.yml after withdrawal approval. The original
+# Apply only with docker-compose.base.yml after withdrawal approval. The original
 # fixture image is restored with a closed, safe-log config for late auth callbacks.
 services:
   auth-client:

@@ -1,10 +1,11 @@
 # Auth Protocol Playground — UI Slice 001
 
 An isolated React/TypeScript browser app for the Catalog and Mission Control Workspace.
-Default development, production builds and the public deployment remain fixture-only.
+Default local development and ordinary builds use fixtures. The public deployment uses
+the explicit `public-runtime` image target and executes the existing OAuth/OIDC mission.
 Tasks 8.1–8.6 add an explicitly configured private Vite execution binding to the existing
 `epa-auth-lab` BFF; it uses no separate authentication service. This package keeps its
-independent npm workflow; root `playground:*` scripts manage the existing static deployment.
+independent npm workflow; root `playground:*` scripts use the live hosted profile.
 
 From the repository root, with Node 24:
 
@@ -128,12 +129,17 @@ verifies the actual deployed port-5173 frontend, real Keycloak/HAPI journey, log
 and restart recovery. The owner-approved [deployment plan](../../openspec/changes/001-oidc-pkce/private-deployment-plan.md)
 remains the private scope. The [earlier deployment/rollback record](../../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
 and [firewall evaluation](../../openspec/changes/001-oidc-pkce/firewall-verification.md) preserve
-the prior failures and correction. The private frontend now remains running; the public
-deployment stays fixture-only. Privileged firewall inspection remains separately pending.
+the prior failures and correction. The public installation now uses its own approved
+HTTPS OAuth profile; private verification history does not establish current public acceptance.
 
 ## Hosted deployment
 
-The owner authorized static UI hosting on 2026-10-19 at <https://auth-playground.yappai.de>. From the repository root:
+The live site is <https://auth-playground.yappai.de/missions>. Select **OAuth-Mission starten**
+(or **Start OAuth mission** in English), then start login in the workspace. Individual demo
+accounts are provisioned by the owner and require a first-login password change. The ePA
+mission remains conceptual. See the [release evidence](../../openspec/changes/public-playground-oauth-deployment/live-release-verification.md).
+
+From the repository root:
 
 ```sh
 npm run playground:up
@@ -141,20 +147,25 @@ npm run playground:logs
 npm run playground:down
 ```
 
-The dedicated `infrastructure/docker-compose.playground.yml` stack builds this package with Node 24 and serves only its compiled assets with Nginx. It requires the existing external `dev-proxy` Docker network. It needs no `.env`, backend, Keycloak, database or published host port. The existing `infra:*` and `docker:*` commands manage the separate authorization stack.
+Yoster and these scripts use `infrastructure/docker-compose.host.yml` with private
+`.env.live`. Starting the playground reconciles the complete live stack; stopping it selects
+only the existing public UI/proxy container. There is one public hostname and deployment.
+See the root [Yoster setup](../../README.md#yoster-setup) for immutable images and storage.
+Yoster rebuild requests cannot replace the live public image with the default fixture build.
 
-Traefik's watched file `../infra/traefik/dynamic/epa-lab.yml` (relative to the repository root, outside this checkout) routes `auth-playground.yappai.de` on its existing `web` entry point to `http://epa-lab-playground:80`, following the other hosted projects. Keep that host configuration alongside this stack when moving hosts. This route uses Traefik's file provider. Nginx supports direct SPA routes and refreshes, returns 404 for missing assets, revalidates the app entry point and exposes `/health`. The image build context is limited to this package.
+The `public-runtime` Docker target builds Vite's `public-oauth` mode and serves the existing
+UI with restricted Nginx routes. The BFF holds tokens and credentials; the SPA talks to
+same-origin `/api/oauth` only. Nginx resolves Keycloak through Docker DNS, trusts the verified
+Traefik peer and uses a reserved backend IP for the BFF/provider trust configuration.
+Direct and spoofed ingress is rejected. Undeclared provider/admin/resource paths are closed.
 
-Public HTTPS follows the host's existing Cloudflare setup: add `auth-playground.yappai.de` as a published application route on the YappAI tunnel with HTTP service `http://shared-traefik:80`. Use the incoming hostname, or set the HTTP Host Header to `auth-playground.yappai.de` if an override is required. The hostname also needs the proxied DNS record for that tunnel; the Cloudflare dashboard can create it with the route. TLS terminates at Cloudflare, so this stack does not add a separate certificate resolver or an HTTPS redirect at the HTTP origin.
+The project-specific watched route is `../infra/traefik/dynamic/epa-lab.yml` (outside this
+checkout), rendered from `infrastructure/traefik/epa-lab-public.yml.template`. Existing
+Cloudflare tunnel HTTPS terminates before Traefik. Keep the verified Cloudflared/Traefik
+peer addresses in sync with the private environment; ordinary restarts retain them.
 
-Yoster discovers the root `yappai.host.json` manifest on its next project request. Since 2026-10-28, it manages the full lab through `infrastructure/docker-compose.host.yml`: this same playground container, Keycloak, the auth client, and the FHIR server with PostgreSQL. See the root [Yoster setup](../../README.md#yoster-setup) for environment and submodule preparation. The dedicated `playground:*` scripts still operate the UI alone. After source changes, use **Start → Build images before starting** in Yoster or rerun `npm run playground:up`.
-
-Verify host routing even before public DNS is configured:
-
-```sh
-curl --resolve auth-playground.yappai.de:80:127.0.0.1 http://auth-playground.yappai.de/health
-curl --resolve auth-playground.yappai.de:80:127.0.0.1 http://auth-playground.yappai.de/missions/oauth-oidc/workspace
-```
+The standalone `docker-compose.playground.yml` and default Docker target support static
+local development. The public Yoster manifest selects the live host profile.
 
 ## Language and translation resources
 
@@ -211,7 +222,7 @@ and focus stay in UI. `tests/architecture.spec.ts` checks dependency direction, 
 canonical models and framework-independent domain compilation. Only the existing two
 missions are registered. Task-8 implementation uses the accepted local/private approval;
 task 9.5 now verifies persistent private execution. Public authentication still requires
-separate authorization, and the public deployment remains fixture-only.
+the approved public deployment profile; see the current hosted deployment above.
 
 See [verification.md](verification.md) for scope, adaptations and verification evidence.
 

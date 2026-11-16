@@ -18,9 +18,12 @@ const appRequire = createRequire(new URL('../apps/playground/package.json', impo
 const { firefox } = appRequire('playwright');
 const { default: AxeBuilder } = appRequire('@axe-core/playwright');
 const root = fileURLToPath(new URL('../', import.meta.url));
-const spaImage = 'epa-lab/playground:public-candidate-20261114';
+const spaImage =
+  process.env.PUBLIC_RUNTIME_SPA_IMAGE ?? 'epa-lab/playground:public-candidate-20261114';
 const bffImage = 'epa-lab/auth-client:public-candidate-20261114';
-const hapiImage = 'sha256:ba8049c9074f35f931af8878dd6eda71b728c37bc143bfdaac81a172446a4927';
+const hapiImage =
+  process.env.PUBLIC_RUNTIME_HAPI_IMAGE ??
+  'sha256:ba8049c9074f35f931af8878dd6eda71b728c37bc143bfdaac81a172446a4927';
 
 function docker(...args) {
   try {

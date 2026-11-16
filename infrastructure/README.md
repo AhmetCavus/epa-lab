@@ -1,17 +1,20 @@
 # Private HAPI integration verification
 
-**Public-release preparation:** narrowed tasks 1.1–5.2 reuse the existing services/images
-and prepare the production SPA/proxy without touching live routing or data. See the
-[current design](../openspec/changes/public-playground-oauth-deployment/design.md) and
-[preparation evidence](../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
-Do not run the legacy integration Compose profile below for this change: it starts another
-PostgreSQL container. Use isolated verification with existing images; no database/privilege
-migration or public activation is authorized.
+**Current public deployment:** Yoster and `host:*` use the live profile in
+[`docker-compose.host.yml`](docker-compose.host.yml), including the shared
+[`docker-compose.base.yml`](docker-compose.base.yml), public bindings and production
+PostgreSQL-backed Keycloak. Private credentials/image pins are in `.env.live`.
+See the [host lifecycle](../README.md#yoster-setup) and
+[actual release evidence](../openspec/changes/public-playground-oauth-deployment/live-release-verification.md).
+
+The isolated integration profile below is a development tool that starts its own PostgreSQL.
+It is excluded from live public release verification, which reuses the existing PostgreSQL
+instance and disposable in-memory HAPI verification containers.
 
 Run these commands from the repository root. [`docker-compose.integration.yml`](docker-compose.integration.yml)
 extends the existing canonical HAPI and PostgreSQL definitions. Its separate
 `epa-lab-integration` project, container names and image tag preserve the running
-`epa-lab` services, Keycloak data and public fixture-only Playground.
+`epa-lab` services, Keycloak data and public Playground.
 
 For the component inventory and shared host-stack lifecycle, see the
 [root guide](../README.md#yoster-setup). The existing ePA/PAR and browser-demo commands are
@@ -32,14 +35,14 @@ and [`docker-compose.private.yml`](docker-compose.private.yml). The
 [historical deployment/rollback record](../openspec/changes/001-oidc-pkce/private-deployment-verification.md)
 and [firewall correction evaluation](../openspec/changes/001-oidc-pkce/firewall-verification.md)
 preserve prior failures and correction. Privileged firewall inspection remains pending;
-no public authentication or archive is authorized.
+the separately approved public release has its own acceptance record.
 The [earlier runbook](../openspec/changes/001-oidc-pkce/private-runtime-verification.md) preserves
 the original failed remote check and isolated runtime evidence.
 The isolated checks leave existing containers in place. The accepted private deployment
 recreated only auth-client/HAPI and added the private frontend, retaining reviewed patched
 images and trusted JWKS with guarded synthetic initialization. Keycloak/PostgreSQL/public
 containers and volumes are unchanged.
-The public Playground stays fixture-only.
+The public deployment now uses the explicit public OAuth profile.
 
 The profile requires the existing `.env` and `RES_SERVER_DB_PASSWORD`. For an
 independent test password, pass a second private `--env-file` containing that

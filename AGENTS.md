@@ -1,19 +1,21 @@
 # Agent Guidelines — Auth Protocol Playground
 
-**Owner live-release authorization (2026-11-16):** the owner explicitly approved the
-reviewed `public-playground-oauth-deployment` release packet for **6.1 and 6.2**, including
-the bounded Keycloak maintenance window and experimental public beta activation. Execute
-only the documented targeted handoff: verify images/configuration/backups, cleanly stop
-original Keycloak, retain its H2 volume offline, use prepared PostgreSQL-backed 26.8.2,
-verify fresh private ePA/PAR/OAuth first, then reviewed public bindings and actual HTTPS
-acceptance. On any acceptance failure, stop activation and execute the reviewed targeted
-withdrawal/recovery. Preserve HAPI data and unrelated services; never reset databases or
-delete volumes. Mark tasks complete only with actual evidence; do not archive. This explicit
-grant supersedes historical preparation-only/public-activation restrictions below for this
-reviewed packet alone. The first attempt stopped on an acceptance-helper configuration
-error and executed approved recovery: original private 26.8.0/H2 and public fixtures are
-restored, fresh PostgreSQL state is retained, and 6.1/6.2 remain unchecked. No public
-activation occurred. See [live release evidence](openspec/changes/public-playground-oauth-deployment/live-release-verification.md).
+**Current live public deployment (2026-11-16):** the owner approved
+`public-playground-oauth-deployment` tasks 6.1/6.2 and explicitly instructed replacing the
+old public fixture site in place. The live OAuth mission is deployed and actual private,
+public HTTPS, resource, proxy/security and accessibility acceptance pass. Yoster and root
+host/playground lifecycle commands use `infrastructure/docker-compose.host.yml` with private
+`.env.live`; live build overrides are disabled. There is one public playground container.
+See [current evidence](openspec/changes/public-playground-oauth-deployment/live-release-verification.md).
+Task 6.1 is checked; 6.2 retains only the owner acceptance record. Do not archive.
+
+Keycloak runs immutable production-mode 26.8.2 on the existing PostgreSQL `keycloak` database.
+Retain original H2 offline; never reset databases, delete volumes, change HAPI data/privileges
+or replace unrelated services. Preserve `.env.live` and privately delivered `.env.live-demo`
+(0600, ignored). Provider proxy DNS refresh and the reserved Nginx backend address are part
+of the verified deployment. Earlier preparation-only/public-fixture restrictions below
+are dated history and are superseded for this explicitly approved release. Earlier failed
+attempts and reviewed recoveries remain recorded in the linked evidence.
 
 **Owner preparation authorization (2026-11-16):** resume
 `public-playground-oauth-deployment` tasks **5.3–5.5** for fresh PostgreSQL-backed
@@ -42,7 +44,7 @@ Tasks 6.1/6.2 and public activation still need separate release approval.
 
 **Current authorization (2026-11-11):** the project owner approved OpenSpec change `001-oidc-pkce` for **local/private implementation of tasks 2–9**, accepted ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications, and completed readiness task 1.4. See the [consolidated owner approval record](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary). The approval-recording step must not start implementation; tasks 2–9 remain unstarted. Subsequent implementation must follow the accepted scope and dependencies.
 
-**Public deployment boundary:** do not deploy real authentication publicly. Keep the existing public Playground fixture-only. Local/private implementation approval does not authorize public auth-client, Keycloak, HAPI or API routing.
+**Public deployment boundary:** the approved public runtime exposes only the existing OAuth mission and restricted same-origin/provider routes. Administration, legacy ePA and direct FHIR routes remain private; other public features require their own authorization.
 
 The earlier **UI Slice 001** authorization covers the implemented fixture Catalog and mission-agnostic Workspace; its design and behavior remain the preservation baseline.
 

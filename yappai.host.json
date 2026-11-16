@@ -5,9 +5,9 @@
   "type": "app",
   "category": "hosted-app",
   "composeFile": "infrastructure/docker-compose.host.yml",
-  "composeEnvFile": ".env",
+  "composeEnvFile": ".env.live",
   "publicUrl": "https://auth-playground.yappai.de",
-  "description": "Authentication lab with Keycloak, an OAuth client, a FHIR resource server and a fixture-only playground.",
+  "description": "Live OAuth/OIDC playground with a server-side OAuth client, Keycloak and a protected synthetic FHIR resource.",
   "services": [
     {
       "name": "keycloak",

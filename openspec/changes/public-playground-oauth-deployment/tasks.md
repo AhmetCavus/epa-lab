@@ -1,13 +1,12 @@
 # Tasks
 
-**Live release approved, 2026-11-16; attempt stopped and recovered.** The owner approved
-reviewed tasks 6.1/6.2, bounded Keycloak maintenance, public beta activation and targeted
-failure recovery. The private acceptance helper rejected an incorrectly supplied private
-origin before protocol acceptance; the original private provider and public fixtures were
-recovered under the owner's stop-on-failure instruction. Public activation was never
-attempted. Tasks remain **14/16 complete**, with 6.1/6.2 approved but unchecked. See
-[live execution and preserved state](live-release-verification.md). The dated preparation-only approval
-statements below are history, superseded by this explicit release grant and execution record.
+**Live public replacement verified, 2026-11-16.** The owner approved 6.1/6.2 and
+requested replacing the fixture site in place. The fresh production provider, private
+acceptance, complete actual HTTPS browser/resource journey and security/accessibility
+checks pass. Yoster now uses the permanent live profile. Task 6.1 is checked; task 6.2
+retains only the owner acceptance record. **15/16 tasks complete.** See
+[live verification and preserved state](live-release-verification.md). Earlier dated
+preparation-only statements below are history superseded by the release grant.
 
 **APPROVED narrowed preparation, 2026-11-14 — no live deployment.** Preparation approval
 remains bounded to 1.1–5.2; public rollout tasks 6.1/6.2 still require separate approval.
@@ -29,7 +28,7 @@ Keycloak replacement/public activation remain excluded. See the
 [current preparation record](fresh-keycloak-preparation.md); 5.5 has closed the release
 packet and final checks, while 6.1/6.2 remain unapproved.
 
-All 16 task IDs are retained: **14/16 complete**. The original 11 completed
+All 16 task IDs are retained: **15/16 complete**. The original 11 completed
 descriptions below are preserved verbatim as dated history. Their earlier preservation,
 storage exclusions and successful tests do not assert continuity of old Keycloak identities
 or acceptance of this fresh installation. HAPI privilege/data work and legacy migration
@@ -79,10 +78,10 @@ or legacy-data migration rehearsal is required.
 
 ## 6. Release only after separate approval
 
-The owner explicitly approved these tasks on 2026-11-16. The attempt stopped during private
-acceptance and executed the reviewed recovery; both remain unchecked. Complete fresh private
-acceptance before public activation, then actual public HTTPS acceptance; preparation and
-a corrected helper input alone are not completion evidence.
+The owner explicitly approved these tasks on 2026-11-16. Handoff and all technical
+acceptance pass; the owner trial/acceptance record is the sole remaining part of 6.2.
+Original H2 remains retained offline. Earlier stopped attempts and targeted recovery are
+preserved in the release evidence.
 
-- [ ] 6.1 After separate approval of the exact tested packet, confirmed identity-reset consequences and bounded maintenance, point the existing `epa-lab-keycloak` service at the fresh PostgreSQL installation using production-mode 26.8.2. Retain the original H2 volume offline with its recovery image/settings; perform no H2 transfer or HAPI/shared-storage reset. Verify private fresh ePA/PAR/OAuth before reviewed application/binding changes and any explicitly approved public activation; restore fixture-only access or use approved private-provider recovery on failure.
+- [x] 6.1 After separate approval of the exact tested packet, confirmed identity-reset consequences and bounded maintenance, point the existing `epa-lab-keycloak` service at the fresh PostgreSQL installation using production-mode 26.8.2. Retain the original H2 volume offline with its recovery image/settings; perform no H2 transfer or HAPI/shared-storage reset. Verify private fresh ePA/PAR/OAuth before reviewed application/binding changes and any explicitly approved public activation; restore fixture-only access or use approved private-provider recovery on failure.
 - [ ] 6.2 Verify the full actual public HTTPS browser/resource journey, proxy/security negatives, fresh ePA/PAR and old-authentication rejection with reviewed token/cache handling. Confirm HAPI data/private-admin boundaries and safe observations; record owner acceptance of the new installation or restore fixture-only behavior. Retain original H2 for recovery until acceptance; do not delete it without a separate owner decision. Do not claim provider internals, production readiness or archive this change.

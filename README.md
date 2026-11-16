@@ -1,71 +1,75 @@
 # Auth Protocol Playground
 
-**Public-release preparation:** the owner renewed approval for the narrowed
-`public-playground-oauth-deployment` tasks 1.1–5.2: production OAuth build, same-origin proxy,
-HTTPS bindings, isolated verification and targeted rollback. Existing data/services and
-public fixtures remain; database/privilege migrations are excluded. See the current
-[preparation evidence](openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
-Tasks 6.1/6.2 and public activation remain unapproved.
+The public deployment at <https://auth-playground.yappai.de/missions> uses the existing
+OAuth/OIDC mission, server-side OAuth client, Keycloak and protected synthetic FHIR
+resource. Choose **OAuth-Mission starten** (English: **Start OAuth mission**) and then
+start the login flow. The ePA mission remains conceptual. This is an experimental beta
+with individual owner-provisioned demo accounts and synthetic data.
 
-> **Project state:** `001-oidc-pkce` is **50/50 complete for local/private operation**, with the verified persistent runtime at <http://192.168.178.131:5173/missions>. Real login, resource access, observations, logout/history and restart recovery pass; reviewed patched backends and the private frontend remain healthy. Default builds and the public [`apps/playground`](apps/playground/README.md) remain fixture-only. The change is not archived. Privileged firewall ordering/duplicate and backup-integrity inspection remains an administrative follow-up. See the [owner approval](openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary), [integrated acceptance](openspec/changes/001-oidc-pkce/integrated-acceptance-verification.md), [dependency remediation](openspec/changes/001-oidc-pkce/dependency-remediation-verification.md), [approved private deployment plan](openspec/changes/001-oidc-pkce/private-deployment-plan.md), [historical deployment/rollback](openspec/changes/001-oidc-pkce/private-deployment-verification.md), [firewall evaluation](openspec/changes/001-oidc-pkce/firewall-verification.md) and [persistent-runtime acceptance/runbook](openspec/changes/001-oidc-pkce/private-deployment-acceptance.md).
+The owner authorized replacing the fixture deployment in place on 2026-11-16. See the
+[current release evidence](openspec/changes/public-playground-oauth-deployment/live-release-verification.md)
+for actual acceptance and the retained recovery history. The change is not archived.
 
-Run the UI from this repository root with `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`, then open <http://127.0.0.1:5173/missions>. The `playground:*` root scripts manage the hosted UI; existing backend commands retain their behavior. See the [UI package guide](apps/playground/README.md) for build, deployment and browser checks.
+Default local Vite development and the ordinary static build still support fixture-based
+learning. Run `npm --prefix apps/playground ci` and `npm --prefix apps/playground run dev`,
+then open <http://127.0.0.1:5173/missions>. See the [UI package guide](apps/playground/README.md).
 
 **Explore protocols. Execute flows. Understand security.**
 
-A browser-only learning playground with a **Mission Catalog** and reusable **Mission Control Workspace**. Each mission explains a protocol through its actors, actions, safe observations, and contextual explanations. The first intended runnable mission is **OAuth 2.0 / OIDC Authorization Code + PKCE**; ePA/gematik and other families are future modules, not implemented capabilities.
+A browser learning playground with a Mission Catalog and reusable Mission Control Workspace.
+The SPA presents the learning experience; the NestJS BFF is the OAuth client and holds
+tokens server-side. Keycloak provides authorization and identity; HAPI independently
+authorizes the fixed fictional resource read.
 
 ## Yoster setup
 
-The root [`yappai.host.json`](yappai.host.json) registers the complete lab through [`infrastructure/docker-compose.host.yml`](infrastructure/docker-compose.host.yml). It reuses the local Keycloak/auth-client and standalone playground Compose definitions, with the optional backend profile cleared so Yoster's ordinary Start action starts every service.
+[`yappai.host.json`](yappai.host.json) manages the existing public site through
+[`infrastructure/docker-compose.host.yml`](infrastructure/docker-compose.host.yml) and
+private `.env.live`. The host profile includes the shared service definitions plus the
+public and PostgreSQL-backed Keycloak overlays. Yoster Start and the root lifecycle
+commands use the same live profile; there is one public playground container and hostname.
 
-| Service         | Container               | Purpose / default access                              |
-| --------------- | ----------------------- | ----------------------------------------------------- |
-| `keycloak`      | `epa-lab-keycloak`      | Authorization Server and IdP; `http://localhost:8080` |
-| `auth-client`   | `epa-lab-auth-client`   | Existing NestJS OAuth client; `http://localhost:3000` |
-| `res-server`    | `epa-lab-res-server`    | HAPI FHIR server; `http://localhost:8083/fhir`        |
-| `res-server-db` | `epa-lab-res-server-db` | Persistent PostgreSQL for FHIR; Docker network only   |
-| `playground`    | `epa-lab-playground`    | Fixture-only SPA; `https://auth-playground.yappai.de` |
+| Service         | Container               | Purpose / access                                                                                              |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `keycloak`      | `epa-lab-keycloak`      | Production-mode Keycloak 26.8.2; public realm through the restricted proxy, administration on the private LAN |
+| `auth-client`   | `epa-lab-auth-client`   | Server-side OAuth client; public `/api/oauth` through Nginx, private ePA endpoints retained                   |
+| `res-server`    | `epa-lab-res-server`    | Protected synthetic FHIR resource; accessed by the BFF                                                        |
+| `res-server-db` | `epa-lab-res-server-db` | Existing persistent PostgreSQL; separate `hapi` and `keycloak` databases, Docker network only                 |
+| `playground`    | `epa-lab-playground`    | Live SPA and restricted same-origin proxy at `https://auth-playground.yappai.de`                              |
 
-Prepare the resource-server submodule and environment from the repository root:
-
-```sh
-git submodule update --init --recursive services/res-server
-npm run env:init
-docker compose --env-file .env -f infrastructure/docker-compose.host.yml config --quiet
-```
-
-`env:init` generates missing or blank local credentials, including `RES_SERVER_DB_PASSWORD`, while retaining existing values. The manifest explicitly supplies `.env` to Compose. The host needs the existing external `dev-proxy` network; Compose must support the manifests' `!reset`/`!override` tags and `gw_priority` (verified with Compose 5.6.1). Keycloak's original `epa-auth-lab_keycloak-data` volume is retained, and FHIR uses a separate persistent PostgreSQL volume. Database credentials must match the credentials used when their volume was initialized.
-
-In Yoster, open **Auth Protocol Playground → Start → Build images before starting** for the first launch or after source changes. All five containers have Docker health checks; Yoster also checks the playground's internal HTTP endpoint. Build output for the resource server comes from its own Gradle-based submodule. The equivalent CLI commands are:
+The existing host environment is provisioned in `.env.live` (0600, excluded from Git and
+Docker build contexts). It contains immutable reviewed image identities, private credentials,
+the existing HAPI datasource password and verified proxy peer addresses. Preserve this file
+when updating the checkout. `.env` remains the local-development/recovery input; `env:init`
+does not provision a public installation or replace `.env.live`.
 
 ```sh
+docker compose --env-file .env.live -f infrastructure/docker-compose.host.yml config --quiet
 npm run host:up
 npm run host:logs
-npm run host:down
 ```
 
-`host:down` stops/removes the host stack while preserving named data volumes. The `playground:*` scripts select the static UI definition, `infra:*` selects the Keycloak definition, and `docker:*` enables Keycloak plus the auth client. They share the `epa-lab` Compose project and stable container names; these are deployment lifecycle commands, not isolated verification commands. Use the [private integration guide](infrastructure/README.md) to test HAPI while preserving running services. `infra:reset` remains a destructive Keycloak data reset and is not part of that workflow.
+Yoster **Start** uses the same configuration. Live service builds are disabled in Compose;
+source changes require explicitly building and verifying new images, then updating the
+private immutable image pins. A restart retains configuration; `host:up` reconciles it.
+The external `dev-proxy` network and existing PostgreSQL data volume must remain present.
+Compose must support `include`, `!reset`, `!override` and `gw_priority` (verified with 5.6.1).
+Nginx uses a reserved backend address and Docker DNS to follow Keycloak recreations.
 
-Backend listeners default to loopback. `AUTH_CLIENT_HOST`/`AUTH_CLIENT_PORT`, `KEYCLOAK_BIND_ADDRESS`/`KEYCLOAK_PORT`, and `RES_SERVER_BIND_ADDRESS`/`RES_SERVER_PORT` control Docker access. The namespaced auth-client inputs prevent Yoster's own `PORT` from overriding this service; Compose maps them to `HOST`/`PORT` inside the container. Direct Node development still uses `HOST`/`PORT`. The auth client retains Linux host networking so its configured issuer is reachable from both the backend and browser.
+`host:down` removes the host containers while retaining named volumes. `playground:up`
+starts the complete live stack; `playground:down` stops only its public UI/proxy container.
+`playground:logs` and `host:logs` show timestamps and the last 15 minutes by default.
+The legacy `infra:*` and `docker:*` commands select development configurations with the
+same service names; use the live host commands on this deployment. `infra:reset` deletes
+Keycloak development data and is not a public lifecycle operation.
 
-For this host's LAN access, set the following in `.env` alongside the existing credentials:
-
-```dotenv
-AUTH_CLIENT_HOST=192.168.178.131
-AUTH_CLIENT_PORT=3000
-KEYCLOAK_BIND_ADDRESS=192.168.178.131
-KEYCLOAK_PORT=5555
-KEYCLOAK_HOSTNAME=http://192.168.178.131:5555
-RES_SERVER_BIND_ADDRESS=192.168.178.131
-RES_SERVER_PORT=8083
-OIDC_ALLOW_PRIVATE_NETWORK_HTTP=true
-OIDC_ISSUER=http://192.168.178.131:5555/realms/epa-demo
-OIDC_DEFAULT_REDIRECT_URI=http://192.168.178.131:3000/callback
-OIDC_ALLOWED_REDIRECT_URIS=["http://192.168.178.131:3000/callback"]
-```
-
-For an intentional host-stack configuration update, `docker compose --env-file .env -f infrastructure/docker-compose.host.yml up -d --wait` applies binding/environment changes by recreating affected containers; a plain restart retains their old configuration. With the example above, Keycloak is at `http://192.168.178.131:5555/`, auth-client readiness at `http://192.168.178.131:3000/health/ready`, and HAPI readiness at `http://192.168.178.131:8083/actuator/health/readiness`. Keep `KEYCLOAK_HOSTNAME`, `OIDC_ISSUER` and redirect URLs consistent as described in [the architecture guide](docs/architecture.md#lokale-infrastruktur). Only the fixture playground uses the existing public Traefik route. Task 9.5's authorized resume replaced only the two backends and added the private frontend; actual persistent acceptance now passes. Use the targeted private lifecycle and rollback in its runbook to preserve Keycloak, PostgreSQL and public services.
+The existing LAN endpoints remain Keycloak `http://192.168.178.131:5555`, BFF readiness
+`http://192.168.178.131:3000/health/ready` and HAPI readiness
+`http://192.168.178.131:8083/actuator/health/readiness`. The public realm issuer and callback
+use HTTPS on `auth-playground.yappai.de`. Private ePA uses its separate `epa-demo` issuer
+and `http://192.168.178.131:3000/callback`. Keep these client/realm settings distinct.
+The original H2 volume is retained for offline recovery; do not delete or attach it to the
+PostgreSQL-backed provider. The existing PostgreSQL instance and HAPI data are preserved.
 
 ## Decisions already made in discussion
 
@@ -99,7 +103,7 @@ epa-lab/
 │   ├── auth-client/               # NestJS; @epa-auth-lab/authorization
 │   └── res-server/                # canonical HAPI FHIR Git submodule
 ├── apps/
-│   ├── playground/                # fixture-only React SPA; separate npm workflow
+│   ├── playground/                # React SPA; live public OAuth, separate npm workflow
 │   └── fdv-android/               # placeholder only
 ├── infrastructure/                # Keycloak and existing Compose definitions
 │   ├── README.md                  # isolated private integration lifecycle
@@ -159,13 +163,13 @@ docker compose --env-file .env -f infrastructure/docker-compose.yml --profile ba
 
 Use [`infrastructure/README.md`](infrastructure/README.md) for the verified build, startup, health probes and shutdown commands. The separate `epa-lab-integration` project reuses the canonical HAPI/PG assets, publishes HAPI only on `127.0.0.1:18083`, and uses an internal database network with a disposable tmpfs database. It does not start or replace the existing Keycloak, auth-client or Playground. The existing host-networked auth-client can reach the loopback address; internal-network and auth-client connectivity and two clean lifecycle cycles are recorded in the [task 2.5 evidence](openspec/changes/001-oidc-pkce/repository-verification.md#task-25-completion--authorized-health-prerequisite-private-publication-and-lifecycle-2026-11-12).
 
-Only exact GET/HEAD liveness/readiness probes are anonymous and return status only. The [HAPI security policy](services/res-server/SECURITY.md) now independently validates trusted Access Tokens and allows only `GET /fhir/Basic/playground-demo` with `demo.fhir.read`; all other data operations/interfaces are denied. New HAPI images require explicit `RES_SERVER_JWKS_URI` alongside the existing issuer; the integration profile seeds only its disposable fictional fixture through the internal DAO. The [BFF resource and observation contract](services/auth-client/README.md#protected-synthetic-resource) now connects that fixed read to the standard server-held session and owned safe events; see [verification evidence](openspec/changes/001-oidc-pkce/resource-observability-verification.md). Existing deployed containers have not been updated, and the public Playground stays fixture-only.
+Only exact GET/HEAD liveness/readiness probes are anonymous and return status only. The [HAPI security policy](services/res-server/SECURITY.md) now independently validates trusted Access Tokens and allows only `GET /fhir/Basic/playground-demo` with `demo.fhir.read`; all other data operations/interfaces are denied. New HAPI images require explicit `RES_SERVER_JWKS_URI` alongside the existing issuer; the integration profile seeds only its disposable fictional fixture through the internal DAO. The [BFF resource and observation contract](services/auth-client/README.md#protected-synthetic-resource) now connects that fixed read to the standard server-held session and owned safe events; see [verification evidence](openspec/changes/001-oidc-pkce/resource-observability-verification.md). The public deployment reuses this policy with the public realm issuer; resource-server source remains independently maintained.
 
 ### Private standard Keycloak client
 
-The existing `epa-demo` realm now also contains confidential client `playground-oidc`, with an exact `/api/oauth/callback`, required PKCE S256 and direct Authorization Code flow without PAR. Standard Access Tokens carry audience `playground-fhir`; the optional `demo.fhir.read` scope permits a separate valid narrower grant. The existing ePA client and required-PAR policy are preserved. See the [Keycloak guide](infrastructure/keycloak/README.md) for fresh setup, idempotent migration, rollback and isolated verification. Credentials remain server-side. The [auth-client profiles and backend browser lifecycle](services/auth-client/README.md) are verified in temporary private test processes. The standard profile stays disabled by default; the existing deployed containers and fixture UI have not been updated.
+The existing `epa-demo` realm now also contains confidential client `playground-oidc`, with an exact `/api/oauth/callback`, required PKCE S256 and direct Authorization Code flow without PAR. Standard Access Tokens carry audience `playground-fhir`; the optional `demo.fhir.read` scope permits a separate valid narrower grant. The existing ePA client and required-PAR policy are preserved. See the [Keycloak guide](infrastructure/keycloak/README.md) for fresh setup, idempotent migration, rollback and isolated verification. Credentials remain server-side. The [auth-client profiles and backend browser lifecycle](services/auth-client/README.md) are verified in temporary private test processes. The standard profile is enabled by the public deployment overlay with its separate public realm; it remains opt-in in development.
 
-The SPA has an [explicit private Vite binding](apps/playground/README.md#explicit-private-execution) for session restoration, authentication navigation, the synthetic read, local logout and safe owned observations. Default builds and the public deployment remain fixture-only. The owner-approved [deployment plan](openspec/changes/001-oidc-pkce/private-deployment-plan.md) has passed actual persistent acceptance and fresh recursive checkout; the private entry remains running after verification.
+The SPA has an [explicit private Vite binding](apps/playground/README.md#explicit-private-execution) for session restoration, authentication navigation, the synthetic read, local logout and safe owned observations. Default local builds use fixtures; the live public deployment uses the explicit public OAuth build. The owner-approved [deployment plan](openspec/changes/001-oidc-pkce/private-deployment-plan.md) has passed actual persistent acceptance and fresh recursive checkout; the private entry remains running after verification.
 
 ## Status and authority
 
@@ -180,8 +184,8 @@ The SPA has an [explicit private Vite binding](apps/playground/README.md#explici
 
 ## Integration note
 
-The design handoff originated as a standalone starter. Repository inspection confirmed it now coexists with existing `epa-auth-lab` code. Slice 001 is an isolated UI package in `apps/playground`; existing backend services, configuration and infrastructure are preserved. The owner authorized static UI hosting at `auth-playground.yappai.de` and Yoster registration on 2026-10-19. Local/private backend integration is authorized by the 2026-11-11 `001-oidc-pkce` approval. Public hosting of real authentication remains excluded and requires separate authorization.
+The design handoff originated as a standalone starter. Repository inspection confirmed it now coexists with existing `epa-auth-lab` code. Slice 001 is an isolated UI package in `apps/playground`; existing backend services, configuration and infrastructure are preserved. The owner authorized static UI hosting at `auth-playground.yappai.de` and Yoster registration on 2026-10-19. Local/private backend integration is authorized by the 2026-11-11 `001-oidc-pkce` approval. The separately approved 2026-11-16 public release now replaces the hosted fixture deployment; see the current release evidence above.
 
 ## UI Slice 001
 
-The catalog and mission-agnostic workspace are implemented in [`apps/playground`](apps/playground/README.md). Review both previews and the [verification record](apps/playground/verification.md) against the [visual references](docs/design/visual-references.md). Local/private implementation and persistent-runtime acceptance pass through task 9.5. Existing catalog/integration-test labels and public fixture-only behavior are preserved; only the explicit private binding executes authentication.
+The catalog and mission-agnostic workspace are implemented in [`apps/playground`](apps/playground/README.md). Review both previews and the [verification record](apps/playground/verification.md) against the [visual references](docs/design/visual-references.md). Local/private implementation and persistent-runtime acceptance pass through task 9.5. The public OAuth build executes the existing mission through the same BFF; local fixture builds remain available.
