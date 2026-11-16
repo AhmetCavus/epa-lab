@@ -111,6 +111,7 @@ const events: readonly FixtureEvent[] = [
 ];
 export const oauthMission: Mission = {
   id: 'oauth-oidc',
+  execution: 'oauth-standard',
   availability: 'fixture',
   illustration: 'identity',
   channels: [

@@ -1,7 +1,8 @@
 import { BrowserLoginStore, loginLifetimeMs } from './browser-login.store';
 import type { PendingLogin } from './browser-login.store';
 import type { VerifiedLogin } from '../../oidc/token.service';
-import { createAuthorizationTransaction } from '../../oidc/authorization-transaction';
+import { createBoundAuthorizationTransaction } from '../../oidc/authorization-transaction';
+import { clientProfile } from '../../config/client-profile';
 import { AuthorizationError } from '../../common/errors/authorization-error';
 import { testMetadata, testConfiguration } from '../../../test/fixtures';
 
@@ -11,10 +12,9 @@ describe('bounded browser login storage', () => {
   it('bounds pending transactions and recovers capacity after they expire', () => {
     const store = new BrowserLoginStore();
     const login: Omit<PendingLogin, 'expiresAt'> = {
-      transaction: createAuthorizationTransaction(),
+      transaction: createBoundAuthorizationTransaction(clientProfile(testConfiguration, 'epa-par')),
       browserBinding: 'fictional-browser-binding',
       metadata: testMetadata,
-      redirectUri: testConfiguration.defaultRedirectUri,
     };
 
     for (let index = 0; index < 1000; index += 1) {

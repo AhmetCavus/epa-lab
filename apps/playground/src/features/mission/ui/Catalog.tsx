@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Mission } from '../domain/mission';
-import { missions } from '../application/mission-catalog';
+import { missions, workspacePaths } from '../application/mission-catalog';
 
 const catalogArtwork = {
   hero: '/assets/mission-catalog-hero.jpg',
@@ -13,8 +13,15 @@ const catalogArtwork = {
   },
 } as const;
 
-export function Catalog() {
+export function Catalog({
+  runtimeEnabled = false,
+  publicRuntime = false,
+}: {
+  runtimeEnabled?: boolean;
+  publicRuntime?: boolean;
+}) {
   const { t } = useTranslation('mission');
+  const context = publicRuntime ? 'public' : undefined;
   useEffect(() => {
     document.title = t('common:titles.catalog');
   }, [t]);
@@ -31,7 +38,9 @@ export function Catalog() {
             <br />
             <span>{t('mission:catalog.headingAccent')}</span>
           </h1>
-          <p className="intro-copy">{t('mission:catalog.intro')}</p>
+          <p className="intro-copy">
+            {t(runtimeEnabled ? 'runtime.catalogIntro' : 'catalog.intro', { context })}
+          </p>
         </div>
         <div className="catalog-hero" aria-hidden="true">
           <picture>
@@ -59,7 +68,13 @@ export function Catalog() {
       </div>
       <div className="mission-grid">
         {missions.map((mission, index) => (
-          <MissionCard key={mission.id} mission={mission} index={index} />
+          <MissionCard
+            key={mission.id}
+            mission={mission}
+            index={index}
+            runtimeEnabled={runtimeEnabled}
+            publicRuntime={publicRuntime}
+          />
         ))}
       </div>
       <aside className="preview-notice">
@@ -67,8 +82,10 @@ export function Catalog() {
           i
         </span>
         <div>
-          <strong>{t('mission:catalog.noticeTitle')}</strong>
-          <p>{t('mission:catalog.notice')}</p>
+          <strong>
+            {t(runtimeEnabled ? 'runtime.catalogNoticeTitle' : 'catalog.noticeTitle', { context })}
+          </strong>
+          <p>{t(runtimeEnabled ? 'runtime.catalogNotice' : 'catalog.notice', { context })}</p>
         </div>
       </aside>
       <section className="learning-principles" aria-label={t('mission:catalog.principles.label')}>
@@ -92,8 +109,19 @@ export function Catalog() {
   );
 }
 
-function MissionCard({ mission, index }: { mission: Mission; index: number }) {
+function MissionCard({
+  mission,
+  index,
+  runtimeEnabled,
+  publicRuntime,
+}: {
+  mission: Mission;
+  index: number;
+  runtimeEnabled: boolean;
+  publicRuntime: boolean;
+}) {
   const { t } = useTranslation('mission');
+  const paths = workspacePaths(mission, runtimeEnabled);
   return (
     <article className={`mission-card ${mission.illustration}`}>
       <div className="mission-art" aria-hidden="true">
@@ -126,11 +154,16 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
         </ul>
         <Link
           className={`button ${mission.preview.kind === 'fixture' ? 'primary' : 'secondary'}`}
-          to={`/missions/${mission.id}/workspace`}
+          to={paths.preview}
         >
           {t(mission.previewLabelKey)}
           <span aria-hidden="true">↗</span>
         </Link>
+        {paths.execution && (
+          <Link className="button secondary" to={paths.execution}>
+            {t('runtime.catalogAction', { context: publicRuntime ? 'public' : undefined })}
+          </Link>
+        )}
       </div>
     </article>
   );

@@ -10,7 +10,9 @@ export function configureRequestLogging(app: INestApplication): void {
   app.use((request: Request, response: Response, next: NextFunction) => {
     const suppliedRequestId = request.headers['x-request-id'];
     const requestId =
-      typeof suppliedRequestId === 'string' && requestIdPattern.test(suppliedRequestId)
+      !request.path.toLowerCase().startsWith('/api/oauth/') &&
+      typeof suppliedRequestId === 'string' &&
+      requestIdPattern.test(suppliedRequestId)
         ? suppliedRequestId
         : randomUUID();
     const startedAt = performance.now();

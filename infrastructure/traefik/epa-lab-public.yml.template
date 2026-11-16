@@ -1,0 +1,24 @@
+# Candidate replacement for this project's route only. Never copy during preparation.
+http:
+  routers:
+    epa-lab-playground:
+      rule: 'Host(`auth-playground.yappai.de`)'
+      entryPoints: [web]
+      middlewares: [epa-lab-tunnel-only, epa-lab-public-authority]
+      service: epa-lab-playground
+  middlewares:
+    epa-lab-tunnel-only:
+      ipAllowList:
+        sourceRange: ['${PUBLIC_CLOUDFLARED_ADDRESS}/32']
+    epa-lab-public-authority:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Host: auth-playground.yappai.de
+          X-Forwarded-Proto: https
+          X-Forwarded-Port: '443'
+          Forwarded: ''
+  services:
+    epa-lab-playground:
+      loadBalancer:
+        servers:
+          - url: http://epa-lab-playground:80

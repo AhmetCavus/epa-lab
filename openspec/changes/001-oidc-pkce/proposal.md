@@ -2,6 +2,9 @@
 
 **Status:** APPROVED — LOCAL/PRIVATE IMPLEMENTATION AUTHORIZED
 
+**Task 9.4 scope extension:** APPROVED — LOCAL/PRIVATE TASK 9.4 ONLY. See the
+[dated remediation proposal](#task-94-security-remediation); the existing approval remains intact.
+
 **Planning revision:** 2026-11-11
 
 The project owner approved this complete change on 2026-11-11 and authorized tasks 2–9 for local/private implementation. ADR-0001/ADR-0002, the reconciled UX/visual baseline, security architecture and revised specifications are accepted. See the [owner approval record](readiness-review.md#consolidated-owner-approval-summary). This step records approval only; implementation has not started. Real authentication must not be deployed publicly, and the existing public Playground remains fixture-only.
@@ -41,3 +44,49 @@ Future implementation affects the existing SPA, auth-client, Keycloak client con
 The owner accepted the reconciled design, scenarios, route/session/event contracts, Resource Server policy and ADR-0001/ADR-0002 on 2026-11-11. The change is APPROVED for local/private tasks 2–9; authorization does not constitute implementation or runtime verification. Preserve Accepted ADR-0003 and ADR-0004. Public OAuth/backend deployment requires separate authorization; the existing static UI hosting authorization does not cover it.
 
 Real ePA/TI integration, SMART on FHIR, patient data, certification claims, provider-wide SSO logout, refresh-token workflows, durable run storage, distributed sessions, and a standard-versus-PAR comparison UI remain outside this first integration.
+
+## Task 9.4 security remediation
+
+**Proposed:** 2026-11-13. **Owner decision:** Approved on 2026-11-13 by the project owner
+through explicit consolidated approval and `$openspec-apply-change 001-oidc-pkce`.
+This approval is recorded before dependency implementation; it is not verification evidence.
+
+The [integrated acceptance record](integrated-acceptance-verification.md#security-dependency-result-and-acceptance-blocker)
+records the completed Zod patch and three additional transitive production dependency
+findings blocking task 9.4. The owner authorizes resolving only these production dependencies:
+
+| Dependency    | Baseline installed version | Required patched floor | Advisory                                                                 |
+| ------------- | -------------------------- | ---------------------- | ------------------------------------------------------------------------ |
+| `body-parser` | 2.3.0                      | `>=2.4.0`              | [GHSA-27r3-jxmh-p828](https://github.com/advisories/GHSA-27r3-jxmh-p828) |
+| `multer`      | 2.4.0                      | `>=2.5.0`              | [GHSA-q7qp-rjg7-q26m](https://github.com/advisories/GHSA-q7qp-rjg7-q26m) |
+| `qs`          | 6.16.0                     | `>=6.16.1`             | [GHSA-6pq8-jhm2-2vcw](https://github.com/advisories/GHSA-6pq8-jhm2-2vcw) |
+
+The extension covers the smallest compatible patched resolutions, necessary package-manager
+constraints and lockfile changes, and regression verification under the existing task 9.4.
+Prefer the current package major versions and preserve NestJS and unrelated dependency pins.
+A NestJS or other parent/dependency change is permitted only if a compatible patched
+resolution of these three targets demonstrably requires it; document the exact minimal
+change and why the existing parents or a targeted compatible resolution cannot suffice.
+An incompatible framework migration or broader dependency refresh is outside this extension
+and must be reported as a blocker.
+
+Follow the [dependency resolution plan](design.md#task-94-dependency-remediation-plan).
+Verify the actual nested production graph and frozen installation, rerun the original
+quality/security/regression checks, and record versions, commands, results and remaining
+findings without audit suppression or security exceptions. Other development-tool findings
+and the HAPI remote-checkout limitation remain recorded independently; this extension
+neither fixes nor waives them.
+
+All existing task IDs, acceptance criteria, completed checkboxes and verification history
+remain intact. Approval was recorded at **48/50**, with task 9.4 unchecked pending its full
+existing acceptance. The [dated remediation evidence](dependency-remediation-verification.md)
+now records its completion and **49/50** progress. Task 9.5, availability promotion, public routing/deployment, changes to
+Keycloak/HAPI security policies, and changes to existing containers/volumes are excluded.
+The public Playground remains fixture-only.
+
+The consolidated owner decision covers this proposal, its design plan and the task 9.4
+scope note together. It authorizes updating the three vulnerable transitive dependencies,
+minimal technically required and documented supporting changes, and the specified security
+and regression checks while preserving existing application behavior. The accompanying
+apply request authorizes implementation after this approval record. Task 9.5 and changes
+to public deployment or routing remain excluded; completion still requires actual evidence.

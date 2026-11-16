@@ -1,21 +1,22 @@
 /** @jsxImportSource react */
 import { useTranslation } from 'react-i18next';
 import type { RefObject } from 'react';
-import type { ActorGroup, FixtureEvent, InteractionChannel } from '../domain/protocol-flow';
+import type { ActorGroup, FlowEvent, InteractionChannel } from '../domain/protocol-flow';
 import { InteractionPaths } from './InteractionPaths';
 import { createCanvasLayout } from './interaction-layout';
 
 interface ActorCanvasProps {
   groups: readonly ActorGroup[];
   channels: readonly InteractionChannel[];
-  events: readonly FixtureEvent[];
-  event: FixtureEvent | undefined;
+  events: readonly FlowEvent[];
+  event: FlowEvent | undefined;
   highlightedActorIds: readonly string[];
   selectedActorId: string | null;
   scale: number;
   viewportRef: RefObject<HTMLDivElement | null>;
   onSelectActor: (id: string) => void;
   onSelectEvent: (id: string) => void;
+  presentation?: 'observed' | 'fixture';
 }
 
 export function ActorCanvas({
@@ -29,6 +30,7 @@ export function ActorCanvas({
   viewportRef,
   onSelectActor,
   onSelectEvent,
+  presentation = 'fixture',
 }: ActorCanvasProps) {
   const { t } = useTranslation('protocol-flow');
   const layout = createCanvasLayout(groups);
@@ -91,6 +93,7 @@ export function ActorCanvas({
             events={events}
             selectedEventId={event?.id ?? null}
             onSelectEvent={onSelectEvent}
+            presentation={presentation}
           />
         </div>
       </div>
@@ -105,7 +108,9 @@ export function ActorCanvas({
         ) : (
           <span>{t('protocol-flow:canvas.noPaths')}</span>
         )}
-        <span className="legend-note">{t('protocol-flow:canvas.fixtureNote')}</span>
+        <span className="legend-note">
+          {t(presentation === 'observed' ? 'canvas.observedNote' : 'canvas.fixtureNote')}
+        </span>
       </div>
       <details className="text-alternative">
         <summary>{t('protocol-flow:canvas.textAlternative')}</summary>
@@ -129,7 +134,11 @@ export function ActorCanvas({
         </ul>
         {events.length > 0 && (
           <>
-            <h3>{t('protocol-flow:canvas.interactions')}</h3>
+            <h3>
+              {t(
+                presentation === 'observed' ? 'canvas.observedInteractions' : 'canvas.interactions',
+              )}
+            </h3>
             <ol>
               {events.map((interaction) => {
                 const sourceId =
@@ -141,21 +150,36 @@ export function ActorCanvas({
                     : undefined;
                 return (
                   <li key={interaction.id}>
-                    {t('canvas.interactionDescription', {
-                      title: t(interaction.titleKey),
-                      direction: t(
-                        interaction.kind === 'message'
-                          ? 'diagram.messageDirection'
-                          : 'diagram.internalExplanation',
-                        {
-                          source: source ? t(source.actor.labelKey) : '',
-                          target: target ? t(target.actor.labelKey) : '',
-                        },
-                      ),
-                      channel: t(interaction.channel.labelKey),
-                      visibility: t(`visibility.${interaction.visibility}`),
-                      summary: t(interaction.summaryKey),
-                    })}
+                    {t(
+                      interaction.visibility === 'observed'
+                        ? 'canvas.observedDescription'
+                        : 'canvas.interactionDescription',
+                      {
+                        title: t(interaction.titleKey),
+                        direction: t(
+                          interaction.kind === 'message'
+                            ? 'diagram.messageDirection'
+                            : 'diagram.internalExplanation',
+                          {
+                            source: source ? t(source.actor.labelKey) : '',
+                            target: target ? t(target.actor.labelKey) : '',
+                          },
+                        ),
+                        channel: t(interaction.channel.labelKey),
+                        visibility: t(`visibility.${interaction.visibility}`),
+                        summary: t(interaction.summaryKey),
+                      },
+                    )}
+                    {interaction.visibility === 'observed' && (
+                      <span>
+                        {' '}
+                        {interaction.observation.observedBy} ·{' '}
+                        <time dateTime={interaction.observation.observedAt}>
+                          {interaction.observation.observedAt}
+                        </time>{' '}
+                        · {t(interaction.observation.outcomeKey)}
+                      </span>
+                    )}
                   </li>
                 );
               })}

@@ -2,8 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { z } from 'zod';
 import { configuration } from '../config/configuration';
-import type { AuthorizationTransaction } from './authorization-transaction';
-import type { OidcMetadata } from './oidc-discovery.service';
+import type { BoundAuthorizationTransaction } from './authorization-transaction';
+import { transactionProfile } from './authorization-transaction';
+import type { ClientProfileId } from '../config/client-profile';
+import { validateProfileMetadata } from './oidc-discovery.service';
+import type { ProfileOidcMetadata } from './oidc-discovery.service';
 import {
   createClientAuthorization,
   OidcClientService,
@@ -26,6 +29,9 @@ export interface VerifiedLogin {
   expiresAt: number;
 }
 
+export type TokenExchangeObservation =
+  'response-received' | 'validation-started' | 'validation-succeeded';
+
 @Injectable()
 export class TokenService {
   constructor(
@@ -35,27 +41,35 @@ export class TokenService {
   ) {}
 
   async exchange(
-    metadata: OidcMetadata,
-    transaction: AuthorizationTransaction,
+    metadata: ProfileOidcMetadata,
+    transaction: BoundAuthorizationTransaction,
     code: string,
-    redirectUri: string,
+    expectedProfile: ClientProfileId,
+    observe?: (observation: TokenExchangeObservation) => void,
   ): Promise<VerifiedLogin> {
-    const parsed = tokensSchema.safeParse(
-      await this.client.requestJson(metadata.token_endpoint, 200, {
-        method: 'POST',
-        headers: {
-          authorization: createClientAuthorization(this.config.clientId, this.config.clientSecret),
-          'content-type': 'application/x-www-form-urlencoded',
-          accept: 'application/json',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: redirectUri,
-          code_verifier: transaction.codeVerifier,
-        }).toString(),
-      }),
+    const profile = transactionProfile(this.config, transaction, expectedProfile);
+    const trustedMetadata = validateProfileMetadata(
+      metadata,
+      profile,
+      this.config.allowPrivateNetworkHttp,
     );
+    const response = await this.client.requestJson(trustedMetadata.token_endpoint, 200, {
+      method: 'POST',
+      headers: {
+        authorization: createClientAuthorization(profile.clientId, profile.clientSecret),
+        'content-type': 'application/x-www-form-urlencoded',
+        accept: 'application/json',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: transaction.profile.redirectUri,
+        code_verifier: transaction.codeVerifier,
+      }).toString(),
+    });
+    observe?.('response-received');
+    observe?.('validation-started');
+    const parsed = tokensSchema.safeParse(response);
 
     if (!parsed.success) {
       throw new OidcUpstreamError('invalid_token_response');
@@ -63,11 +77,13 @@ export class TokenService {
 
     const tokens = parsed.data;
     const idToken = await this.idTokens.validate(
-      metadata,
+      trustedMetadata,
       tokens.id_token,
-      transaction.nonce,
+      transaction,
       tokens.access_token,
+      expectedProfile,
     );
+    observe?.('validation-succeeded');
 
     return {
       tokens,

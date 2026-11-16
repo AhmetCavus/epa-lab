@@ -12,7 +12,8 @@ import { HealthModule } from './health/health.module';
       isGlobal: true,
       envFilePath: resolve(__dirname, '../../../.env'),
       validate: (environment: Record<string, unknown>) => {
-        const validated = validateEnvironment(environment);
+        const { standardProfile, ...validated } = validateEnvironment(environment);
+        void standardProfile;
 
         // ConfigModule exports only scalar values to process.env for registerAs factories.
         return {

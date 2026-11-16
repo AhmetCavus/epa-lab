@@ -2,11 +2,13 @@
   "channels": {
     "front": "Frontkanal",
     "back": "Rückkanal",
-    "internal": "Provider-intern"
+    "internal": "Provider-intern",
+    "local": "Akteurlokale Beobachtung"
   },
   "visibility": {
     "explained": "Erklärt",
-    "not-observable": "Nicht beobachtbar"
+    "not-observable": "Nicht beobachtbar",
+    "observed": "Beobachtet"
   },
   "canvas": {
     "scrollLabel": "Scrollbare Akteursübersicht",
@@ -17,7 +19,10 @@
     "textAlternative": "Textalternative zur Akteursübersicht",
     "interactions": "Beispielinteraktionen",
     "actorDescription": "{{actor}} — {{role}}. {{description}}",
-    "interactionDescription": "{{title}}: {{direction}}. {{channel}} · Beispiel / {{visibility}}. {{summary}}"
+    "interactionDescription": "{{title}}: {{direction}}. {{channel}} · Beispiel / {{visibility}}. {{summary}}",
+    "observedNote": "Tatsächliche Beobachtungen an Systemgrenzen · Anbieterinternes bleibt nicht beobachtbar",
+    "observedInteractions": "Beobachtete Interaktionen",
+    "observedDescription": "{{title}}: {{direction}}. {{channel}} · {{visibility}}. {{summary}}"
   },
   "diagram": {
     "empty": "Keine Kommunikationsbeispiele geladen.",
@@ -28,7 +33,9 @@
     "inspect": "{{title}} untersuchen. {{direction}}. {{channel}}. Beispiel — {{visibility}}.",
     "selected": "Ausgewählt",
     "example": "Beispiel",
-    "channelVisibility": "{{channel}} · {{visibility}}"
+    "channelVisibility": "{{channel}} · {{visibility}}",
+    "inspectObserved": "{{title}} untersuchen. {{direction}}. {{channel}}. {{visibility}}.",
+    "observedEmpty": "Noch keine beobachteten Nachrichten oder lokalen Prüfungen abgerufen."
   },
   "inspector": {
     "heading": "Inspektor",
@@ -52,7 +59,19 @@
     "chooseExplanation": "Wähle einen Lernschritt, Akteur oder ein Beispiel, um die Erklärung zu lesen.",
     "actorsChannel": "Akteure und Kanal",
     "chooseSample": "Wähle ein Beispiel, um Quelle, Ziel und Kanal zu untersuchen.",
-    "actorRole": "{{actor}} · {{role}}"
+    "actorRole": "{{actor}} · {{role}}",
+    "selectedObserved": "AUSGEWÄHLTE BEOBACHTUNG",
+    "observedSource": "Tatsächliche Beobachtung an der Systemgrenze",
+    "observedDetails": "FREIGEGEBENE BEOBACHTETE BELEGE",
+    "outcome": "Ergebnis",
+    "sequence": "Reihenfolge im Durchlauf",
+    "reportHeading": "Gemeldete Entscheidung",
+    "reportSource": "Gemeldet von",
+    "reportNote": "Explizite Meldung beim Beobachter empfangen; interne Prüfungen oder ein eigener Serverzeitpunkt werden nicht abgeleitet.",
+    "reportUnavailable": "Entscheidungsmeldung nicht verfügbar. Die HTTP-Antwort allein belegt keine interne Ursache.",
+    "contextOnly": "Kein beobachtetes Ereignis ausgewählt. Dieser Bereich enthält konzeptionelle Lerninhalte.",
+    "chooseObservedExplanation": "Wähle einen Lernschritt, Akteur oder ein beobachtetes Ereignis für die Erklärung.",
+    "chooseObservation": "Wähle ein beobachtetes Ereignis, um Quelle, Ziel und Kanal zu untersuchen."
   },
   "timeline": {
     "heading": "Ereigniszeitleiste",
@@ -61,6 +80,11 @@
     "empty": "Keine beobachteten Ereignisse",
     "emptyHelp": "Es wurde nichts ausgeführt. Konzeptionelle Lerninhalte sind von beobachteten Nachweisen getrennt.",
     "orderNote": "Nur Erklärungsreihenfolge der Beispiele. Keine beobachteten Zeitstempel oder Betriebsergebnisse.",
-    "sampleNumber": "BEISPIEL {{number}}"
+    "sampleNumber": "BEISPIEL {{number}}",
+    "observedCount_one": "{{count, number}} BEOBACHTETES EREIGNIS",
+    "observedCount_other": "{{count, number}} BEOBACHTETE EREIGNISSE",
+    "observedEmptyHelp": "Noch keine berechtigten Beobachtungen abgerufen. Lerninhalte sind von der Ausführung getrennt.",
+    "observedOrder": "Gespeicherte Reihenfolge im Durchlauf. Zeitpunkt und Beobachter stammen von der aufzeichnenden Komponente.",
+    "eventNumber": "EREIGNIS {{number}}"
   }
 }

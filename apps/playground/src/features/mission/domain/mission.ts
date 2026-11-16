@@ -33,4 +33,5 @@ export interface Mission {
   readonly channels: readonly InteractionChannel[];
   readonly checkpoints: readonly Checkpoint[];
   readonly preview: MissionPreview;
+  readonly execution?: 'oauth-standard';
 }

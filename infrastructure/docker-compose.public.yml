@@ -1,0 +1,48 @@
+# Live public bindings, included by docker-compose.host.yml over the shared base.
+# This overlay changes no database, volume, legacy issuer or shared ingress setting.
+services:
+  playground:
+    image: ${PUBLIC_PLAYGROUND_IMAGE:?Use the exact reviewed production image}
+    build: !reset null
+    environment:
+      PLAYGROUND_TRAEFIK_ADDRESS: ${PUBLIC_TRAEFIK_ADDRESS:?Use the verified Traefik peer IP}
+      PLAYGROUND_BFF_UPSTREAM: 192.168.178.131:3000
+      PLAYGROUND_KEYCLOAK_UPSTREAM: epa-lab-keycloak:8080
+    networks:
+      default:
+        ipv4_address: ${PUBLIC_NGINX_BACKEND_ADDRESS:?Use the verified reserved Nginx backend address}
+        gw_priority: 100
+      dev-proxy:
+        gw_priority: 0
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      auth-client:
+        condition: service_healthy
+      res-server:
+        condition: service_healthy
+
+  auth-client:
+    image: ${PUBLIC_AUTH_CLIENT_IMAGE:?Use the exact reviewed BFF image}
+    build: !reset null
+    environment:
+      PLAYGROUND_OIDC_ENABLED: 'true'
+      PLAYGROUND_PUBLIC_RUNTIME: 'true'
+      PLAYGROUND_PUBLIC_PROXY_ADDRESSES: ${PUBLIC_NGINX_BACKEND_ADDRESS:?Use the actual candidate backend peer IP}
+      PLAYGROUND_APP_ORIGIN: https://auth-playground.yappai.de
+      PLAYGROUND_OIDC_ISSUER: https://auth-playground.yappai.de/realms/playground-public
+      PLAYGROUND_OIDC_REDIRECT_URI: https://auth-playground.yappai.de/api/oauth/callback
+      PLAYGROUND_OIDC_CLIENT_SECRET: ${PUBLIC_OIDC_CLIENT_SECRET:?Use the owned public realm client secret}
+
+  keycloak:
+    environment:
+      KC_PROXY_HEADERS: xforwarded
+      KC_PROXY_TRUSTED_ADDRESSES: ${PUBLIC_NGINX_BACKEND_ADDRESS:?Use the actual candidate backend peer IP}
+
+  res-server:
+    image: ${PUBLIC_HAPI_IMAGE:?Use the reviewed existing secured HAPI image}
+    build: !reset null
+    environment:
+      FHIR_OIDC_ISSUER: https://auth-playground.yappai.de/realms/playground-public
+      FHIR_OIDC_JWKS_URI: https://auth-playground.yappai.de/realms/playground-public/protocol/openid-connect/certs
+      PLAYGROUND_SECURITY_ALLOW_PRIVATE_HTTP: 'false'

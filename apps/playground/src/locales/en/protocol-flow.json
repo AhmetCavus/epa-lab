@@ -2,11 +2,13 @@
   "channels": {
     "front": "Front channel",
     "back": "Back channel",
-    "internal": "Provider internal"
+    "internal": "Provider internal",
+    "local": "Actor-local observation"
   },
   "visibility": {
     "explained": "Explained",
-    "not-observable": "Not observable"
+    "not-observable": "Not observable",
+    "observed": "Observed"
   },
   "canvas": {
     "scrollLabel": "Scrollable actor map",
@@ -17,7 +19,10 @@
     "textAlternative": "Actor map text alternative",
     "interactions": "Fixture interactions",
     "actorDescription": "{{actor}} — {{role}}. {{description}}",
-    "interactionDescription": "{{title}}: {{direction}}. {{channel}} · Fixture / {{visibility}}. {{summary}}"
+    "interactionDescription": "{{title}}: {{direction}}. {{channel}} · Fixture / {{visibility}}. {{summary}}",
+    "observedNote": "Actual boundary observations · provider internals remain unobservable",
+    "observedInteractions": "Observed interactions",
+    "observedDescription": "{{title}}: {{direction}}. {{channel}} · {{visibility}}. {{summary}}"
   },
   "diagram": {
     "empty": "No communication samples loaded.",
@@ -28,7 +33,9 @@
     "inspect": "Inspect {{title}}. {{direction}}. {{channel}}. Fixture — {{visibility}}.",
     "selected": "Selected",
     "example": "Example",
-    "channelVisibility": "{{channel}} · {{visibility}}"
+    "channelVisibility": "{{channel}} · {{visibility}}",
+    "inspectObserved": "Inspect {{title}}. {{direction}}. {{channel}}. {{visibility}}.",
+    "observedEmpty": "No observed messages or local checks retrieved yet."
   },
   "inspector": {
     "heading": "Inspector",
@@ -52,7 +59,19 @@
     "chooseExplanation": "Choose a checkpoint, actor or sample to read its explanation.",
     "actorsChannel": "Actors & channel",
     "chooseSample": "Select a sample to inspect its source, destination and channel.",
-    "actorRole": "{{actor}} · {{role}}"
+    "actorRole": "{{actor}} · {{role}}",
+    "selectedObserved": "SELECTED OBSERVATION",
+    "observedSource": "Actual boundary observation",
+    "observedDetails": "ALLOWLISTED OBSERVED EVIDENCE",
+    "outcome": "Outcome",
+    "sequence": "Run sequence",
+    "reportHeading": "Reported decision",
+    "reportSource": "Reported by",
+    "reportNote": "Explicit report received by the observer; no internal checks or separate server timestamp are inferred.",
+    "reportUnavailable": "Decision report unavailable. The HTTP response alone does not establish an internal reason.",
+    "contextOnly": "No observed event is selected. This panel contains conceptual learning content.",
+    "chooseObservedExplanation": "Choose a checkpoint, actor or observed event to read its explanation.",
+    "chooseObservation": "Select an observed event to inspect its source, destination and channel."
   },
   "timeline": {
     "heading": "Event timeline",
@@ -61,6 +80,11 @@
     "empty": "No observed events",
     "emptyHelp": "Nothing has executed. Conceptual learning content is separate from observed evidence.",
     "orderNote": "Fixture explanation order only. No observed timestamps or operational outcomes.",
-    "sampleNumber": "SAMPLE {{number}}"
+    "sampleNumber": "SAMPLE {{number}}",
+    "observedCount_one": "{{count, number}} OBSERVED EVENT",
+    "observedCount_other": "{{count, number}} OBSERVED EVENTS",
+    "observedEmptyHelp": "No eligible observations have been retrieved. Learning content is separate from execution.",
+    "observedOrder": "Recorded per-run sequence. Timestamps and observers are supplied by the recording component.",
+    "eventNumber": "EVENT {{number}}"
   }
 }

@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { AuthorizationError } from '../../common/errors/authorization-error';
-import type { AuthorizationTransaction } from '../../oidc/authorization-transaction';
+import type { BoundAuthorizationTransaction } from '../../oidc/authorization-transaction';
 import type { OidcMetadata } from '../../oidc/oidc-discovery.service';
 import type { VerifiedLogin } from '../../oidc/token.service';
+import { StandardBrowserState } from '../standard-login/standard-browser-state';
 
 export const loginLifetimeMs = 10 * 60 * 1000;
 const sessionLifetimeMs = 15 * 60 * 1000;
 const maximumEntries = 1000;
 
 export interface PendingLogin {
-  transaction: AuthorizationTransaction;
+  transaction: BoundAuthorizationTransaction;
   browserBinding: string;
   metadata: OidcMetadata;
-  redirectUri: string;
   expiresAt: number;
 }
 
@@ -43,6 +43,7 @@ function ensureCapacity(entries: Map<string, { expiresAt: number }>): void {
 
 @Injectable()
 export class BrowserLoginStore {
+  readonly standard = new StandardBrowserState();
   private readonly pendingLogins = new Map<string, PendingLogin>();
   private readonly sessions = new Map<string, BrowserSession>();
 
@@ -62,6 +63,7 @@ export class BrowserLoginStore {
 
     if (
       !login ||
+      login.transaction.profile.id !== 'epa-par' ||
       !browserBinding ||
       suppliedBinding.length !== expectedBinding.length ||
       !timingSafeEqual(suppliedBinding, expectedBinding)

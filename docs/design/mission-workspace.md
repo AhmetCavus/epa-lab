@@ -4,6 +4,11 @@
 
 ## Goal
 
+**Public-release preparation:** the narrowed approved tasks 1.1–5.2 reuse this visual,
+localization and accessibility baseline for an explicit production OAuth build. Public
+activation remains excluded; fixtures and conceptual ePA stay intact. See the
+[current preparation scope](../../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
+
 Localization follows Accepted ADR-0004. The global Deutsch/English control updates all workspace copy and accessible text without resetting the mission, retained checkpoint, loaded samples, inspection selection or map scale. Technical evidence values remain literal; translated annotations preserve fixture/conceptual/not-observable provenance. Longer labels wrap with existing responsive layout and diagram-local scrolling.
 
 **Authorized UI Slice 001:** Both workspaces begin with an empty timeline. OAuth can explicitly load labeled fixture samples; they have no actual observer, timestamps, authentication result or network execution. ePA is a conceptual actor/checkpoint layout with no operational results. Replay explanation navigates loaded samples; Reset view clears selection and restores canvas scale without deleting samples. No Retry flow or Sign out control is exposed because there is no execution or session.
@@ -111,6 +116,24 @@ Never expose passwords, tokens, codes, state/nonce, verifiers, secrets, cookies,
 Preserve mission/protocol-flow ownership and public imports under Accepted ADR-0003. Generic controls must not branch on OAuth/ePA IDs or validation details. The ePA preview remains conceptual with no operational telemetry; existing backend ePA `/login`, `/callback`, `/session` and required-PAR behavior remain separate.
 
 ### Verification and approval boundary
+
+**Implementation alignment, 2026-11-13 (tasks 8.1–8.6):** the existing Workspace now has an
+explicit private Vite binding. Start/Retry uses top-level navigation; return/refresh reads
+only owned session/events. Resource and local logout remain separate actions, with native
+Origin and context-bound CSRF. Authoritative signed-out state commits before event retrieval;
+capacity/recording failure keeps eligible safe history visibly incomplete. Late results do
+not restore signed-out UI state. Pending/failed current attempts disable resource execution
+without relabeling an earlier retained application authentication as a success for that run.
+Replay/Reset/checkpoints/selection remain presentation-only. German/English switching
+preserves run/event identity, learning selection and map scale. The renderer accepts a
+neutral observed variant, including arrowless BFF-local observations and separately reported
+HAPI decisions; runtime and fixture records are never merged.
+
+The existing stylesheet/artwork and panel hierarchy are preserved. The private state/action
+copy occupies existing status/objective/action areas. Default builds and public hosting
+remain fixture-only, and catalog availability stays unverified. See the [private runtime
+guide](../../apps/playground/README.md#explicit-private-execution) and [task 8 verification](../../openspec/changes/001-oidc-pkce/spa-runtime-verification.md).
+This alignment does not start group 9 or change the accepted design/ADRs.
 
 The [revised acceptance specs](../../openspec/changes/001-oidc-pkce/specs/mission-experience/spec.md) cover restoration, owned evidence, lifecycle/recording failures and the unchanged visual contract. Verify keyboard/focus, actor/event/checkpoint selection, reduced motion, diagram text alternative, Fit/scrolling, German/English at narrow widths and actual 100%/200% browser zoom when runtime behavior is implemented. Language changes translate presentation only and retain navigation, run identity, event selection and map scale.
 

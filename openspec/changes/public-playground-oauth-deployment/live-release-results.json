@@ -1,0 +1,183 @@
+{
+  "date": "2026-11-16",
+  "status": "live-public-oauth-verified",
+  "ownerReleaseApproval": true,
+  "ownerInPlaceReplacementInstruction": true,
+  "sourceAtPreflight": "95fa3d4c4658b8f4a456dac120abe9348411260f",
+  "privateEvidenceDirectory": ".local-backups/public-playground-oauth-deployment/20261116-live-resume2-81as5ufc",
+  "images": {
+    "spa": "sha256:1f7ca67c465492385666cd9ce3ab459b2f5faa065af251d4d90e1a6ef0a608c3",
+    "bff": "sha256:213618efa90f9f91dfbaa35c736f9de3aa299278a95e7da32eeb47c453a3c302",
+    "hapiReviewedPlatform": "sha256:f15d09f928f2040e0c214b1aa719d4f60ec6b34c636afc90502849ce89ed3466",
+    "keycloak": "quay.io/keycloak/keycloak@sha256:4da21f9a53bcbac1026a0d654b740a81e98e5de4c45457076acc74b4d94b1551"
+  },
+  "hapiPayloadPreserved": true,
+  "isolatedVerification": {
+    "status": "passed",
+    "images": {
+      "spa": "sha256:1f7ca67c465492385666cd9ce3ab459b2f5faa065af251d4d90e1a6ef0a608c3",
+      "bff": "sha256:213618efa90f9f91dfbaa35c736f9de3aa299278a95e7da32eeb47c453a3c302",
+      "hapi": "sha256:f15d09f928f2040e0c214b1aa719d4f60ec6b34c636afc90502849ce89ed3466"
+    },
+    "journey": "real HTTPS login/callback/refresh/read/Inspector/CSRF logout/old-auth/history",
+    "proxy": "actual Traefik/Nginx, path/method/trust/limit/cache/error-log negatives",
+    "publicAccessibility": "DE/EN, 1366/390px, reduced motion, WCAG 2A/AA/2.1AA/2.2AA, stable run on language change",
+    "withdrawal": "targeted Compose recreation to saved fixture image; catalog/ePA restored, OAuth/provider forwarding closed",
+    "limitations": "Loopback staging only; production-provider suitability and actual public acceptance remain gated."
+  },
+  "privateAcceptance": {
+    "status": "passed",
+    "time": "2026-11-16T18:39:54.888Z",
+    "provider": "26.8.2 production/PostgreSQL",
+    "realmVerification": "versioned fresh epa-demo and playground-public",
+    "privateProtocolChecks": {
+      "passed": 27,
+      "checks": [
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid demo.fhir.read)",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "requested resource permission is present",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid)",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "narrow grant omits resource permission while retaining audience",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "PKCE missing-challenge is rejected before login",
+        "PKCE missing-method is rejected before login",
+        "PKCE plain is rejected before login",
+        "PKCE invalid-method is rejected before login",
+        "wrong-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "wrong-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "unregistered callback is rejected",
+        "password grant is disabled",
+        "client_credentials grant is disabled",
+        "existing ePA client rejects authorization without PAR",
+        "existing ePA client accepts genuine PAR and opens login"
+      ]
+    },
+    "actualPrivateHapi": [
+      {
+        "scope": "openid demo.fhir.read",
+        "status": 200
+      },
+      {
+        "scope": "openid",
+        "status": 403
+      }
+    ],
+    "unauthenticatedAndIdToken": "401",
+    "actualPrivateEpaHeaderPar": "passed",
+    "actualPrivateBrowserLogin": "passed; clean 303 and server-held tokens",
+    "realEpaIntegrationTests": 6,
+    "originalMasterBearer": "401",
+    "originalMasterRefresh": "400 invalid_grant",
+    "originalSigningKeyIdsAbsent": true,
+    "bffAndHapiRestartedForCredentialAndCacheReset": true,
+    "publicActivationNotYetPerformed": true
+  },
+  "actualPublicAcceptance": {
+    "status": "passed",
+    "time": "2026-11-16T18:41:19.495Z",
+    "origin": "https://auth-playground.yappai.de",
+    "actualHttps": true,
+    "browser": "Firefox with normal TLS validation",
+    "firstLoginPasswordChange": true,
+    "liveMissionLink": true,
+    "codeS256WithoutPar": true,
+    "cleanCallback303": true,
+    "workspaceReloadSameRun": true,
+    "syntheticResource": "200 with scope; 403 without scope; 401 without authentication or with ID Token",
+    "safeInspector": true,
+    "csrfRejection": true,
+    "localLogout": true,
+    "oldAuthenticationRejected": true,
+    "ownedHistoryRetained": true,
+    "credentialCookiesSecureHttpOnlyLax": true,
+    "localizationAndAccessibilityScans": 4,
+    "locales": ["de", "en"],
+    "widths": [1366, 390],
+    "publicPathAndMethodDenials": true,
+    "directAndSpoofedPeerDenials": true,
+    "apiNoStore": true,
+    "rateLimitAndRecovery": true,
+    "temporaryAccountDeletedInCleanup": true,
+    "productionReadinessClaim": false
+  },
+  "preservation": {
+    "status": "passed",
+    "untargetedContainersUnchanged": 45,
+    "postgresIdentityImageVolumeStartTimeAndConfigurationUnchanged": true,
+    "hapiDatasourceUnchanged": true,
+    "originalDevelopmentEnvironmentUnchanged": true,
+    "yosterManagedLiveServices": 5,
+    "allLiveServicesHealthy": true,
+    "allLiveServiceConfigurationHashesMatch": true,
+    "reservedNginxPeer": "172.24.0.6",
+    "originalH2RetainedOffline": true,
+    "noTemporaryContainersRemain": true,
+    "intentionalProtectedConfigurationChanges": [
+      "yappai.host.json",
+      "infrastructure/docker-compose.host.yml",
+      "infrastructure/docker-compose.public-rollback.yml",
+      "infrastructure/docker-compose.integration.yml",
+      "infrastructure/docker-compose.public.yml",
+      "/srv/yappai/hosting/infra/traefik/dynamic/epa-lab.yml"
+    ],
+    "volumeDeletion": false,
+    "databaseReset": false,
+    "allHapiTableCountsAndContentFingerprintsUnchanged": 60
+  },
+  "permanentDeployment": {
+    "publicUrl": "https://auth-playground.yappai.de",
+    "composeFile": "infrastructure/docker-compose.host.yml",
+    "composeEnvFile": ".env.live",
+    "singlePublicPlaygroundContainer": true,
+    "yosterServiceOwnershipVerified": 5,
+    "liveImageBuildOverridesDisabled": true,
+    "nginxBackendAddressReserved": true,
+    "providerDnsRefreshEnabled": true,
+    "individualDemoAccountPrivatelyDelivered": true
+  },
+  "historicalAttempts": [
+    {
+      "time": "2026-11-16T15:24:36Z",
+      "outcome": "original provider and fixture site recovered",
+      "cause": "private helper supplied private app origin to public settings validator",
+      "publicActivation": false,
+      "privateEvidenceDirectory": ".local-backups/public-playground-oauth-deployment/20261116-live-release-4aqf2djv"
+    },
+    {
+      "outcome": "original provider and fixture site recovered",
+      "cause": "public discovery 401 after provider container recreation; stale Nginx upstream DNS",
+      "fix": "Docker DNS with bounded re-resolution",
+      "privateEvidenceDirectory": ".local-backups/public-playground-oauth-deployment/20261116-live-resume-qot54033"
+    },
+    {
+      "time": "2026-11-16T18:37:35Z",
+      "outcome": "reviewed application withdrawal completed; fresh PostgreSQL/H2 retained",
+      "cause": "Node fetch ignored custom Host on direct IP probe, yielding router 404 rather than intended 403",
+      "fix": "explicit HTTP request transport; exact 403 probes passed before complete public rerun",
+      "withdrawalImageResolution": "verified reviewed HAPI platform digest and verified private BFF replaced unavailable historical local image IDs"
+    }
+  ],
+  "publicOAuthActive": true,
+  "actualPublicTechnicalAcceptance": true,
+  "ownerAcceptanceOfNewInstallation": "pending owner trial with privately provisioned individual account",
+  "productionReadinessClaim": false,
+  "tasks": {
+    "total": 16,
+    "complete": 15,
+    "remaining": ["6.2: owner acceptance record; all technical checks passed"],
+    "releaseTasksApproved": true,
+    "handoffChecked": true,
+    "technicalPublicAcceptancePassed": true
+  },
+  "archived": false
+}

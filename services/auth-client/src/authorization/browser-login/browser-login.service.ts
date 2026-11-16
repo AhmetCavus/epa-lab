@@ -61,7 +61,7 @@ export class BrowserLoginService {
       login.metadata,
       login.transaction,
       callback.code,
-      login.redirectUri,
+      'epa-par',
     );
 
     return this.store.createSession(verifiedLogin, previousSession);

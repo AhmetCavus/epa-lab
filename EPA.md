@@ -6,17 +6,27 @@ Requests (PAR)** an einen OpenID Provider übermittelt und die Referenz an einen
 FdV zurückgibt. Grundlage sind öffentliche Spezifikationen; das Projekt ist kein
 gematik-zertifiziertes ePA-Produkt.
 
-Der Workspace-Ordner ist das Repository `epa-auth-lab`; ein zusätzliches verschachteltes
-Projektverzeichnis wird nicht benötigt.
+Run commands from this checkout's root, which contains `package.json`, `services/` and
+`infrastructure/`. The legacy root package name remains `epa-auth-lab`; no nested checkout
+directory is required.
+
+**Current scope:** This guide covers the implemented ePA/PAR smoke operation and legacy
+browser login/session demo. The fixture-only Playground is a separate app. The approved
+standard mission's `/api/oauth/*` routes and FHIR audience/permission/operation policy remain
+planned. Canonical HAPI builds, private connectivity and data-free health probes are verified;
+use the [private integration guide](infrastructure/README.md) for isolated startup/shutdown.
+See the [repository overview](README.md) and [accepted mission architecture](docs/architecture/system-context.md).
 
 ## Komponenten und Umfang
 
-| Komponente                    | Rolle                                                       | Umsetzung                                                                                    |
-| ----------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `services/epa-authorization/` | ePA Authorization Demo; OAuth/OIDC Client gegenüber dem IDP | NestJS 11, Express, TypeScript strict                                                        |
-| `infrastructure/keycloak/`    | Lokaler OpenID Provider als vereinfachter sektoraler IDP    | Keycloak **26.8.0**, Realm `epa-demo`, confidential Client `epa-auth-server`                 |
-| `apps/fdv-android/`           | Zukünftiges FdV                                             | Nur `.gitkeep`; keine Android-Implementierung                                                |
-| `docs/`                       | Architektur und Spezifikationsnachweise                     | [Architektur](docs/architecture.md), [Traceability und Abweichungen](docs/specifications.md) |
+| Komponente                 | Rolle                                                       | Umsetzung                                                                                         |
+| -------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `services/auth-client/`    | ePA Authorization Demo; OAuth/OIDC Client gegenüber dem IDP | NestJS 11, Express, TypeScript strict                                                             |
+| `infrastructure/keycloak/` | Lokaler OpenID Provider als vereinfachter sektoraler IDP    | Keycloak **26.8.0**, Realm `epa-demo`, confidential Client `epa-auth-server`                      |
+| `services/res-server/`     | Canonical HAPI FHIR Resource Server                         | Independently maintained Git submodule; private PostgreSQL integration and health probes verified |
+| `apps/playground/`         | Mission Catalog and Workspace                               | Fixture-only React SPA; no backend integration                                                    |
+| `apps/fdv-android/`        | Zukünftiges FdV                                             | Nur `.gitkeep`; keine Android-Implementierung                                                     |
+| `docs/`                    | Architektur und Spezifikationsnachweise                     | [Architektur](docs/architecture.md), [Traceability und Abweichungen](docs/specifications.md)      |
 
 Weitere Werkzeuge: Node.js **24 LTS**, pnpm **10.34.6**, Docker Compose, `@nestjs/config`,
 Zod, Jest und Supertest. Im Standard-Workflow läuft der Backend-Prozess auf dem Host und
@@ -31,8 +41,10 @@ und medizinische Daten sind außerhalb der Demo.
 
 ## Voraussetzungen und Installation
 
-Benötigt werden Node.js 24, Corepack beziehungsweise pnpm, Docker Engine mit Compose v2
-oder neuer und freie lokale Ports 8080 und 3000. Die Scripts funktionieren unter Linux/macOS.
+Node.js 24, Corepack/pnpm 10.34.6 and Docker with Compose are required. The current manifests
+use `!reset`, `!override` and `gw_priority` (verified with Compose 5.6.1). The legacy demo needs
+free local ports 8080 and 3000 by default; check the configured bindings on an existing host.
+The containerized auth-client uses Linux host networking.
 
 Im Repository-Verzeichnis ausführen:
 
@@ -44,10 +56,10 @@ pnpm infra:up
 pnpm dev
 ```
 
-`env:init` erzeugt `.env` aus [`.env.example`](.env.example) mit zufälligen lokalen Passwörtern
-und Client Secret. Eine vorhandene `.env` wird erhalten. Die Datei wird mit Modus `0600`
-angelegt und ist durch `.gitignore` ausgeschlossen. Alternativ `.env.example` nach `.env`
-kopieren und die drei leeren Secret-Felder selbst mit unabhängigen Werten füllen.
+`env:init` creates `.env` from [`.env.example`](.env.example), fills missing/blank local
+credentials and retains existing values. New files use mode `0600` and `.gitignore` excludes
+them. Alternatively, copy the example and fill its blank secret fields with independent values.
+HAPI requires `RES_SERVER_DB_PASSWORD`; the isolated workflow can use a separate private env file.
 
 `infra:up` wartet auf Keycloaks Readiness; Realm, Client, Client Policy und Testidentität werden
 automatisch importiert. Die dokumentierten Grundlagen sind [Keycloaks Containerbetrieb](https://www.keycloak.org/server/containers)
@@ -64,24 +76,30 @@ NestJS liest `.env` aus dem Repository-Verzeichnis unabhängig vom Arbeitsverzei
 Service. Vorhandene Prozessvariablen haben Vorrang. Ungültige Konfiguration stoppt den Start;
 Validierungsfehler nennen ausschließlich die betroffenen Feldnamen.
 
-| Variable                          | Bedeutung / Standard                                                                                                      |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `KEYCLOAK_ADMIN_USERNAME`         | Lokaler Bootstrap-Administrator, Beispiel `epa-lab-admin`                                                                 |
-| `KEYCLOAK_ADMIN_PASSWORD`         | Zufälliges lokales Admin-Passwort                                                                                         |
-| `KEYCLOAK_BIND_ADDRESS`           | Docker Host-Bind-Adresse, standardmäßig `127.0.0.1`                                                                       |
-| `KEYCLOAK_PORT`                   | Veröffentlichter Host-Port, standardmäßig `8080`; Container-Port bleibt `8080`                                            |
-| `KEYCLOAK_HOSTNAME`               | Vom Browser und Backend erreichbare Keycloak-Basis-URL, standardmäßig `http://localhost:8080`                             |
-| `OIDC_CLIENT_SECRET`              | Server-seitiges Secret, mindestens 16 Zeichen                                                                             |
-| `TEST_USER_PASSWORD`              | Passwort der fiktiven Identität `demo-versicherte`                                                                        |
-| `PORT`                            | NestJS-Port auf dem Host oder im Backend-Container, `3000`                                                                |
-| `HOST`                            | NestJS-Bind-Adresse auf dem Host oder im Backend-Container, standardmäßig `127.0.0.1`; `0.0.0.0` für alle IPv4-Interfaces |
-| `OIDC_ALLOW_PRIVATE_NETWORK_HTTP` | Explizite HTTP-Ausnahme für private IPv4-Adressen im isolierten Entwicklungs-LAN, standardmäßig `false`                   |
-| `OIDC_ISSUER`                     | Exakter Issuer; standardmäßig `http://localhost:8080/realms/epa-demo`, für LAN-Zugriff die erreichbare Server-Adresse     |
-| `OIDC_CLIENT_ID`                  | `epa-auth-server`; wird auch in den Realm-Import eingesetzt                                                               |
-| `OIDC_DEFAULT_REDIRECT_URI`       | `http://localhost:3000/callback`; für die LAN-Demo `http://192.168.178.131:3000/callback`                                 |
-| `OIDC_ALLOWED_REDIRECT_URIS`      | JSON-Array exakter URIs, initial `["http://localhost:3000/callback"]`                                                     |
-| `OIDC_HTTP_TIMEOUT_MS`            | Discovery-/PAR-Deadline einschließlich Response Body, `5000`                                                              |
-| `OIDC_DISCOVERY_CACHE_TTL_MS`     | Metadaten-Cache, `300000`                                                                                                 |
+| Variable                          | Bedeutung / Standard                                                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `KEYCLOAK_ADMIN_USERNAME`         | Lokaler Bootstrap-Administrator, Beispiel `epa-lab-admin`                                                             |
+| `KEYCLOAK_ADMIN_PASSWORD`         | Zufälliges lokales Admin-Passwort                                                                                     |
+| `KEYCLOAK_BIND_ADDRESS`           | Docker Host-Bind-Adresse, standardmäßig `127.0.0.1`                                                                   |
+| `KEYCLOAK_PORT`                   | Veröffentlichter Host-Port, standardmäßig `8080`; Container-Port bleibt `8080`                                        |
+| `KEYCLOAK_HOSTNAME`               | Vom Browser und Backend erreichbare Keycloak-Basis-URL, standardmäßig `http://localhost:8080`                         |
+| `OIDC_CLIENT_SECRET`              | Server-seitiges Secret, mindestens 16 Zeichen                                                                         |
+| `TEST_USER_PASSWORD`              | Passwort der fiktiven Identität `demo-versicherte`                                                                    |
+| `PORT`                            | Direct Node process port, default `3000`                                                                              |
+| `HOST`                            | Direct Node process bind address, default `127.0.0.1`                                                                 |
+| `AUTH_CLIENT_PORT`                | Compose input mapped to the container's `PORT`, default `3000`                                                        |
+| `AUTH_CLIENT_HOST`                | Compose input mapped to the container's `HOST`, default `127.0.0.1`                                                   |
+| `RES_SERVER_DB_PASSWORD`          | HAPI PostgreSQL password; must match an existing persistent database's initialized credential                         |
+| `RES_SERVER_BIND_ADDRESS`         | Host-stack HAPI bind address, default `127.0.0.1`                                                                     |
+| `RES_SERVER_PORT`                 | Host-stack HAPI published port, default `8083`                                                                        |
+| `INTEGRATION_FHIR_PORT`           | Isolated HAPI loopback port, default `18083`; separate from the host-stack port                                       |
+| `OIDC_ALLOW_PRIVATE_NETWORK_HTTP` | Explizite HTTP-Ausnahme für private IPv4-Adressen im isolierten Entwicklungs-LAN, standardmäßig `false`               |
+| `OIDC_ISSUER`                     | Exakter Issuer; standardmäßig `http://localhost:8080/realms/epa-demo`, für LAN-Zugriff die erreichbare Server-Adresse |
+| `OIDC_CLIENT_ID`                  | `epa-auth-server`; wird auch in den Realm-Import eingesetzt                                                           |
+| `OIDC_DEFAULT_REDIRECT_URI`       | `http://localhost:3000/callback`; für die LAN-Demo `http://192.168.178.131:3000/callback`                             |
+| `OIDC_ALLOWED_REDIRECT_URIS`      | JSON-Array exakter URIs, initial `["http://localhost:3000/callback"]`                                                 |
+| `OIDC_HTTP_TIMEOUT_MS`            | Discovery-/PAR-Deadline einschließlich Response Body, `5000`                                                          |
+| `OIDC_DISCOVERY_CACHE_TTL_MS`     | Metadaten-Cache, `300000`                                                                                             |
 
 HTTP-Konfiguration ist standardmäßig nur für Loopback erlaubt; sonst ist HTTPS erforderlich.
 Die explizite LAN-Ausnahme erlaubt ausschließlich private IPv4-Adressen aus `10.0.0.0/8`,
@@ -102,8 +120,11 @@ Für einen Server mit LAN-Adresse `192.168.178.131` und Keycloak-Host-Port `5555
 die folgenden Werte in `.env` setzen:
 
 ```dotenv
-HOST=0.0.0.0
-KEYCLOAK_BIND_ADDRESS=0.0.0.0
+HOST=192.168.178.131
+PORT=3000
+AUTH_CLIENT_HOST=192.168.178.131
+AUTH_CLIENT_PORT=3000
+KEYCLOAK_BIND_ADDRESS=192.168.178.131
 KEYCLOAK_PORT=5555
 KEYCLOAK_HOSTNAME=http://192.168.178.131:5555
 OIDC_ISSUER=http://192.168.178.131:5555/realms/epa-demo
@@ -159,7 +180,7 @@ Siehe [Docker und UFW](https://docs.docker.com/engine/network/packet-filtering-f
 
 ### NestJS und Keycloak gemeinsam mit Docker starten
 
-Das [Dockerfile](services/epa-authorization/Dockerfile) baut das Backend mit Node.js 24 und
+Das [Dockerfile](services/auth-client/Dockerfile) baut das Backend mit Node.js 24 und
 dem versionierten pnpm-Lockfile. Das Runtime-Image enthält die kompilierten Dateien und
 Produktionsabhängigkeiten; der Server läuft als Benutzer `node`. `.env`, lokale Dependencies
 und Build-Artefakte sind durch [`.dockerignore`](.dockerignore) vom Build-Kontext ausgeschlossen.
@@ -169,8 +190,10 @@ Der Backend-Service verwendet [Docker Host Networking](https://docs.docker.com/e
 auf Linux. Er teilt das Host-Netzwerk und erreicht Keycloak über dessen veröffentlichten
 Host-Port. Damit funktionieren sowohl die lokalen Standardwerte als auch die LAN-Konfiguration
 aus dem vorherigen Abschnitt mit derselben Issuer-Adresse im Browser und Backend.
-Es gibt für NestJS kein zusätzliches Docker-Port-Mapping; `HOST` und `PORT` steuern den
-Listener direkt. Unter Docker Desktop muss Host Networking ausdrücklich aktiviert sein.
+There is no separate NestJS port mapping. Compose maps `AUTH_CLIENT_HOST`/`AUTH_CLIENT_PORT`
+to the container's `HOST`/`PORT`; direct Node development uses `HOST`/`PORT` instead. This
+prevents Yoster's own `PORT` from overriding the container listener. Docker Desktop requires
+host networking to be enabled explicitly.
 
 Einen laufenden `pnpm dev`-Prozess oder die Debug-Session beenden, um Port 3000 freizugeben.
 Anschließend im Repository-Verzeichnis ausführen:
@@ -181,49 +204,51 @@ curl --fail http://localhost:3000/health/ready
 pnpm docker:logs
 ```
 
-`docker:up` baut das Backend-Image, startet beide Services und wartet auf deren Readiness.
-Das Backend startet erst nach Keycloaks erfolgreichem Healthcheck. Mit `HOST=0.0.0.0` und
-`PORT=3000` lauscht es auch im Container auf allen IPv4-Interfaces des Servers und ist im LAN
-unter `http://192.168.178.131:3000/health/ready` erreichbar. Die LAN-Adresse durch die eigene
-Server-Adresse ersetzen. `KEYCLOAK_HOSTNAME`, `OIDC_ISSUER` und `x-idp-iss` verwenden dabei
-weiterhin dieselbe LAN-Adresse; ein interner Service-Name wie `keycloak` ist kein vom
-externen Browser erreichbarer Issuer.
+`docker:up` builds the backend image, starts Keycloak and auth-client and waits for readiness.
+The backend starts after Keycloak's successful health check. With
+`AUTH_CLIENT_HOST=192.168.178.131` and `AUTH_CLIENT_PORT=3000`, the host-networked container
+listens at that private LAN address; readiness is `http://192.168.178.131:3000/health/ready`.
+Replace it with the address of your lab. `KEYCLOAK_HOSTNAME`, `OIDC_ISSUER` and `x-idp-iss`
+must use the same reachable address; an internal service name such as `keycloak` does not
+provide an issuer reachable by an external browser.
 
-Nach Source-Änderungen erneut `pnpm docker:up` ausführen. Der Container verwendet den
-gebauten Server ohne Watch Mode. `pnpm docker:down` stoppt beide Services und erhält das
-Keycloak-Datenvolume. Für das Debugging danach wieder `pnpm infra:up` und `pnpm dev` nutzen.
+After source changes, `pnpm docker:up` rebuilds the deployed server, which has no watch mode.
+The lifecycle scripts share the `epa-lab` project and
+container names with the host/Playground definitions. For a targeted stop that preserves
+containers, volumes and other running services, use:
+
+```bash
+docker compose --env-file .env -f infrastructure/docker-compose.yml --profile backend stop auth-client keycloak
+```
+
+The `*:down` scripts invoke Compose `down`; they are not the isolated verification workflow.
+For HAPI verification without changing this deployment, use [infrastructure/README.md](infrastructure/README.md).
 
 ## Befehle
 
-| Befehl                           | Zweck                                                                  |
-| -------------------------------- | ---------------------------------------------------------------------- |
-| `pnpm install --frozen-lockfile` | Dependencies aus dem versionierten Lockfile installieren               |
-| `pnpm env:init`                  | Lokale Konfiguration ohne Überschreiben erzeugen                       |
-| `pnpm infra:up`                  | Keycloak starten und Readiness abwarten                                |
-| `pnpm infra:down`                | Keycloak stoppen; Entwicklungsdaten bleiben erhalten                   |
-| `pnpm infra:reset`               | Container und **lokales Keycloak-Datenvolume löschen**                 |
-| `pnpm docker:up`                 | Backend bauen, mit Keycloak starten und Readiness abwarten             |
-| `pnpm docker:down`               | Backend und Keycloak stoppen; Entwicklungsdaten bleiben erhalten       |
-| `pnpm docker:logs`               | Laufende Backend-Container-Logs anzeigen                               |
-| `pnpm dev`                       | Backend zunächst bauen, dann Compiler und Server im Watch Mode starten |
-| `pnpm build`                     | Ausführbares Backend nach `services/epa-authorization/dist/` bauen     |
-| `pnpm start`                     | Bereits gebautes Backend starten                                       |
-| `pnpm typecheck`                 | Alle Source- und Testdateien mit TypeScript strict prüfen              |
-| `pnpm lint`                      | Type-aware ESLint und Prettier-Prüfung                                 |
-| `pnpm format`                    | Formatierung anwenden                                                  |
-| `pnpm test`                      | Unit- und HTTP-Contract-Tests ohne Docker                              |
-| `pnpm test:integration`          | Echte Keycloak-Integration; Keycloak muss bereit sein                  |
+| Befehl                           | Zweck                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile` | Dependencies aus dem versionierten Lockfile installieren                                    |
+| `pnpm env:init`                  | Lokale Konfiguration ohne Überschreiben erzeugen                                            |
+| `pnpm infra:up`                  | Keycloak starten und Readiness abwarten                                                     |
+| `pnpm infra:down`                | Compose `down` for the base definition in shared project `epa-lab`; named volumes retained  |
+| `pnpm infra:reset`               | Container und **lokales Keycloak-Datenvolume löschen**                                      |
+| `pnpm docker:up`                 | Backend bauen, mit Keycloak starten und Readiness abwarten                                  |
+| `pnpm docker:down`               | Compose `down` with the backend profile in shared project `epa-lab`; named volumes retained |
+| `pnpm docker:logs`               | Laufende Backend-Container-Logs anzeigen                                                    |
+| `pnpm dev`                       | Backend zunächst bauen, dann Compiler und Server im Watch Mode starten                      |
+| `pnpm build`                     | Ausführbares Backend nach `services/auth-client/dist/` bauen                                |
+| `pnpm start`                     | Bereits gebautes Backend starten                                                            |
+| `pnpm typecheck`                 | Alle Source- und Testdateien mit TypeScript strict prüfen                                   |
+| `pnpm lint`                      | Type-aware ESLint und Prettier-Prüfung                                                      |
+| `pnpm format`                    | Formatierung anwenden                                                                       |
+| `pnpm test`                      | Unit- und HTTP-Contract-Tests ohne Docker                                                   |
+| `pnpm test:integration`          | Echte Keycloak-Integration; Keycloak muss bereit sein                                       |
 
-Beim erneuten Start bleibt ein vorhandener Realm erhalten und wird nicht überschrieben.
-Änderungen an importierten Secrets, Client-Einstellungen oder Redirect URIs erfordern einen
-Reset oder eine gezielte administrative Änderung. Für eine saubere Neuinitialisierung:
-
-```bash
-pnpm infra:reset
-pnpm infra:up
-```
-
-`.env` bleibt beim Reset erhalten. Keine manuellen Admin-Console-Schritte sind erforderlich.
+Restarting preserves an existing realm; import files do not overwrite it. Apply changes to
+existing client secrets, settings and redirect URIs through the Keycloak Admin Console/API
+and keep the backend configuration consistent. A volume reset is not required. The existing
+`infra:reset` script deletes Keycloak data and is not part of the verified integration workflow.
 
 ## Postman- und Bruno-Collections
 
@@ -241,20 +266,19 @@ diesen Request deaktiviert. Nur der IDP-Loginformular-Request folgt internen Wei
 
 ### Import und Modi
 
-Separate Environment-Dateien liegen unter `docs/api-clients/environments/`:
+Only the `dev` profile has standalone environment files in this checkout:
 
-| Modus  | Postman                                                                                      | Bruno                                              |
-| ------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `dev`  | [dev.postman_environment.json](docs/api-clients/environments/dev.postman_environment.json)   | [dev.bru](docs/api-clients/environments/dev.bru)   |
-| `stag` | [stag.postman_environment.json](docs/api-clients/environments/stag.postman_environment.json) | [stag.bru](docs/api-clients/environments/stag.bru) |
-| `prod` | [prod.postman_environment.json](docs/api-clients/environments/prod.postman_environment.json) | [prod.bru](docs/api-clients/environments/prod.bru) |
+| Modus  | Postman                                                                                    | Bruno                                                     |
+| ------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `dev`  | [dev.postman_environment.json](docs/api-clients/environments/dev.postman_environment.json) | [dev.bru](docs/api-clients/environments/dev.bru)          |
+| `stag` | Collection defaults selected with `MODE=stag`; no standalone file                          | Included in the Bruno collection JSON; no standalone file |
+| `prod` | Collection defaults selected with `MODE=prod`; no standalone file                          | Included in the Bruno collection JSON; no standalone file |
 
-**Postman:** Die Collection und die drei `*.postman_environment.json`-Dateien über **Import**
-öffnen. Anschließend das gewünschte Environment `ePA Authentication Lab — dev`, `stag` oder
-`prod` auswählen und dort die Werte bearbeiten. Jede Datei enthält `MODE`, alle Server-/Client-
-Parameter und ein leeres, als sensibel markiertes `OIDC_CLIENT_SECRET`. Das aktive Environment
-überschreibt die Collection-Defaults. Ohne aktives Environment kann weiterhin die Collection-
-Variable `MODE` die Defaults aus `DEV_*`, `STAG_*` und `PROD_*` auswählen. Siehe
+**Postman:** Import the collection and, optionally, `dev.postman_environment.json`. That file
+contains `MODE`, server/client parameters and an empty sensitive `OIDC_CLIENT_SECRET`.
+An active environment overrides collection defaults. Without an active environment, the
+collection variable `MODE` selects the `DEV_*`, `STAG_*` or `PROD_*` defaults; edit the
+selected profile's placeholders locally. No standalone `stag` or `prod` file is supplied. See
 [Postman-Export](https://learning.postman.com/v11/docs/getting-started/importing-and-exporting/exporting-data)
 und [Variablen](https://learning.postman.com/docs/use/send-requests/variables/variables/).
 Die Scripts verwenden Web Crypto aus dem aktuellen
@@ -265,11 +289,10 @@ lokales Zielverzeichnis angeben. Anschließend eines der enthaltenen Environment
 `stag` oder `prod` auswählen und dessen Werte bearbeiten. Die Scripts funktionieren im
 Safe Mode. Das einzelne JSON-Exportformat enthält die Environments; siehe
 [Bruno-Export](https://docs.usebruno.com/get-started/import-export-data/export-collections).
-Die separaten nativen Dateien `dev.bru`, `stag.bru` und `prod.bru` können zusätzlich in den
-Ordner `environments/` der importierten Collection kopiert werden, um die Profile wiederherzustellen.
-Anschließend das gewünschte Environment auswählen. Bei bereits vorhandenen Dateien ersetzen
-sie die entsprechenden Profile; lokale Einstellungen deshalb vorher sichern. Für die Bruno CLI
-kann eine Datei direkt mit `--env-file /absoluter/pfad/dev.bru` ausgewählt werden.
+The standalone `dev.bru` can also be copied into the imported collection's `environments/`
+directory; preserve existing local values before replacing that profile. The `stag` and `prod`
+profiles are included in the JSON export only. For the Bruno CLI, a native file can be selected
+with `--env-file /absolute/path/dev.bru`.
 
 `dev` verwendet den aktuellen LAN-Server: NestJS `http://192.168.178.131:3000` und Issuer
 `http://192.168.178.131:5555/realms/epa-demo`. Bei einem anderen Lab die Werte anpassen.

@@ -141,7 +141,12 @@ describe('real Keycloak 26.8.0 PAR integration (requires pnpm infra:up)', () => 
   });
 
   it('completes a real browser login, exchanges the code and validates the ID token', async () => {
-    const environment = parseEnv(await readFile(resolve(__dirname, '../../../.env'), 'utf8'));
+    const environment = parseEnv(
+      await readFile(
+        process.env.KEYCLOAK_TEST_ENV_FILE ?? resolve(__dirname, '../../../.env'),
+        'utf8',
+      ),
+    );
     const password = process.env.TEST_USER_PASSWORD ?? environment.TEST_USER_PASSWORD;
 
     if (!password) {

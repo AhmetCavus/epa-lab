@@ -13,10 +13,16 @@
   },
   "header": {
     "slice": "UI-SLICE 001",
-    "preview": "VORSCHAU"
+    "preview": "VORSCHAU",
+    "private": "Lokal",
+    "integration": "Prüfung",
+    "public": "Mission Control",
+    "demo": "Demo"
   },
   "footer": {
-    "notice": "Lernvorschau mit Beispieldaten · keine Live-Protokollausführung"
+    "notice": "Lernvorschau mit Beispieldaten · keine Live-Protokollausführung",
+    "privateNotice": "Private Prüfumgebung · Beispiele und Beobachtungen bleiben getrennt",
+    "publicNotice": "Synthetische Demo · eigene Demokonten · keine Patientendaten"
   },
   "notFound": {
     "eyebrow": "UNBEKANNTES ZIEL",
@@ -32,5 +38,6 @@
     "workspace": "{{mission}} · Mission Control",
     "notFound": "Seite nicht gefunden · Auth Protocol Playground"
   },
-  "description": "Protokollrollen und sichere Nachweise in einer Lernumgebung mit Beispieldaten erkunden."
+  "description": "Protokollrollen und sichere Nachweise in einer Lernumgebung mit Beispieldaten erkunden.",
+  "description_public": "Erkunde OAuth mit synthetischen Daten und sicheren Protokollbeobachtungen."
 }

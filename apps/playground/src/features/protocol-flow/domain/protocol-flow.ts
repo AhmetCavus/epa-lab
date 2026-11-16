@@ -55,7 +55,44 @@ export type FixtureEvent = FixtureContent &
       }
   );
 
-export function interactionActorIds(interaction: FixtureEvent): readonly string[] {
+export type ReportedEvidence =
+  | { readonly available: false }
+  | {
+      readonly available: true;
+      readonly reportedBy: string;
+      readonly evidence: readonly EvidenceField[];
+    };
+
+export interface Observation {
+  readonly runId: string;
+  readonly sequence: number;
+  readonly observedAt: string;
+  readonly observedBy: string;
+  readonly outcome: string;
+  readonly outcomeKey: string;
+}
+
+export type ObservedEvent = Omit<FixtureContent, 'visibility'> & {
+  readonly visibility: 'observed';
+  readonly observation: Observation;
+  readonly report?: ReportedEvidence;
+} & (
+    | {
+        readonly kind: 'message';
+        readonly sourceActorId: string;
+        readonly targetActorId: string;
+        readonly channel: MessageChannel;
+      }
+    | {
+        readonly kind: 'internal';
+        readonly actorId: string;
+        readonly channel: InternalChannel;
+      }
+  );
+
+export type FlowEvent = FixtureEvent | ObservedEvent;
+
+export function interactionActorIds(interaction: FlowEvent): readonly string[] {
   if (interaction.kind === 'internal') {
     return [interaction.actorId];
   }

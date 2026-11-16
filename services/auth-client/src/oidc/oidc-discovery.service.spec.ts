@@ -1,6 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { configuration } from '../config/configuration';
-import { testConfiguration, testMetadata } from '../../test/fixtures';
+import {
+  testConfiguration,
+  testMetadata,
+  profileTestConfiguration,
+  standardTestMetadata,
+} from '../../test/fixtures';
 import { OidcClientService, OidcUpstreamError } from './oidc-client.service';
 import { OidcDiscoveryService } from './oidc-discovery.service';
 
@@ -25,6 +30,103 @@ describe('OidcDiscoveryService', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it('accepts standard metadata without PAR and never shares that acceptance with ePA', async () => {
+    const profiles = await createService(profileTestConfiguration);
+    requestJson
+      .mockResolvedValueOnce(standardTestMetadata)
+      .mockResolvedValueOnce(standardTestMetadata);
+    await expect(profiles.discover('playground-standard')).resolves.toEqual(standardTestMetadata);
+    await expect(profiles.discover()).rejects.toMatchObject({ reason: 'invalid_discovery' });
+    await expect(profiles.discover()).resolves.toEqual(testMetadata);
+    await profiles.discover('playground-standard');
+    expect(requestJson).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not use or retain an irrelevant PAR endpoint for standard authorization', async () => {
+    const profiles = await createService(profileTestConfiguration);
+    requestJson.mockResolvedValue({
+      ...standardTestMetadata,
+      pushed_authorization_request_endpoint: 'http://attacker.example/par',
+    });
+    expect(await profiles.discover('playground-standard')).not.toHaveProperty(
+      'pushed_authorization_request_endpoint',
+    );
+    await expect(profiles.discover()).rejects.toMatchObject({ reason: 'invalid_discovery' });
+  });
+
+  it('keeps concurrent requests and expiry caches scoped to profile and issuer', async () => {
+    const profiles = await createService(profileTestConfiguration);
+    const now = Date.now();
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+    await Promise.all([
+      profiles.discover(),
+      profiles.discover(),
+      profiles.discover('playground-standard'),
+      profiles.discover('playground-standard'),
+    ]);
+    expect(requestJson).toHaveBeenCalledTimes(2);
+    clock.mockReturnValue(now + testConfiguration.discoveryCacheTtlMs);
+    await profiles.discover('playground-standard');
+    expect(requestJson).toHaveBeenCalledTimes(3);
+  });
+
+  it('uses distinct configured issuers for cache identity and endpoint trust', async () => {
+    const profile = profileTestConfiguration.standardProfile;
+    if (!profile) {
+      throw new Error('Expected enabled test profile');
+    }
+    const issuer = 'http://localhost:9090/realms/standard';
+    const profiles = await createService({
+      ...profileTestConfiguration,
+      standardProfile: { ...profile, issuer },
+    });
+    const metadata = {
+      ...standardTestMetadata,
+      issuer,
+      authorization_endpoint: `${issuer}/auth`,
+      token_endpoint: `${issuer}/token`,
+      jwks_uri: `${issuer}/jwks`,
+    };
+    requestJson.mockResolvedValueOnce(metadata).mockResolvedValueOnce(testMetadata);
+    await expect(profiles.discover('playground-standard')).resolves.toEqual(metadata);
+    await expect(profiles.discover()).resolves.toEqual(testMetadata);
+    expect(requestJson.mock.calls.map(([url]) => url)).toEqual([
+      `${issuer}/.well-known/openid-configuration`,
+      `${testConfiguration.issuer}/.well-known/openid-configuration`,
+    ]);
+  });
+
+  it('rejects disabled standard use before transport', async () => {
+    await expect(service.discover('playground-standard')).rejects.toMatchObject({ status: 403 });
+    expect(requestJson).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { issuer: 'http://localhost:9090/wrong' },
+    { response_types_supported: ['token'] },
+    { response_types_supported: undefined },
+    { grant_types_supported: ['client_credentials'] },
+    { token_endpoint: 'http://attacker.example/token' },
+    { authorization_endpoint: 'http://localhost:8080/auth?injected=1' },
+    { jwks_uri: 'http://user:password@localhost:8080/jwks' },
+    { jwks_uri: 'http://169.254.169.254/jwks' },
+    { jwks_uri: 'http://localhost:9090/jwks' },
+    { jwks_uri: 'http://localhost:8080/jwks#fragment' },
+    { code_challenge_methods_supported: ['plain'] },
+    { token_endpoint_auth_methods_supported: ['none'] },
+    { id_token_signing_alg_values_supported: ['none'] },
+  ])('rejects invalid standard discovery and permits a later safe retry (%#)', async (override) => {
+    const profiles = await createService(profileTestConfiguration);
+    requestJson
+      .mockResolvedValueOnce({ ...standardTestMetadata, ...override })
+      .mockResolvedValueOnce(standardTestMetadata);
+    await expect(profiles.discover('playground-standard')).rejects.toMatchObject({
+      reason: 'invalid_discovery',
+    });
+    await expect(profiles.discover('playground-standard')).resolves.toEqual(standardTestMetadata);
+    expect(requestJson).toHaveBeenCalledTimes(2);
+  });
 
   it('uses only configured discovery and caches validated metadata', async () => {
     await expect(service.discover()).resolves.toEqual(testMetadata);

@@ -10,7 +10,7 @@ import { AuthorizationModule } from '../src/authorization/authorization.module';
 import { loginLifetimeMs } from '../src/authorization/browser-login/browser-login.store';
 import { AuthorizationErrorFilter } from '../src/common/errors/authorization-error.filter';
 import { configureRequestLogging } from '../src/common/logging/request-logging';
-import { OidcClientService } from '../src/oidc/oidc-client.service';
+import { OidcClientService, createClientAuthorization } from '../src/oidc/oidc-client.service';
 import { testConfiguration, testMetadata } from './fixtures';
 
 const signingKeys = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -177,6 +177,33 @@ describe('browser login and callback (real JWT signatures, mocked provider trans
       .expect(403);
     expect(tokenRequests()).toHaveLength(0);
     await browser.get('/callback').query({ state, code: callbackCode }).expect(303);
+  });
+
+  it('cannot select credentials, profile or callback through extra callback parameters', async () => {
+    const { browser, state } = await beginLogin();
+    const suppliedSecret = 'untrusted-callback-secret';
+    await browser
+      .get('/callback')
+      .query({
+        state,
+        code: callbackCode,
+        profile: 'playground-standard',
+        client_id: 'playground-oidc',
+        client_secret: suppliedSecret,
+        redirect_uri: 'http://localhost:9999/foreign',
+        issuer: 'http://localhost:9090/foreign',
+      })
+      .expect(303);
+    const options = tokenRequests()[0]?.[2];
+    expect(
+      new Headers(options?.headers).get('authorization') ===
+        createClientAuthorization(testConfiguration.clientId, testConfiguration.clientSecret),
+    ).toBe(true);
+    const body = typeof options?.body === 'string' ? new URLSearchParams(options.body) : undefined;
+    expect(body?.get('redirect_uri')).toBe(testConfiguration.defaultRedirectUri);
+    expect(JSON.stringify([logSpy.mock.calls, warnSpy.mock.calls]).includes(suppliedSecret)).toBe(
+      false,
+    );
   });
 
   it('rejects callback replay after completion', async () => {

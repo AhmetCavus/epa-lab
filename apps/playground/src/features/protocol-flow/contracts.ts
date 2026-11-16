@@ -6,4 +6,7 @@ export type {
   InternalChannel,
   InteractionChannel,
   FixtureEvent,
+  ObservedEvent,
+  FlowEvent,
+  ReportedEvidence,
 } from './domain/protocol-flow';

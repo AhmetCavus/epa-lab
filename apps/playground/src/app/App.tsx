@@ -5,6 +5,7 @@ import { Catalog } from '../features/mission';
 import { WorkspaceRoute } from './WorkspaceRoute';
 import { NotFound } from './NotFound';
 import { selectLanguage } from './i18n';
+import { executionRuntime, privateOAuthRuntime, publicOAuthRuntime } from './runtime';
 
 export function App() {
   const { t, i18n } = useTranslation('common');
@@ -15,7 +16,12 @@ export function App() {
   }, [location.pathname]);
 
   useEffect(() => {
-    document.querySelector('meta[name="description"]')?.setAttribute('content', t('description'));
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute(
+        'content',
+        t('description', { context: publicOAuthRuntime ? 'public' : undefined }),
+      );
   }, [t]);
 
   return (
@@ -39,9 +45,21 @@ export function App() {
           </Link>
         </nav>
         <span className="header-label">
-          {t('common:header.slice')}
+          {t(
+            publicOAuthRuntime
+              ? 'header.public'
+              : privateOAuthRuntime
+                ? 'header.private'
+                : 'header.slice',
+          )}
           <span> / </span>
-          {t('common:header.preview')}
+          {t(
+            publicOAuthRuntime
+              ? 'header.demo'
+              : privateOAuthRuntime
+                ? 'header.integration'
+                : 'header.preview',
+          )}
         </span>
         <label className="language-control">
           <span>{t('language.label')}</span>
@@ -60,7 +78,10 @@ export function App() {
       </header>
       <Routes>
         <Route path="/" element={<Navigate to="/missions" replace />} />
-        <Route path="/missions" element={<Catalog />} />
+        <Route
+          path="/missions"
+          element={<Catalog runtimeEnabled={executionRuntime} publicRuntime={publicOAuthRuntime} />}
+        />
         <Route path="/missions/:missionId/workspace" element={<WorkspaceRoute />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -68,7 +89,15 @@ export function App() {
         <span>
           Auth Protocol Playground <span className="footer-version">/ 001</span>
         </span>
-        <span>{t('common:footer.notice')}</span>
+        <span>
+          {t(
+            publicOAuthRuntime
+              ? 'footer.publicNotice'
+              : privateOAuthRuntime
+                ? 'footer.privateNotice'
+                : 'footer.notice',
+          )}
+        </span>
       </footer>
     </>
   );

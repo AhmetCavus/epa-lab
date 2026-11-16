@@ -1,14 +1,15 @@
 /** @jsxImportSource react */
 import { useTranslation } from 'react-i18next';
 import { useEffect, useId, useRef } from 'react';
-import type { FixtureEvent } from '../domain/protocol-flow';
+import type { FlowEvent } from '../domain/protocol-flow';
 import type { CanvasLayout } from './interaction-layout';
 
 interface InteractionPathsProps {
   layout: CanvasLayout;
-  events: readonly FixtureEvent[];
+  events: readonly FlowEvent[];
   selectedEventId: string | null;
   onSelectEvent: (id: string) => void;
+  presentation?: 'observed' | 'fixture';
 }
 
 export function InteractionPaths({
@@ -16,6 +17,7 @@ export function InteractionPaths({
   events,
   selectedEventId,
   onSelectEvent,
+  presentation = 'fixture',
 }: InteractionPathsProps) {
   const { t } = useTranslation('protocol-flow');
   const markerId = `direction-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -58,7 +60,7 @@ export function InteractionPaths({
       </svg>
       {events.length === 0 && (
         <p className="diagram-empty">
-          {t('protocol-flow:diagram.empty')}
+          {t(presentation === 'observed' ? 'diagram.observedEmpty' : 'diagram.empty')}
           <br />
           {t('protocol-flow:diagram.emptyHelp')}
         </p>
@@ -81,6 +83,8 @@ export function InteractionPaths({
               })
             : t('diagram.internalDirection', { source: t(source.actor.labelKey) });
         const isSelected = selectedEventId === event.id;
+        const idleLabel =
+          event.visibility === 'observed' ? 'visibility.observed' : 'diagram.example';
 
         return (
           <button
@@ -89,12 +93,15 @@ export function InteractionPaths({
             data-event-id={event.id}
             data-channel={event.channel.kind}
             aria-pressed={isSelected}
-            aria-label={t('diagram.inspect', {
-              title: t(event.titleKey),
-              direction,
-              channel: t(event.channel.labelKey),
-              visibility: t(`visibility.${event.visibility}`),
-            })}
+            aria-label={t(
+              event.visibility === 'observed' ? 'diagram.inspectObserved' : 'diagram.inspect',
+              {
+                title: t(event.titleKey),
+                direction,
+                channel: t(event.channel.labelKey),
+                visibility: t(`visibility.${event.visibility}`),
+              },
+            )}
             onClick={() => onSelectEvent(event.id)}
           >
             <span className="interaction-label">
@@ -102,7 +109,7 @@ export function InteractionPaths({
                 <span className="message-number">{String(index + 1).padStart(2, '0')}</span>
                 <strong>{t(event.titleKey)}</strong>
                 <span className="path-selection-label">
-                  {t(isSelected ? 'diagram.selected' : 'diagram.example')}
+                  {t(isSelected ? 'diagram.selected' : idleLabel)}
                 </span>
               </span>
               <span className="message-direction">{direction}</span>

@@ -1,0 +1,9 @@
+name: epa-lab
+
+# Yoster and host lifecycle commands share this single live deployment profile.
+include:
+  - path:
+      - docker-compose.base.yml
+      - docker-compose.public.yml
+      - docker-compose.keycloak-postgres.yml
+    env_file: ../.env.live

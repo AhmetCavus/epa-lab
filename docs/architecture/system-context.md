@@ -4,18 +4,33 @@
 
 **Readiness reconciliation:** 2026-11-11, change `001-oidc-pkce`, tasks 1.1–1.3 only
 
-This document aligns with the [integration design](../../openspec/changes/001-oidc-pkce/design.md) and its two capability specifications. The owner accepted this architecture, ADR-0001/ADR-0002, the reconciled UX/visual baseline and revised specs on 2026-11-11, approving `001-oidc-pkce` tasks 2–9 for local/private implementation. The [readiness review and owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) records that explicit decision. This step starts no implementation; public real authentication remains unauthorized.
+This document aligns with the [integration design](../../openspec/changes/001-oidc-pkce/design.md) and its two capability specifications. The owner accepted this architecture, ADR-0001/ADR-0002, the reconciled UX/visual baseline and revised specs on 2026-11-11, approving `001-oidc-pkce` tasks 2–9 for local/private implementation. The [readiness review and owner approval record](../../openspec/changes/001-oidc-pkce/readiness-review.md#consolidated-owner-approval-summary) records that explicit decision. Public real authentication remains unauthorized.
+
+**Implementation alignment, 2026-11-12 (task 2.6):** Repository/integration tasks 2.1–2.5 are verified. The current-state notes below reflect their results; the accepted first-mission API, session, resource policy and event contracts remain planned. See [runtime evidence](../../openspec/changes/001-oidc-pkce/repository-verification.md#task-25-completion--authorized-health-prerequisite-private-publication-and-lifecycle-2026-11-12) and the [private run guide](../../infrastructure/README.md).
+
+**Keycloak alignment, 2026-11-12 (tasks 3.1–3.3):** The separate standard client, audience and
+optional permission scope are configured and verified in the existing private realm, with
+fresh setup, idempotent migration and rollback evidence. See the [Keycloak guide](../../infrastructure/keycloak/README.md)
+and [verification record](../../openspec/changes/001-oidc-pkce/keycloak-verification.md).
+The auth-client profiles and backend standard browser lifecycle are verified under tasks 4.1–5.5. See the [backend contract](../../services/auth-client/README.md), [profile verification](../../openspec/changes/001-oidc-pkce/auth-client-profiles-verification.md) and [browser lifecycle evidence](../../openspec/changes/001-oidc-pkce/browser-lifecycle-verification.md). The [HAPI policy](../../services/res-server/SECURITY.md) now verifies independent Access Token/permission enforcement for the synthetic read; see [Resource Server evidence](../../openspec/changes/001-oidc-pkce/resource-server-verification.md). Tasks 7.1–7.6 connect the fixed BFF resource operation and owned safe event API with [private integration evidence](../../openspec/changes/001-oidc-pkce/resource-observability-verification.md). Tasks 8.1–8.6 add the [explicit private SPA binding](../../apps/playground/README.md#explicit-private-execution), neutral observed-event presentation and focused browser verification. Full group-9 acceptance and runnable availability remain pending; the deployed fixture UI and backend containers are unchanged.
+
+**Public-release preparation, 2026-11-14:** the narrowed change reuses these ADR/component
+boundaries for the production SPA, same-origin proxy and HTTPS profile configuration.
+No database/privilege migration or fleet redesign is included. See the
+[current design](../../openspec/changes/public-playground-oauth-deployment/design.md) and
+[preparation evidence](../../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
+Public activation and tasks 6.1/6.2 remain excluded during preparation.
 
 ## Components and current implementation boundary
 
-| Component                 | Current repository state                                                                                                   | Proposed local integration responsibility                                                                                                                |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/playground`         | React SPA / Mission Control; fixture-only OAuth preview and conceptual ePA workspace                                       | Preserve the Catalog/Workspace design; add mission-owned browser navigation, session/run restoration and safe event projection under the approved change |
-| `services/auth-client`    | Existing NestJS confidential OAuth/OIDC client; ePA PAR header operation, browser login/callback and session demonstration | Reuse as the BFF; add the isolated standard mission routes, local session/logout, fixed resource access and owned event API                              |
-| `infrastructure/keycloak` | Existing Keycloak realm and ePA client with required PAR and S256                                                          | Same deployment fulfills Authorization Server and IdP roles; add a separate standard client without changing ePA policy                                  |
-| `services/res-server`     | Canonical HAPI FHIR Git submodule; inbound security is not implemented/verified                                            | Independently validate bearer credentials and permission for one synthetic FHIR read; deny undeclared data operations                                    |
+| Component                 | Current repository state                                                                                                                 | Proposed local integration responsibility                                                              |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `apps/playground`         | React SPA / Mission Control; default fixtures plus explicit private session/actions/observations binding                                 | Preserve the design and public fixture build; complete group-9 acceptance before runnable availability |
+| `services/auth-client`    | Existing ePA PAR/browser demo plus verified standard profiles, browser lifecycle, fixed resource read and owned version-1 observations   | Preserve the backend security/ownership boundaries during final mission acceptance                     |
+| `infrastructure/keycloak` | Existing realm/ePA required-PAR client; separate standard S256 client, audience and optional scope verified                              | Reuse the registered standard client for BFF integration; preserve ePA client and policy               |
+| `services/res-server`     | Canonical HAPI fork; explicit trust, Access Token validation, exact synthetic read permission and default-deny operation policy verified | Preserve this independent boundary and explicit safe reports                                           |
 
-No new BFF, Resource Server, Keycloak deployment or realm is proposed. Existing dependency declarations and disabled placeholder HAPI security settings do not establish a protected API. Obsolete build/Compose paths and the duplicate HAPI gitlink are documented implementation work in groups 2–9, not repaired or accepted by this review.
+No new BFF, Resource Server, Keycloak deployment or realm is introduced. Tasks 2.1–2.5 repaired tooling/build/Compose paths, preserved unique work while removing the duplicate HAPI gitlink, and verified private integration. Group 6 extends the same HAPI fork with the accepted mission policy; the earlier dependency/health prerequisite reports remain historical. Stable package `@epa-auth-lab/authorization`, Keycloak client `epa-auth-server`, API-client folder `epa-authorization` and existing ePA endpoint identifiers remain valid.
 
 ## Logical architecture for the proposed first runnable mission
 
@@ -42,7 +57,7 @@ IdP is not one of the four OAuth 2.0 roles. Browser redirects and direct BFF-to-
 
 ## Separate standard and existing ePA profiles
 
-The proposed `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. It starts Authorization Code + PKCE S256 directly, requests `openid demo.fhir.read`, and makes **no PAR call**. Standard discovery does not require PAR metadata. The resource Access Token audience is `playground-fhir`; the ID Token audience remains the OAuth client.
+The implemented auth-client `playground-standard` profile uses confidential Keycloak client `playground-oidc` in the existing realm. The Keycloak side verifies direct Authorization Code + PKCE S256, `openid demo.fhir.read` and **no PAR requirement**. Standard discovery is verified without PAR metadata; the existing ePA path still requires it. Both paths reuse the current transaction/transport/token services, with credentials and ID Token checks bound to captured server-selected profile context. Standard browser handlers use an isolated namespace in the existing process-local store. The verified Access Token audience is `playground-fhir`; ID Tokens retain only the OAuth client audience. An `openid`-only grant retains the resource audience without `demo.fhir.read` and produces a verified HAPI permission denial through the BFF.
 
 The existing `epa-par` profile retains its current client configuration, PAR discovery requirement, `require-par` marker and required-PAR policy. Standard configuration must not weaken or bypass that policy.
 
@@ -57,9 +72,12 @@ Existing implemented routes remain separate:
 
 Preserve existing ePA cookies, response contracts and tests. A smoke redirect or successful Keycloak authentication alone does not establish an application session; the originating browser binding and tracked callback transaction must also be valid. Mission Control's ePA entry stays conceptual, despite this separate existing backend demonstration. Comparing both flows in the UI is deferred.
 
-## Proposed standard browser API and redirects
+## Standard browser API and redirects
 
-These routes belong to the existing auth-client and are **not implemented by this documentation work**:
+These routes belong to the existing auth-client. Login, callback, session, local logout,
+fixed resource access and owned event reads are implemented and verified in private test
+processes when the standard profile is enabled. The [backend guide](../../services/auth-client/README.md#session-dto)
+documents the minimal DTO; `observationsAvailable` reflects safe history completeness.
 
 | Method and route                    | Contract                                                                                                                                                                               |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -72,7 +90,7 @@ These routes belong to the existing auth-client and are **not implemented by thi
 
 The fixed return is `/missions/oauth-oidc/workspace`. Correlated success, provider denial and exchange/validation failure return there with safe server-side outcome state, without callback parameters. An uncorrelated callback grants no run access. Do not accept caller-selected clients, issuers, callback settings, upstream URLs or `returnTo` destinations.
 
-Login and callback use the same application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. Refresh restores via session and owned-event reads; it does not repeat protocol actions.
+Login and callback use the same canonical application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. A fresh session request with the same cookie restores authentication/current-run state without repeating protocol actions. Owned-event reads preserve event identities and do not repeat protocol actions. The private SPA restores these reads on return/refresh; full group-9 acceptance remains pending.
 
 ## Sequence (illustrative, not an observed trace)
 
@@ -129,15 +147,26 @@ Context/run viewing expires within its original fifteen-minute lifetime. Bound e
 
 ## Independent HAPI authorization boundary
 
-The sole proposed exercise is `GET /fhir/Basic/playground-demo`, a synthetic nonclinical R4 Basic resource seeded through local/test setup, not anonymous writes. HAPI independently validates signature/key/algorithm, issuer, `playground-fhir` audience, expiry/not-before, token purpose and `demo.fhir.read`. BFF session cookies and ID Tokens do not authorize HAPI.
+The verified baseline permits only exact GET/HEAD `/actuator/health/liveness` and
+`/actuator/health/readiness` without authentication, with no health components/details.
+JWT authentication remains required elsewhere, including FHIR, MCP and `/actuator/health`.
+The narrow mission policy is now verified with signed-token tests through the real HAPI
+servlet and real private Keycloak tokens. Health status or a 401 response alone is not that evidence.
+
+The sole allowed exercise is exact `GET /fhir/Basic/playground-demo` without a query string, a synthetic nonclinical R4 Basic resource seeded through explicit local/test DAO setup. HAPI independently validates RS256/trusted keys, configured issuer/JWKS, `playground-fhir` audience, required expiry, not-before when present, signed Keycloak bearer purpose and `demo.fhir.read`. Missing/unsafe configuration fails closed. BFF session cookies and ID Tokens do not authorize HAPI.
 
 Return 401 for missing/invalid bearer credentials and 403 for valid credentials without permission or for undeclared data operations. Default-deny other FHIR reads, writes, searches, history, batch/transaction and data-bearing alternate endpoints, including MCP/CDS/test paths. Only explicitly reviewed data-free health/readiness exceptions are allowed. Acceptance must exercise direct HAPI requests as well as the BFF path.
 
-The BFF forwards only its server-held Access Token to the single configured read, with time/size limits. It returns a small safe synthetic view or stable failure code; it is not an arbitrary proxy. A BFF 401 before an upstream request must not be shown as a HAPI denial.
+The implemented BFF resource operation forwards only its server-held standard Access Token to the single configured read, with time/size limits, returning a small safe synthetic view or stable failure code. It rechecks authentication after asynchronous work before returning data. A BFF 401 before an upstream request is recorded only as a local rejection, never a HAPI denial. See the [resource DTO and event contract](../../services/auth-client/README.md#protected-synthetic-resource).
 
 ## Safe event provenance
 
 The version-1 discriminated event contract has stable `eventId`/`runId`, per-run `sequence`, actual `observedAt`/`observedBy`, closed `kind`, actor references, channel, outcome and per-kind allowlisted `evidence`. Unknown/unsafe fields, kinds or versions are rejected; no raw JSON fallback or false complete-trace claim. The [design's event contract](../../openspec/changes/001-oidc-pkce/design.md#6-define-a-versioned-safe-observation-contract) is canonical.
+
+The existing process-local store implements that contract with a strict projection at recording
+and API reads. Capacity reservations include concurrent work and prevent starting outbound
+operations without a complete event budget. A recording/capacity failure marks the owned
+document `complete: false`; it never evicts earlier events or prevents logout/credential cleanup.
 
 auth-client observes its own correlation/validation, exchange outcomes and received HAPI responses. An event for a HAPI response is `observedBy: auth-client` with the BFF observation time. A 200 response does not prove a list of internal security checks.
 
@@ -154,15 +183,17 @@ Teaching responses and routine application/proxy/resource logs exclude passwords
 
 The shell and protocol-flow capability remain mission-neutral under Accepted ADR-0003. Mission owns declarations, runtime adaptation and actions; protocol-flow renders neutral actors/events/selection through its existing public entries. Do not add a runtime plugin framework or put OAuth/ePA branches in generic controls. Preserve German-default/English behavior under Accepted ADR-0004, the two-card catalog, current artwork/layout and fixture mode.
 
-UI Slice 001 is hosted in an isolated `apps/playground` package alongside the existing `epa-auth-lab` services. Repository inspection confirmed those services and infrastructure already exist. The UI does not call or alter them. This is a UI-only coexistence boundary, not approval of backend integration.
+UI Slice 001 is hosted in an isolated `apps/playground` package alongside the existing `epa-auth-lab` services. The fixture UI does not call or alter those services. Local/private backend integration has separate approval under `001-oidc-pkce`; it does not change the public hosting boundary.
 
-On 2026-10-19, the owner authorized static UI deployment at `auth-playground.yappai.de` and registration in Yoster. The dedicated `infrastructure/docker-compose.playground.yml` stack builds only `apps/playground`, serves its compiled assets with Nginx and joins the existing `dev-proxy` network. Traefik's watched host configuration `../infra/traefik/dynamic/epa-lab.yml` routes the hostname to `http://epa-lab-playground:80`; public HTTPS requires the hostname on the existing Cloudflare tunnel. The root `yappai.host.json` manages and monitors only this static stack. No backend, authentication provider, session or database is part of this deployment.
+On 2026-10-19, the owner authorized static UI deployment at `auth-playground.yappai.de` and registration in Yoster. The dedicated [`infrastructure/docker-compose.playground.yml`](../../infrastructure/docker-compose.playground.yml) definition builds only `apps/playground`, serves its compiled assets with Nginx and joins the existing `dev-proxy` network. Traefik's watched host configuration `../infra/traefik/dynamic/epa-lab.yml` (relative to the repository root, outside this checkout) routes the hostname to `http://epa-lab-playground:80`; public HTTPS uses the existing Cloudflare tunnel.
+
+Since the separately authorized 2026-10-28 host setup, the root [`yappai.host.json`](../../yappai.host.json) manages the five-service [`infrastructure/docker-compose.host.yml`](../../infrastructure/docker-compose.host.yml) stack: Playground, Keycloak, auth-client, HAPI and its PostgreSQL database. Backend bindings default to loopback and may use explicitly configured private LAN addresses. Only the fixture Playground has public routing; the manifest does not authorize public backend exposure. The [isolated integration profile](../../infrastructure/README.md) uses a separate project and disposable database for verification without replacing deployed services.
 
 Future same-origin API routing uses existing Vite/Nginx configuration for **local/private** testing under the approved change. No broad credentialed CORS policy or new gateway is needed. Public API/auth-client/Keycloak/HAPI exposure is outside this change's implementation scope and requires separate authorization. Static-hosting permission does not grant authentication deployment permission.
 
 ## Accepted scope and pending runtime verification
 
-The owner accepted ADR-0001 and ADR-0002 and the reconciled UX/security/spec baseline on 2026-11-11, explicitly approving the complete change and local/private tasks 2–9. Readiness task 1.4 is complete. Tasks 2–9 remain unstarted in this approval-recording step; prior verification reports remain historical fixture evidence. Runtime acceptance is pending and public authentication deployment remains excluded.
+The owner accepted ADR-0001 and ADR-0002 and the reconciled UX/security/spec baseline on 2026-11-11, explicitly approving the complete change and local/private tasks 2–9. Readiness task 1.4 is complete; recording that approval itself started no implementation. Subsequent tasks 2.1–2.5 have verified repository/private infrastructure results, and task 2.6 aligns active documentation. Historical reports retain their original scope and results. First-mission runtime acceptance is pending and public authentication deployment remains excluded.
 
 ## Reference specifications
 

@@ -4,6 +4,11 @@
 
 ## Purpose
 
+**Public-release preparation:** the narrowed approved tasks 1.1–5.2 reuse this visual,
+localization and accessibility baseline for an explicit production OAuth build. Public
+activation remains excluded; fixtures and conceptual ePA stay intact. See the
+[current preparation scope](../../openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
+
 Localization follows Accepted ADR-0004: German is the default regardless of browser language, with English available through the accessible global language control. Both mission cards and availability/preview actions use external translation resources. Brand/protocol names and mission IDs remain stable; language selection does not start a mission.
 
 **Authorized UI Slice 001:** OAuth is labeled **Fixture preview** with a working **Preview fixture** link. ePA remains **Planned** with a working **Preview concept** link to its layout-only fixture. Neither card offers a runnable mission. Only these two entries and real navigation are included.
@@ -55,6 +60,13 @@ The existing OAuth card can expose a real mission only when a separately enabled
 Until that binding is available and verified, preserve the explicit Fixture preview and Planned states and their working preview routes. An absent or unavailable runtime must give a truthful, non-sensitive unavailable state, not a fake successful run. The current public deployment stays fixture-only; local/private integration approval would not authorize publishing authentication routes.
 
 The ePA card remains Planned with a conceptual preview and no runnable action. The existing auth-client's separate PAR demonstration does not change this card's availability. The first standard mission uses Authorization Code + PKCE without PAR; a comparison of the two flows is deferred.
+
+**Implementation alignment, 2026-11-13:** default fixture cards remain unchanged. Only the
+explicit private Vite binding adds a separately labeled integration-test link on the OAuth
+card; its fixture link selects `?view=fixture`. Neither this link nor focused task-8
+verification changes Fixture preview/Planned availability. Runnable promotion remains task
+9.5. The public build/deployment contains no enabled binding or backend routing. See the
+[runtime guide](../../apps/playground/README.md#explicit-private-execution).
 
 Retain the two-card layout, full-width responsive hero, existing JPEGs, status text independent of color, keyboard navigation and German-default/English copy. No filters, introduction overlay, additional mission card or artwork redesign is required for this integration. The open design questions below remain optional future review topics, not missing first-integration decisions.
 
