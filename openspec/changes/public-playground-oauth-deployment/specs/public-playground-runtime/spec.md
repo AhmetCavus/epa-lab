@@ -9,14 +9,13 @@ This 2026-11-14 revision removes database/privilege migrations and broad readine
 Change 001 remains the implemented component/security/UX baseline. Owner-confirmed site and
 private-mission availability do not substitute for acceptance of the new public OAuth binding.
 
-**DRAFT extension, 2026-11-16:** planning confirmation adds only the Keycloak production
-startup/storage prerequisite below. Implementation, database provisioning, maintenance and
-public cutover still require explicit authorization. Completed preparation evidence remains
-historical; the draft does not reinstate HAPI/database restructuring.
-
-**Subsequent preparation authorization, 2026-11-16:** implementation of 5.3–5.5 is now
-owner-authorized. The requirements below still require specific database/maintenance
-approvals and verified preservation before execution or live release, respectively.
+**Final owner decision, 2026-11-16:** retain existing Keycloak H2 `dev-file` storage and
+development startup for the experimental public beta. The earlier PostgreSQL migration,
+provisioning, role-creation and storage-transition requirements are removed. Tasks 5.3–5.5
+now prepare only the 26.8.0 → 26.8.2 security upgrade, consistent H2 backup and tested
+rollback. This planning update changes no live service and authorizes no backup pause,
+deployment or public activation. The 11 completed tasks, existing OAuth implementation
+and public release candidate remain the baseline; dated migration guidance is superseded.
 
 ## ADDED Requirements
 
@@ -77,10 +76,10 @@ server-side. Discovery/JWKS same-origin, TLS and stored-transaction validation M
 ### Requirement: Preserve existing ePA and data
 
 The public binding MUST preserve the private ePA issuer, users, signing keys, clients,
-credentials, PAR requirement and legacy endpoints/sessions. Existing data and volumes MUST
-remain intact. HAPI database/schema/data/ownership/credentials/permissions MUST NOT change.
-The only proposed storage exception is the explicitly reviewed Keycloak-only production
-prerequisite below; planning confirmation MUST NOT authorize executing that transition.
+credentials, PAR requirement and legacy endpoints. The existing Keycloak container/service
+identity and H2 volume/data MUST be retained. HAPI PostgreSQL configuration, database,
+schema, data, ownership, credentials and permissions MUST NOT change. Provider maintenance
+MUST have an explicitly reviewed session/recovery impact; no storage transition is in scope.
 
 #### Scenario: ePA regression
 
@@ -148,6 +147,19 @@ SHALL be configured without importing legacy users. Demo Access Tokens MUST expi
 - **THEN** no new demo access is granted
 - **AND** issued bearer validity remains bounded by expiry without claiming immediate revocation.
 
+### Requirement: Experimental beta disclosure
+
+Release documentation MUST identify the deployment as an experimental beta using
+owner-provisioned demo accounts and synthetic-only data. It MUST disclose the
+owner-accepted unsupported production H2 storage/development-startup risk and MUST NOT
+claim production readiness or vendor-supported H2 upgrades.
+
+#### Scenario: Beta release review
+
+- **WHEN** the owner reviews the release packet or demo-access guidance
+- **THEN** experimental status, account provisioning, synthetic-only use and the accepted storage/startup limitations are explicit
+- **AND** passing security or compatibility tests do not produce a production-readiness claim or enable public registration.
+
 ### Requirement: Trusted proxy and bounded requests
 
 New public authentication routes SHALL accept canonical host/protocol/client identity only
@@ -185,17 +197,23 @@ responses MUST NOT be shared-cached.
 
 ### Requirement: Genuine public-authentication activation gates
 
-Public authentication MUST remain disabled until the existing provider has a production-suitable
-configuration and the new HTTPS/proxy/token/session/private-service boundaries pass. The draft
-Keycloak prerequisite MUST receive implementation and required maintenance/database approvals
-before execution. Other unresolved security prerequisites MUST be reported separately,
-without bypass or automatic inclusion of database/infrastructure projects.
+Public authentication MUST remain disabled until the focused provider patch/backup/rollback
+evidence, required live-maintenance and release approvals, and HTTPS/proxy/token/session/
+private-service checks pass. Retained H2/development startup is an accepted experimental-beta
+risk, not a requirement to provision a database or change startup mode. Other failures MUST
+be reported separately without weakening authentication or expanding scope.
 
-#### Scenario: Unsuitable provider configuration
+#### Scenario: Unverified patch or failed authentication boundary
 
-- **WHEN** the deployment still relies on unsupported development-only provider settings or a required auth boundary fails
-- **THEN** public authentication activation is blocked with the specific evidence and a separately reviewed minimal resolution
-- **AND** the working public site remains available; no database migration or security exception is silently introduced.
+- **WHEN** the 26.8.2 patch/preservation/rollback evidence or required approval is missing, or a required auth boundary fails
+- **THEN** activation stays blocked with the specific missing evidence or failure while public fixtures remain available
+- **AND** accepted H2/development mode alone does not reinstate the removed production-storage gate or waive any other security boundary.
+
+#### Scenario: Separate HAPI availability failure
+
+- **WHEN** the existing HAPI/PostgreSQL resource path is unavailable
+- **THEN** its availability issue is reported separately and successful resource acceptance is withheld until the actual required path works
+- **AND** Keycloak H2 backup/patch/rollback preparation can proceed independently without changing HAPI's PostgreSQL configuration.
 
 #### Scenario: Isolated Cloudflare probe
 
@@ -203,51 +221,59 @@ without bypass or automatic inclusion of database/infrastructure projects.
 - **THEN** the vantage/path/result is retained without treating it as an infrastructure outage or gating unrelated build/proxy work
 - **AND** actual runtime discovery/JWKS/API failures, if reproduced on required OAuth paths, remain genuine integration failures.
 
-### Requirement: Keycloak production storage prerequisite
+### Requirement: Focused Keycloak security upgrade on retained H2
 
-The production candidate SHALL reuse the existing Keycloak service and PostgreSQL 16
-instance/volume, with database `keycloak` and separate non-superuser role `keycloak_app`.
-It MUST use supported production startup, private database/admin/management access and
-verified hostname/proxy/TLS configuration. No additional PostgreSQL container or volume,
-HAPI privilege transition or generic migration framework SHALL be introduced.
+The beta SHALL retain the existing Keycloak service/container identity, H2 `dev-file`
+storage and development startup. The provider change SHALL be limited to 26.8.0 → 26.8.2
+using verified immutable image identities and isolated compatibility/restart evidence.
+Keycloak PostgreSQL migration, database provisioning, role creation and storage/startup
+transitions MUST NOT be introduced. Existing OAuth implementation and SPA/BFF candidates
+MUST be preserved.
 
-#### Scenario: Isolated production candidate
+#### Scenario: Isolated patched H2 candidate
 
-- **WHEN** separately authorized preparation starts the production-mode candidate on an isolated Keycloak target
-- **THEN** readiness, restart/recovery, public-realm HTTPS metadata/keys and the unchanged legacy issuer/ePA PAR flow pass with real components
-- **AND** the Keycloak database role has only its required schema privileges, cannot read/write HAPI data or assume HAPI roles, and uses a verified shared-instance connection budget.
+- **WHEN** preparation exercises 26.8.2 on an isolated working copy of the consistent existing H2 backup
+- **THEN** real readiness/restart, public-realm HTTPS metadata/keys, standard OAuth and the legacy issuer/ePA PAR flow are verified
+- **AND** it neither mounts the live provider volume nor replaces existing services, candidate images or storage architecture.
 
-#### Scenario: Unsafe provisioning or conflicting state
+#### Scenario: Patch incompatible with preserved state
 
-- **WHEN** provisioning finds conflicting ownership, requires excessive privileges/HAPI changes, lacks specific database-mutation approval or cannot satisfy the private access boundary
-- **THEN** it fails closed and reports the blocker without overwriting data, broadening grants or changing HAPI
-- **AND** repeat provisioning verifies owned state; existing volumes/databases are never reset or recreated to make tests pass.
+- **WHEN** the exact patched image cannot use the preserved H2 copy or a required regression fails
+- **THEN** the patch remains blocked with the concrete failure and the original live provider/data stay untouched
+- **AND** no fixture reinitialization, password/key reset, validation bypass or database transition is substituted to obtain success.
 
-### Requirement: Preserve Keycloak state through production transition
+### Requirement: Consistent H2 preservation and tested provider rollback
 
-The transition SHALL use a consistent protected source backup and preserve legacy realm/user
-identities, credential behavior, signing keys, client secrets/configuration, administrative
-recovery, the ePA issuer and PAR policy. Transfer exports MUST NOT be treated as complete
-backups. Maintenance/session/revocation impact and targeted recovery MUST be reviewed
-explicitly before live approval. Existing preservation/security requirements are not waived.
+The upgrade MUST have a protected, verifiably consistent pre-upgrade H2 backup and matching
+saved 26.8.0 image/configuration. Isolated upgrade and restore-based rollback MUST preserve
+realm/user identities, credentials, signing keys, clients, administrative recovery, issuer
+and PAR policy. Required maintenance and session/token/revocation/post-upgrade-write impact
+MUST be reviewed before live approval. Hot file copies or partial exports MUST NOT count
+as the backup.
 
-#### Scenario: Legacy state preservation rehearsal
+#### Scenario: Source consistency and restore proof
 
-- **WHEN** a consistent source is restored into the isolated production-storage target
-- **THEN** private comparisons verify identity/configuration/key preservation and real legacy login/token/PAR regressions pass without printing sensitive material
-- **AND** no legacy realm is recreated from fixtures, keys/passwords are not reset to conceal loss, and public synthetic accounts remain separate from legacy users.
+- **WHEN** an administrator supplies a verifiable cold backup or separately approved Keycloak-only stop/copy/start produces one
+- **THEN** its provenance, source version, clean-stop consistency, integrity and restore are verified without exposing secrets
+- **AND** upgrade/state comparisons use only isolated copies, preserve the original backup and never recreate missing legacy state from fixtures.
 
-#### Scenario: Incomplete backup or unresolved maintenance impact
+#### Scenario: Missing backup or operational approval
 
-- **WHEN** the available source is inconsistent, only a masked/partial export exists, or session/revocation and maintenance implications remain unresolved
-- **THEN** live transition stays blocked pending verified preservation and explicit owner decisions
-- **AND** no live pause, database creation, container recreation or authentication activation is inferred from planning confirmation.
+- **WHEN** a consistent source, successful restore or required maintenance/session-impact approval is missing
+- **THEN** live upgrade stays blocked with the specific missing evidence or approval
+- **AND** planning confirmation does not stop, recreate, upgrade or restore a live container or activate public OAuth.
 
-#### Scenario: Provider recovery and application withdrawal
+#### Scenario: Restore the pre-upgrade state
 
-- **WHEN** a separately approved provider transition or acceptance fails
-- **THEN** the rehearsed Keycloak-only recovery preserves administrative access and accounts for post-cutover writes before switching storage back
-- **AND** public forwarding can be withdrawn independently, with no HAPI restore, shared-volume reset, silent stale-identity restore or deletion of retained provider data.
+- **WHEN** provider rollback is rehearsed or a separately approved live patch fails
+- **THEN** the upgraded provider is stopped and its state retained before the untouched pre-upgrade backup is restored with the matching 26.8.0 image/settings
+- **AND** 26.8.0 never opens 26.8.2-written files, post-upgrade identity/revocation writes and issued tokens are explicitly accounted for, and administrative/ePA/standard regressions are verified.
+
+#### Scenario: Independent application withdrawal
+
+- **WHEN** the public application is withdrawn while the patched provider remains usable
+- **THEN** the saved fixture release and closed OAuth/provider forwarding restore the application boundary without automatically downgrading the provider
+- **AND** no HAPI PostgreSQL restore, shared-volume reset, silent stale-identity restore or provider-data deletion is performed.
 
 ### Requirement: Preserve Mission Control presentation
 

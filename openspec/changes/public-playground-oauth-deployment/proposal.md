@@ -3,14 +3,20 @@
 **APPROVED narrowed preparation: 2026-11-14 — no live deployment.**
 Existing preparation approval covers tasks 1.1–5.2; tasks 6.1/6.2 still require release approval.
 
-**DRAFT Keycloak prerequisite extension: 2026-11-16.** The owner confirmed revision of
-these planning artifacts only. Proposed tasks 5.3–5.5 are not authorized for implementation;
-database creation, maintenance, container recreation and public activation are not approved.
-The 11 completed tasks and their dated evidence remain unchanged.
+**Final owner decision, 2026-11-16 — experimental public beta:** retain the existing
+Keycloak H2 `dev-file` storage and development startup. Remove the earlier Keycloak
+PostgreSQL migration, provisioning, role-creation and storage-transition requirements.
+Preparation tasks 5.3–5.5 now cover only a focused Keycloak 26.8.0 → 26.8.2 security
+upgrade, consistent H2 backup and tested rollback. The earlier preparation apply
+authorization remains recorded; this request updates planning only and authorizes no
+live-service modification, backup pause, deployment or public OAuth activation.
+Tasks 6.1/6.2 still require separate release approval.
 
-**Subsequent preparation authorization, 2026-11-16:** the owner explicitly authorized
-implementation of tasks 5.3–5.5. Specific shared-database DDL/live-maintenance approvals
-and public release remain separate; see [current execution evidence](keycloak-production-verification.md).
+The 11 completed tasks, existing OAuth implementation, public SPA/BFF release candidate
+and dated evidence remain unchanged. This decision supersedes the storage-transition
+instructions and production-storage gate in the dated
+[execution report](keycloak-production-verification.md) and [release packet](release-packet.md);
+their observations and saved image identities remain historical evidence, not new work.
 
 ## Why
 
@@ -36,10 +42,14 @@ preparation guidance; the completed task 1.1 remains an approval-history record.
   Reuse Cloudflare Tunnel, Traefik, Nginx, BFF, Keycloak and private HAPI unchanged in purpose.
 - Verify the real browser journey, new ingress security boundaries and targeted rollback.
   Keep synthetic-only access and owner-provisioned individual demo accounts.
-- **DRAFT prerequisite:** prepare production startup/storage for the existing Keycloak,
-  using a separate `keycloak` database and non-superuser `keycloak_app` role on the existing
-  PostgreSQL 16 instance. Rehearse preservation of legacy users, signing keys, clients,
-  credentials and ePA/PAR before any separately approved live transition.
+- Retain the existing `epa-lab-keycloak` container/service identity, H2 volume
+  `epa-auth-lab_keycloak-data`, ePA realm/users/clients/keys and existing OAuth behavior.
+  Prepare only the 26.8.2 provider image change with a consistent protected H2 backup,
+  isolated compatibility/restart checks and rollback to the saved 26.8.0 image/state.
+- Explicitly label the release experimental beta: owner-provisioned individual demo
+  accounts, synthetic-only data, unsupported production storage/startup risk and no
+  production-readiness claim. The owner accepts this bounded risk; retaining H2 is not
+  an unresolved database decision or a requirement to adopt production startup.
 
 ## Capabilities
 
@@ -59,22 +69,18 @@ Limited to SPA build/runtime configuration, its Nginx proxy, BFF public profile/
 settings, demo-realm HTTPS configuration, necessary HAPI issuer/JWKS settings and the targeted
 release packet. Existing design, DE/EN localization, accessibility and application logic stay.
 
-The draft exception is limited to Keycloak's own production database/role and the necessary
-legacy Keycloak state transfer. It adds no PostgreSQL container or persistent volume.
-HAPI database/data/schema/ownership/credentials/permissions remain unchanged; its historical
-privilege findings are not reopened. General database restructuring, generic migration
-tooling, fleet changes and broad readiness reviews remain excluded. No new service or
-application dependency is planned.
+There is no Keycloak database provisioning, role creation, export/import transfer or
+storage-engine/startup-mode transition in scope. HAPI's PostgreSQL configuration, database,
+data, schema, ownership, credentials and permissions remain unchanged. Its recorded
+availability issue is a separate operational issue, not a dependency of the Keycloak
+backup/upgrade preparation. A failing actual resource path still prevents claiming a
+successful end-to-end public resource journey. No new service or application dependency,
+general database restructuring or broad readiness review is planned.
 
-The prerequisite covers a consistent protected backup, isolated production rehearsal,
-maintenance/session-impact review, exact targeted rollback and release-packet refresh.
-Missing backup consistency, preservation evidence or required operational approvals keep
-the transition blocked. Planning confirmation does not authorize live database work.
-
-Genuine public-authentication blockers are listed separately in [design.md](design.md):
-provider production suitability, trustworthy HTTPS/proxy handling, private administration/FHIR,
-and actual discovery/JWKS/token/session security. Resolve those gates without bypasses; any
-work beyond this Keycloak-only exception needs its own reviewed scope. The subsequent
-authorization covers preparation tasks 5.3–5.5; specific live maintenance/database work
-and all live cutover still need explicit authorization.
-The existing public site remains fixture-only until the release gates pass.
+Remaining provider preparation is a verified consistent backup, immutable 26.8.2 image,
+isolated state-preservation/rollback evidence and refreshed packet. Required backup or
+upgrade maintenance and public release need specific approval; none is supplied by this
+planning update. The concrete [activation gates](design.md#public-authentication-activation-gates)
+retain HTTPS/proxy, private administration/FHIR and discovery/JWKS/token/session checks.
+The accepted H2/development-mode risk does not waive those controls or establish
+production readiness. The existing public site remains fixture-only until release approval.
