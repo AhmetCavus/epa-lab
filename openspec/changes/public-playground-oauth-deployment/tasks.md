@@ -1,5 +1,14 @@
 # Tasks
 
+**Live release approved, 2026-11-16; attempt stopped and recovered.** The owner approved
+reviewed tasks 6.1/6.2, bounded Keycloak maintenance, public beta activation and targeted
+failure recovery. The private acceptance helper rejected an incorrectly supplied private
+origin before protocol acceptance; the original private provider and public fixtures were
+recovered under the owner's stop-on-failure instruction. Public activation was never
+attempted. Tasks remain **14/16 complete**, with 6.1/6.2 approved but unchecked. See
+[live execution and preserved state](live-release-verification.md). The dated preparation-only approval
+statements below are history, superseded by this explicit release grant and execution record.
+
 **APPROVED narrowed preparation, 2026-11-14 — no live deployment.** Preparation approval
 remains bounded to 1.1–5.2; public rollout tasks 6.1/6.2 still require separate approval.
 Follow the narrowed [proposal](proposal.md), [design](design.md) and [specification](specs/public-playground-runtime/spec.md).
@@ -70,8 +79,10 @@ or legacy-data migration rehearsal is required.
 
 ## 6. Release only after separate approval
 
-These tasks remain unapproved. Close actual public-authentication gates before activation;
-do not infer release approval from prior preparation authorization or planning completion.
+The owner explicitly approved these tasks on 2026-11-16. The attempt stopped during private
+acceptance and executed the reviewed recovery; both remain unchecked. Complete fresh private
+acceptance before public activation, then actual public HTTPS acceptance; preparation and
+a corrected helper input alone are not completion evidence.
 
 - [ ] 6.1 After separate approval of the exact tested packet, confirmed identity-reset consequences and bounded maintenance, point the existing `epa-lab-keycloak` service at the fresh PostgreSQL installation using production-mode 26.8.2. Retain the original H2 volume offline with its recovery image/settings; perform no H2 transfer or HAPI/shared-storage reset. Verify private fresh ePA/PAR/OAuth before reviewed application/binding changes and any explicitly approved public activation; restore fixture-only access or use approved private-provider recovery on failure.
 - [ ] 6.2 Verify the full actual public HTTPS browser/resource journey, proxy/security negatives, fresh ePA/PAR and old-authentication rejection with reviewed token/cache handling. Confirm HAPI data/private-admin boundaries and safe observations; record owner acceptance of the new installation or restore fixture-only behavior. Retain original H2 for recovery until acceptance; do not delete it without a separate owner decision. Do not claim provider internals, production readiness or archive this change.

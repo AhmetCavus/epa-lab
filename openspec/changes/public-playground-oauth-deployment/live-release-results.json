@@ -1,0 +1,152 @@
+{
+  "date": "2026-11-16",
+  "status": "withdrawn-and-recovered",
+  "ownerReleaseApproval": true,
+  "sourceAtPreflight": "ab5a0cd72ff35a0215bd90e58016492afd162a81",
+  "privateEvidenceDirectory": ".local-backups/public-playground-oauth-deployment/20261116-live-release-4aqf2djv",
+  "preflight": {
+    "status": "passed",
+    "imagesVerified": 6,
+    "backupHashesVerified": true,
+    "protectedConfigurationHashes": 10,
+    "existingContainersRecorded": 49
+  },
+  "handoff": {
+    "originalCleanShutdown": {
+      "time": "2026-11-16T15:25:26.868384+00:00",
+      "container": "c3158e844e54e57f0a4f223898728001ebf97624d4ef7560f5c0b876d7adef2d",
+      "exitCode": 143,
+      "gracefulShutdownLogged": true,
+      "volume": "epa-auth-lab_keycloak-data"
+    },
+    "freshProductionProviderStarted": true,
+    "providerVersion": "26.8.2",
+    "originalH2WasDetached": true,
+    "freshPrivateAdministration": "passed"
+  },
+  "failedGate": {
+    "stage": "fresh-private-administration/public-realm-settings validation",
+    "error": "Invalid public setting: PLAYGROUND_APP_ORIGIN",
+    "cause": "agent verification helper passed private origin to public settings validator",
+    "providerDefectEstablished": false,
+    "helperInputCorrectedAndLocallyValidated": true,
+    "actualFreshPrivateProtocolAcceptance": "not completed",
+    "actualPublicActivation": "not attempted",
+    "releaseResumedAfterRecovery": false
+  },
+  "recovery": {
+    "status": "completed",
+    "time": "2026-11-16T15:27:47.350538+00:00",
+    "originalPrivateProviderRestored": true,
+    "freshPostgresStateRetained": true,
+    "publicFixtureRestored": true,
+    "h2ReattachedOnlyForApprovedRecovery": true
+  },
+  "recoveryAcceptance": {
+    "status": "passed",
+    "time": "2026-11-16T15:30:25.435Z",
+    "originalAdministration": "passed",
+    "restoredPrivateProtocol": {
+      "passed": 27,
+      "checks": [
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid demo.fhir.read)",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "requested resource permission is present",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid)",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "narrow grant omits resource permission while retaining audience",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "PKCE missing-challenge is rejected before login",
+        "PKCE missing-method is rejected before login",
+        "PKCE plain is rejected before login",
+        "PKCE invalid-method is rejected before login",
+        "wrong-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "wrong-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "unregistered callback is rejected",
+        "password grant is disabled",
+        "client_credentials grant is disabled",
+        "existing ePA client rejects authorization without PAR",
+        "existing ePA client accepts genuine PAR and opens login"
+      ]
+    },
+    "liveHapiStatuses": [200, 403, 401],
+    "actualPrivateBrowserLogin": "passed",
+    "realEpaIntegrationTests": 6,
+    "actualPublicHttps": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/missions",
+        "status": 200
+      },
+      {
+        "path": "/missions/epa-concept/workspace",
+        "status": 200
+      },
+      {
+        "path": "/api/oauth/session",
+        "status": 404
+      },
+      {
+        "path": "/api/oauth/login",
+        "status": 404
+      },
+      {
+        "path": "/realms/playground-public/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "path": "/api/oauth/callback",
+        "status": 404
+      }
+    ],
+    "publicOAuthActive": false,
+    "freshPostgresStateRetained": true
+  },
+  "preservation": {
+    "allHapiTableCountsAndContentFingerprintsUnchanged": 60,
+    "hapiDatasourceConfigurationUnchanged": true,
+    "hapiImageUnchanged": true,
+    "protectedConfigurationHashesUnchanged": 10,
+    "untargetedContainersUnchanged": 45,
+    "postgresqlContainerImageVolumeAndStartTimeUnchanged": true,
+    "freshStorageRetained": {
+      "keycloakTables": 101,
+      "activeProviderConnections": 0
+    },
+    "originalH2CurrentlyAttachedToRecoveredOriginalProvider": true,
+    "h2Migrated": false,
+    "databasesReset": false,
+    "volumesDeleted": false,
+    "reviewedCandidateImagesPreserved": true
+  },
+  "publicOAuthActive": false,
+  "actualPublicBetaAcceptance": false,
+  "productionReadinessClaim": false,
+  "tasks": {
+    "total": 16,
+    "complete": 14,
+    "remaining": ["6.1", "6.2"],
+    "releaseTasksApproved": true,
+    "releaseTasksChecked": false
+  },
+  "archived": false,
+  "recordValidation": {
+    "strictOpenSpecIssues": 0,
+    "allTaskDescriptionsAndCheckboxesPreserved": true,
+    "localLinksResolved": 62,
+    "changedFileCredentialScan": "passed",
+    "candidateImagesPreserved": true
+  }
+}

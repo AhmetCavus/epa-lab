@@ -1,5 +1,20 @@
 # Agent Guidelines — Auth Protocol Playground
 
+**Owner live-release authorization (2026-11-16):** the owner explicitly approved the
+reviewed `public-playground-oauth-deployment` release packet for **6.1 and 6.2**, including
+the bounded Keycloak maintenance window and experimental public beta activation. Execute
+only the documented targeted handoff: verify images/configuration/backups, cleanly stop
+original Keycloak, retain its H2 volume offline, use prepared PostgreSQL-backed 26.8.2,
+verify fresh private ePA/PAR/OAuth first, then reviewed public bindings and actual HTTPS
+acceptance. On any acceptance failure, stop activation and execute the reviewed targeted
+withdrawal/recovery. Preserve HAPI data and unrelated services; never reset databases or
+delete volumes. Mark tasks complete only with actual evidence; do not archive. This explicit
+grant supersedes historical preparation-only/public-activation restrictions below for this
+reviewed packet alone. The first attempt stopped on an acceptance-helper configuration
+error and executed approved recovery: original private 26.8.0/H2 and public fixtures are
+restored, fresh PostgreSQL state is retained, and 6.1/6.2 remain unchecked. No public
+activation occurred. See [live release evidence](openspec/changes/public-playground-oauth-deployment/live-release-verification.md).
+
 **Owner preparation authorization (2026-11-16):** resume
 `public-playground-oauth-deployment` tasks **5.3–5.5** for fresh PostgreSQL-backed
 Keycloak 26.8.2 preparation. The owner accepts recreated users, regenerated signing keys,

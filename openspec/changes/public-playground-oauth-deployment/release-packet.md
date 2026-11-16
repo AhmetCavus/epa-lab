@@ -1,5 +1,14 @@
 # Public OAuth candidate — owner review packet
 
+**Owner approved this reviewed packet for 6.1/6.2 on 2026-11-16. The attempt was stopped
+and recovered before public activation.** The private verification helper passed the
+private app origin into the public-realm settings validator. The original private 26.8.0/H2
+provider and fixture-only public access are restored; the fresh PostgreSQL state is retained.
+Tasks 6.1/6.2 are approved but unchecked. See the [actual execution record](live-release-verification.md)
+and [sanitized results](live-release-results.json). The remaining packet is the reviewed
+pre-release snapshot: its earlier pending-approval statements describe preparation history,
+not the owner's subsequent grant or completed live acceptance.
+
 Preparation packet updated 2026-11-16. **Do not execute live rollout from this packet yet.**
 Tasks 6.1/6.2 remain unapproved. The production candidate has passed; live handoff and
 actual public acceptance remain open. Keep the existing fixture release running.

@@ -1,5 +1,14 @@
 # Design
 
+**Live release approved, 2026-11-16; attempt stopped and recovered.** The owner approved
+reviewed tasks 6.1/6.2, bounded Keycloak maintenance, public beta activation and targeted
+failure recovery. The private acceptance helper rejected an incorrectly supplied private
+origin before protocol acceptance; the original private provider and public fixtures were
+recovered under the owner's stop-on-failure instruction. Public activation was never
+attempted. Tasks remain **14/16 complete**, with 6.1/6.2 approved but unchecked. See
+[live execution and preserved state](live-release-verification.md). The dated preparation-only approval
+statements below are history, superseded by this explicit release grant and execution record.
+
 **APPROVED narrowed preparation: 2026-11-14 — public deployment is not authorized.**
 See [proposal.md](proposal.md) for scope and [tasks.md](tasks.md) for preserved tracking.
 
