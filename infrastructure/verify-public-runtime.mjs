@@ -321,6 +321,7 @@ async function verifyRuntime(context) {
         OIDC_ISSUER: `${settings.server}/realms/epa-demo`,
         OIDC_CLIENT_ID: env.OIDC_CLIENT_ID,
         OIDC_CLIENT_SECRET: env.OIDC_CLIENT_SECRET,
+        OIDC_ALLOW_PRIVATE_NETWORK_HTTP: env.OIDC_ALLOW_PRIVATE_NETWORK_HTTP ?? 'false',
         OIDC_DEFAULT_REDIRECT_URI: env.OIDC_DEFAULT_REDIRECT_URI,
         OIDC_ALLOWED_REDIRECT_URIS: JSON.stringify([env.OIDC_DEFAULT_REDIRECT_URI]),
         PLAYGROUND_OIDC_ENABLED: 'true',

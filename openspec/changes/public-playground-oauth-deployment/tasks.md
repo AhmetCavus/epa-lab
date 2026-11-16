@@ -10,12 +10,17 @@ production-mode 26.8.2 in the existing `epa-lab-keycloak` service. Provision `ep
 `playground-public` and fresh synthetic users from versioned configuration. No H2 migration.
 Preserve the original H2 volume offline for recovery until the fresh installation is accepted.
 
-**Planning only:** the earlier preparation apply is history, not authorization to perform
-this revised plan's live recovery/DDL or container replacement. No live database reset,
-service change or public activation is performed. Specific operational approval and
-separate release approval remain required; 5.3–5.5 and 6.1/6.2 remain unchecked.
+**Preparation resumed by owner apply, 2026-11-16:** preparation 5.3–5.5 is authorized.
+The owner accepts recreated users, regenerated keys, invalidated sessions and incompatible
+old tokens/credentials; no H2 migration. The owner subsequently approved the exact
+PostgreSQL restart/read-only postchecks; recovery and 5.3 are complete. New database/role/
+schema creation subsequently received explicit owner approval and is now provisioned;
+isolated production-mode fresh-flow/restart verification passes and 5.4 is complete. Live
+Keycloak replacement/public activation remain excluded. See the
+[current preparation record](fresh-keycloak-preparation.md); 5.5 has closed the release
+packet and final checks, while 6.1/6.2 remain unapproved.
 
-All 16 task IDs and checkbox states are retained: **11/16 complete**. The 11 completed
+All 16 task IDs are retained: **14/16 complete**. The original 11 completed
 descriptions below are preserved verbatim as dated history. Their earlier preservation,
 storage exclusions and successful tests do not assert continuity of old Keycloak identities
 or acceptance of this fresh installation. HAPI privilege/data work and legacy migration
@@ -24,8 +29,8 @@ remain excluded. Keep historical
 existing public SPA/BFF candidates and change 001 unchanged. The migration proposals in
 [earlier execution evidence](keycloak-production-verification.md) and [release packet](release-packet.md)
 and the earlier retained-H2 beta plan are superseded; their actual observations/image
-identities remain dated evidence. Only the five unfinished task descriptions below change.
-Refresh the packet under 5.5 after actual fresh-install tests. The isolated 403 is not an
+identities remain dated evidence. Tasks 5.3–5.5 record the additional verified preparation
+and completed packet after actual fresh-install tests. The isolated 403 is not an
 outage prerequisite. Existing PostgreSQL availability is now a prerequisite for the fresh
 Keycloak database; restore it through a targeted approved operation while keeping HAPI's
 database/data and PostgreSQL configuration untouched. No H2 export/import, data transfer
@@ -59,9 +64,9 @@ or legacy-data migration rehearsal is required.
 
 ### Focused preparation — fresh PostgreSQL Keycloak, no H2 migration
 
-- [ ] 5.3 Diagnose and restore existing PostgreSQL 16 availability through a specifically approved targeted operation that preserves HAPI database/data/configuration; verify private TCP, SQL and HAPI connectivity. Prepare exact fresh `keycloak`/least-privilege `keycloak_app` provisioning with conflict/effective-access checks. Record owner confirmation of regenerated users/signing keys and client/session/token/cache consequences before live provider replacement. No reset, shared-volume replacement or inferred live-repair/DDL approval.
-- [ ] 5.4 After recovery and specific provisioning approval, create the fresh `keycloak` database/role on the existing instance and verify least privilege with no HAPI data access. Pin 26.8.2 and test an isolated production-mode candidate using versioned `epa-demo`/`playground-public` configuration and fresh synthetic users. Verify repeat/conflict/restart, administrative access, real fresh ePA/PAR and OAuth/HTTPS/session/logout/resource behavior. No existing provider replacement, H2 import/data transfer, migration rehearsal or HAPI data change.
-- [ ] 5.5 Refresh the packet with exact provider/database/realm settings, image identities, fresh-flow evidence and confirmed identity-reset/token handling. Document the approved handoff's offline original-H2 retention with matching recovery image/settings until acceptance, plus targeted provider recovery and independent fixture withdrawal. Preserve SPA/BFF candidate identities; verify focused configuration/security checks and strict OpenSpec. Retain experimental beta, owner-provisioned synthetic accounts and no production-readiness claim. No live cutover/public activation.
+- [x] 5.3 Diagnose and restore existing PostgreSQL 16 availability through a specifically approved targeted operation that preserves HAPI database/data/configuration; verify private TCP, SQL and HAPI connectivity. Prepare exact fresh `keycloak`/least-privilege `keycloak_app` provisioning with conflict/effective-access checks. Record owner confirmation of regenerated users/signing keys and client/session/token/cache consequences before live provider replacement. No reset, shared-volume replacement or inferred live-repair/DDL approval.
+- [x] 5.4 After recovery and specific provisioning approval, create the fresh `keycloak` database/role on the existing instance and verify least privilege with no HAPI data access. Pin 26.8.2 and test an isolated production-mode candidate using versioned `epa-demo`/`playground-public` configuration and fresh synthetic users. Verify repeat/conflict/restart, administrative access, real fresh ePA/PAR and OAuth/HTTPS/session/logout/resource behavior. No existing provider replacement, H2 import/data transfer, migration rehearsal or HAPI data change.
+- [x] 5.5 Refresh the packet with exact provider/database/realm settings, image identities, fresh-flow evidence and confirmed identity-reset/token handling. Document the approved handoff's offline original-H2 retention with matching recovery image/settings until acceptance, plus targeted provider recovery and independent fixture withdrawal. Preserve SPA/BFF candidate identities; verify focused configuration/security checks and strict OpenSpec. Retain experimental beta, owner-provisioned synthetic accounts and no production-readiness claim. No live cutover/public activation.
 
 ## 6. Release only after separate approval
 

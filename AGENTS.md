@@ -1,5 +1,21 @@
 # Agent Guidelines — Auth Protocol Playground
 
+**Owner preparation authorization (2026-11-16):** resume
+`public-playground-oauth-deployment` tasks **5.3–5.5** for fresh PostgreSQL-backed
+Keycloak 26.8.2 preparation. The owner accepts recreated users, regenerated signing keys,
+invalidated sessions and incompatible old tokens/credentials; no H2 migration is required.
+Diagnose existing PostgreSQL read-only, propose a targeted data-preserving recovery, prepare
+database/role configuration and the immutable image, and update verification/release evidence.
+Do not change live PostgreSQL or create live database objects without separate approval.
+The owner subsequently approved the proposed one-container PostgreSQL restart/read-only
+postchecks, then separately approved the fresh `keycloak` database, least-privilege
+`keycloak_app` role and its schema with a privately generated credential. These grants
+cover only that recovery/addition and the authorized isolated preparation; HAPI data and
+configuration remain unchanged.
+Do not replace live Keycloak or activate public OAuth; tasks 6.1/6.2 remain unapproved.
+Retain original H2 for offline recovery at the separately approved provider handoff.
+See [current preparation](openspec/changes/public-playground-oauth-deployment/fresh-keycloak-preparation.md).
+
 **Additional owner authorization (2026-11-14):** `public-playground-oauth-deployment`
 is approved for the narrowed preparation tasks **1.1–5.2**. See the current
 [scope and evidence](openspec/changes/public-playground-oauth-deployment/preparation-verification.md).
@@ -64,7 +80,7 @@ Follow Accepted [ADR-0004](docs/architecture/decisions/ADR-0004-localization-and
 1. Read `README.md`, `docs/product/vision-and-scope.md`, both UX documents, and architecture ADRs before proposing modifications.
 2. When details are unknown, write an **Open Decision** in the relevant file; do not silently invent the answer.
 3. Update architecture, UX, and OpenSpec consistently when a decision changes.
-4. Implement only explicitly `APPROVED` OpenSpec changes with accepted conditions. `001-oidc-pkce` is approved for local/private tasks 2–9; `public-playground-oauth-deployment` is approved only for preparation tasks 1.1–5.2 as recorded above. Preserve the existing UI baseline and public fixture-only deployment. Other changes still require their own authorization.
+4. Implement only explicitly `APPROVED` OpenSpec changes with accepted conditions. `001-oidc-pkce` is approved for local/private tasks 2–9; `public-playground-oauth-deployment` preparation extends through 5.5 within the 2026-11-16 restrictions above. Live PostgreSQL changes/DDL require separate approval, and tasks 6.1/6.2/public activation remain unapproved. Preserve the existing UI baseline and public fixtures. Other changes still require their own authorization.
 5. Prefer a complete small vertical slice over creating infrastructure for many future missions.
 6. Never edit existing `epa-auth-lab` code or configuration based on assumptions; first verify the chosen repository boundary.
 

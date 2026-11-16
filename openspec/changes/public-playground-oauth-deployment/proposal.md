@@ -10,10 +10,15 @@ production mode with a fresh `keycloak` database and dedicated least-privilege
 configuration; do not import or migrate any existing H2 data. Retain the original H2
 volume offline for recovery until the fresh installation is accepted.
 
-**Planning only.** This update authorizes no PostgreSQL repair, DDL, live database reset,
-container replacement or public activation. Earlier preparation authorization is history,
-not approval to execute the revised live operations. Tasks 6.1/6.2 still require separate
-release approval; the remaining preparation must follow its specific operational gates.
+**Preparation resumed by explicit owner apply, 2026-11-16:** tasks 5.3–5.5 are authorized
+within the owner's limits. Recreated users, regenerated signing keys, invalidated sessions
+and incompatibility of old tokens/credentials are accepted; no H2 migration is required.
+The owner subsequently approved the exact PostgreSQL restart/read-only postchecks; recovery
+is verified and task 5.3 complete. Fresh database/role/schema creation subsequently received
+explicit approval. Provisioning and isolated production-mode ePA/PAR, OAuth/browser and
+restart verification now pass. Live Keycloak replacement/
+public activation remain excluded; 6.1/6.2 are unapproved. See
+[current preparation and owner confirmation](fresh-keycloak-preparation.md).
 
 The 11 completed tasks, existing OAuth implementation, public SPA/BFF release candidate
 and dated evidence remain unchanged. This decision supersedes the retained-H2 beta plan
@@ -52,9 +57,9 @@ the completed task 1.1 remains an approval-history record.
   `keycloak_app`. Keep HAPI's database, data, credentials, ownership and permissions intact.
   Diagnose and restore the existing PostgreSQL service's availability before provisioning.
 - **BREAKING identity continuity:** initialize `epa-demo` and `playground-public` from
-  versioned configuration with fresh synthetic users and generated signing keys. Confirm
-  the consequences for old users, credentials, sessions, tokens and client bindings before
-  live replacement. Do not transfer H2 records, credentials, keys or sessions.
+  versioned configuration with fresh synthetic users and generated signing keys. The owner
+  accepted the resulting identity/key/session/token discontinuity; verify fresh client
+  bindings and token/cache handling before replacement. Do not transfer any H2 state.
 - Prepare production-mode Keycloak 26.8.2 and targeted acceptance/recovery using the existing
   service. Keep `epa-auth-lab_keycloak-data` offline with its saved original image/settings;
   no H2 upgrade, export/import migration or legacy-data migration rehearsal is required.
@@ -87,8 +92,9 @@ configuration; no reset, reinitialization, HAPI privilege change or shared-volum
 is a proposed remedy. No extra PostgreSQL instance, generic migration tooling or broad
 readiness review is planned.
 
-The remaining [gates](design.md#public-authentication-activation-gates) are targeted PostgreSQL
-recovery/provisioning, confirmed identity-reset consequences, verified fresh ePA/PAR/OAuth
-behavior, offline H2 recovery retention and separately approved live release/public acceptance.
+Targeted PostgreSQL recovery/provisioning, owner-confirmed identity-reset consequences and
+isolated fresh ePA/PAR/OAuth/restart verification are complete. The remaining
+[gates](design.md#public-authentication-activation-gates) are the separately approved live
+provider handoff with offline original-H2 retention and actual public release/acceptance.
 No H2 export/import, H2-to-PostgreSQL transfer or legacy-data migration rehearsal belongs
 to this plan. The current public deployment remains fixture-only until separate approval.

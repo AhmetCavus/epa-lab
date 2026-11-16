@@ -1,14 +1,15 @@
 import { execFileSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import { createServer, request as httpsRequest } from 'node:https';
 import { createServer as tcpServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { parseEnv } from 'node:util';
 import { setTimeout } from 'node:timers/promises';
-import { adminApi, requireCondition, standardSettings } from './standard-client.mjs';
+import { adminApi, privateUrl, requireCondition, standardSettings } from './standard-client.mjs';
 import { provisionDemoAccount } from './public-demo-account.mjs';
 import {
   configurePublicRealm,
@@ -22,7 +23,30 @@ import { verifyStandardFlow } from './verify-standard-client.mjs';
 import { publicTestTls } from './public-test-tls.mjs';
 
 const image = 'sha256:b0f60d489d51c5d113390bdf5461d4c06e6051be026c05549f2e1e10ec352bcc';
+const postgresImage =
+  'quay.io/keycloak/keycloak@sha256:4da21f9a53bcbac1026a0d654b740a81e98e5de4c45457076acc74b4d94b1551';
 const secret = () => randomBytes(32).toString('base64url');
+
+async function postgresVerificationSettings() {
+  const path = process.env.KEYCLOAK_POSTGRES_ENV_FILE;
+  if (!path) return undefined;
+
+  const metadata = await stat(path);
+  requireCondition((metadata.mode & 0o077) === 0, 'PostgreSQL verification inputs must be private');
+  const settings = parseEnv(await readFile(path, 'utf8'));
+  for (const name of [
+    'KEYCLOAK_DB_PASSWORD',
+    'KEYCLOAK_ADMIN_PASSWORD',
+    'OIDC_CLIENT_SECRET',
+    'PLAYGROUND_OIDC_CLIENT_SECRET',
+    'PUBLIC_OIDC_CLIENT_SECRET',
+    'TEST_USER_PASSWORD',
+  ]) {
+    requireCondition(settings[name]?.length >= 32, `Missing private verification input: ${name}`);
+  }
+  return settings;
+}
+
 function docker(...args) {
   try {
     return execFileSync('docker', args, {
@@ -81,7 +105,7 @@ export function publicRequest(tlsPort, ca) {
   };
 }
 
-async function changeInitialPassword(request, password, replacement, secrets) {
+async function changeInitialPassword(request, account, replacement, secrets) {
   const verifier = secret();
   secrets.add(verifier);
   const url = new URL(`${publicIssuer}/protocol/openid-connect/auth`);
@@ -125,7 +149,11 @@ async function changeInitialPassword(request, password, replacement, secrets) {
   let required = await call(action(await login.text()), {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ username: 'demo-a123', password, credentialId: '' }),
+    body: new URLSearchParams({
+      username: account.username,
+      password: account.password,
+      credentialId: '',
+    }),
   });
   for (let count = 0; [302, 303].includes(required.status) && count < 5; count += 1) {
     const next = new URL(required.headers.get('location'));
@@ -198,6 +226,7 @@ async function rejectPublicAccount(request, username, password, secrets) {
 }
 
 export async function verifyIsolatedPublicRealm(verifyRuntime) {
+  const postgres = await postgresVerificationSettings();
   const directory = await mkdtemp(join(tmpdir(), 'epa-public-keycloak-'));
   const name = `epa-public-verify-${randomBytes(5).toString('hex')}`;
   let container;
@@ -211,19 +240,23 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
     const env = {
       KEYCLOAK_ADMIN_URL: server,
       KEYCLOAK_ADMIN_USERNAME: 'isolated-admin',
-      KEYCLOAK_ADMIN_PASSWORD: secret(),
+      KEYCLOAK_ADMIN_PASSWORD: postgres?.KEYCLOAK_ADMIN_PASSWORD ?? secret(),
       PLAYGROUND_OIDC_CLIENT_ID: 'playground-oidc',
-      PLAYGROUND_OIDC_CLIENT_SECRET: secret(),
-      PLAYGROUND_OIDC_REDIRECT_URI: 'http://127.0.0.1:3000/api/oauth/callback',
+      PLAYGROUND_OIDC_CLIENT_SECRET: postgres?.PLAYGROUND_OIDC_CLIENT_SECRET ?? secret(),
+      PLAYGROUND_OIDC_REDIRECT_URI:
+        postgres?.PLAYGROUND_OIDC_REDIRECT_URI ?? 'http://127.0.0.1:3000/api/oauth/callback',
       OIDC_CLIENT_ID: 'epa-auth-server',
-      OIDC_CLIENT_SECRET: secret(),
-      OIDC_DEFAULT_REDIRECT_URI: 'http://127.0.0.1:3000/callback',
-      TEST_USER_PASSWORD: secret(),
+      OIDC_CLIENT_SECRET: postgres?.OIDC_CLIENT_SECRET ?? secret(),
+      OIDC_ALLOW_PRIVATE_NETWORK_HTTP: postgres ? 'true' : 'false',
+      OIDC_DEFAULT_REDIRECT_URI:
+        postgres?.OIDC_DEFAULT_REDIRECT_URI ?? 'http://127.0.0.1:3000/callback',
+      TEST_USER_PASSWORD: postgres?.TEST_USER_PASSWORD ?? secret(),
     };
     for (const [key, value] of Object.entries(env))
       if (/PASSWORD|SECRET/.test(key)) secrets.add(value);
-    const publicSecret = secret();
+    const publicSecret = postgres?.PUBLIC_OIDC_CLIENT_SECRET ?? secret();
     secrets.add(publicSecret);
+    if (postgres) secrets.add(postgres.KEYCLOAK_DB_PASSWORD);
     const settings = publicRealmSettings({
       ...env,
       PLAYGROUND_OIDC_CLIENT_SECRET: publicSecret,
@@ -243,13 +276,28 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
         KC_HOSTNAME: server,
         KC_PROXY_HEADERS: 'xforwarded',
         KC_PROXY_TRUSTED_ADDRESSES: '127.0.0.1,172.17.0.0/16',
-        KC_DB: 'dev-file',
+        KC_DB: postgres ? 'postgres' : 'dev-file',
+        ...(postgres
+          ? {
+              KC_DB_URL: 'jdbc:postgresql://res-server-db:5432/keycloak',
+              KC_DB_USERNAME: 'keycloak_app',
+              KC_DB_PASSWORD: postgres.KEYCLOAK_DB_PASSWORD,
+              KC_DB_SCHEMA: 'keycloak',
+              KC_DB_POOL_INITIAL_SIZE: '1',
+              KC_DB_POOL_MIN_SIZE: '1',
+              KC_DB_POOL_MAX_SIZE: '4',
+              KC_HTTP_ENABLED: 'true',
+              KC_HOSTNAME_STRICT: 'true',
+              KC_HEALTH_ENABLED: 'true',
+            }
+          : {}),
       })
         .map(([key, value]) => `${key}=${value}`)
         .join('\n'),
       { mode: 0o600 },
     );
-    // An ephemeral bridge and tmpfs reproduce the pinned provider only. No live realm/volume is used.
+    // The optional production candidate uses only the separately approved fresh database.
+    // Its temporary data directory never mounts the original provider's H2 volume.
     network = docker('network', 'create', '--label', 'epa.verification=public-playground', name);
     const gatewayIp = JSON.parse(docker('network', 'inspect', network))[0].IPAM.Config[0].Gateway;
     const envText = await readFile(envFile, 'utf8');
@@ -265,6 +313,7 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       name,
       '--network',
       network,
+      ...(postgres ? ['--network', 'epa-lab_default'] : []),
       '--label',
       'traefik.enable=false',
       '--memory',
@@ -279,28 +328,66 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       envFile,
       '--mount',
       `type=bind,source=${importFile},target=/opt/keycloak/data/import/epa-demo-realm.json,readonly`,
-      image,
-      'start-dev',
+      postgres ? postgresImage : image,
+      postgres ? 'start' : 'start-dev',
       '--import-realm',
     );
-    console.info('Isolated pinned Keycloak started; loopback only, tmpfs, no existing volumes.');
-    let ready = false;
-    for (let attempt = 0; attempt < 120; attempt += 1) {
-      try {
-        const result = await fetch(`${server}/realms/epa-demo/.well-known/openid-configuration`, {
-          signal: AbortSignal.timeout(1000),
-        });
-        ready = result.ok;
-        await result.body?.cancel();
-        if (ready) break;
-      } catch {
-        /* Await this isolated provider only. */
+    console.info(
+      postgres
+        ? 'Isolated production Keycloak 26.8.2 started; fresh PostgreSQL, loopback only, no H2.'
+        : 'Isolated pinned Keycloak started; loopback only, tmpfs, no existing volumes.',
+    );
+    async function waitForProvider() {
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        try {
+          const result = await fetch(`${server}/realms/epa-demo/.well-known/openid-configuration`, {
+            signal: AbortSignal.timeout(1000),
+          });
+          const ready = result.ok;
+          await result.body?.cancel();
+          if (ready) return;
+        } catch {
+          /* Await this isolated provider only. */
+        }
+        await setTimeout(1000);
       }
-      await setTimeout(1000);
+      throw new Error('Isolated Keycloak did not become ready');
     }
-    requireCondition(ready, 'Isolated Keycloak did not become ready');
+    await waitForProvider();
     const legacySettings = standardSettings(env);
     let legacyApi = await adminApi(legacySettings);
+    if (postgres) {
+      // The retained fresh database may contain an earlier loopback rehearsal binding.
+      // Reconcile only these declared callback fields; never adopt arbitrary conflicts.
+      for (const [clientId, callback, previousCallback, expectedSecret] of [
+        [
+          env.OIDC_CLIENT_ID,
+          env.OIDC_DEFAULT_REDIRECT_URI,
+          'http://127.0.0.1:3000/callback',
+          env.OIDC_CLIENT_SECRET,
+        ],
+        [
+          env.PLAYGROUND_OIDC_CLIENT_ID,
+          env.PLAYGROUND_OIDC_REDIRECT_URI,
+          'http://127.0.0.1:3000/api/oauth/callback',
+          env.PLAYGROUND_OIDC_CLIENT_SECRET,
+        ],
+      ]) {
+        privateUrl(callback);
+        const clients = await legacyApi(`/clients?clientId=${encodeURIComponent(clientId)}`);
+        requireCondition(clients.length === 1, 'Fresh versioned client is missing or ambiguous');
+        const client = await legacyApi(`/clients/${clients[0].id}`);
+        requireCondition(
+          client.redirectUris?.length === 1 &&
+            [callback, previousCallback].includes(client.redirectUris[0]) &&
+            (await legacyApi(`/clients/${client.id}/client-secret`)).value === expectedSecret,
+          'Fresh callback or credential configuration conflicts with the owned rehearsal',
+        );
+        if (client.redirectUris[0] !== callback) {
+          await legacyApi(`/clients/${client.id}`, 'PUT', { redirectUris: [callback] });
+        }
+      }
+    }
     const user = (await legacyApi('/users?username=demo-versicherte&exact=true'))[0];
     await legacyApi(`/users/${user.id}`, 'PUT', {
       ...user,
@@ -308,7 +395,10 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
     });
     const before = await preservationSnapshot(legacyApi);
     const first = await configurePublicRealm({ settings, action: 'apply' });
-    requireCondition(first.status === 'created', 'Fresh public realm was not created');
+    requireCondition(
+      first.status === 'created' || (postgres && first.status === 'unchanged'),
+      'Fresh or previously owned public realm was not verified',
+    );
     requireCondition(
       (await configurePublicRealm({ settings, action: 'apply' })).status === 'unchanged',
       'Repeat is not idempotent',
@@ -324,7 +414,10 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       rejected = true;
     }
     requireCondition(rejected, 'Conflicting credentials were not rejected');
-    const account = { username: 'demo-a123', password: secret() };
+    const account = {
+      username: postgres ? `demo-${randomBytes(5).toString('hex')}` : 'demo-a123',
+      password: secret(),
+    };
     const replacement = secret();
     secrets.add(account.password);
     secrets.add(replacement);
@@ -333,14 +426,14 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       'Fresh demo account failed',
     );
     let publicApi = await adminApi(settings, publicRealmName);
-    const [createdAccount] = await publicApi('/users?username=demo-a123&exact=true');
+    const [createdAccount] = await publicApi(`/users?username=${account.username}&exact=true`);
     console.info(
       JSON.stringify({
         accountProvisioning: {
           enabled: createdAccount.enabled === true,
           syntheticProfile:
             createdAccount.firstName === 'Synthetic' && createdAccount.lastName === 'Demo',
-          syntheticEmail: createdAccount.email === 'demo-a123@example.invalid',
+          syntheticEmail: createdAccount.email === `${account.username}@example.invalid`,
           ownerPresent:
             createdAccount.attributes?.['playground.managed-by']?.[0] ===
             'public-playground-oauth-deployment',
@@ -384,7 +477,14 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
     });
     await new Promise((resolve) => gateway.listen(tlsPort, '127.0.0.1', resolve));
     const request = publicRequest(tlsPort, cert);
-    await changeInitialPassword(request, account.password, replacement, secrets);
+    await changeInitialPassword(request, account, replacement, secrets);
+    if (postgres) {
+      await writeFile(
+        join(directory, 'public-demo.env'),
+        `PUBLIC_DEMO_USERNAME=${account.username}\nPUBLIC_DEMO_PASSWORD=${replacement}\n`,
+        { mode: 0o600 },
+      );
+    }
     const verifiedTokens = [];
     const flow = await verifyStandardFlow(
       settings,
@@ -393,27 +493,14 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       { issuer: publicIssuer, request, onTokens: (tokens) => verifiedTokens.push(tokens) },
     );
     await rejectPublicAccount(request, 'demo-unprovisioned', replacement, secrets);
-    const [activeAccount] = await publicApi('/users?username=demo-a123&exact=true');
+    const [activeAccount] = await publicApi(`/users?username=${account.username}&exact=true`);
+    requireCondition(activeAccount, 'Owned verification account is missing');
     await publicApi(`/users/${activeAccount.id}`, 'PUT', { ...activeAccount, enabled: false });
     try {
       await rejectPublicAccount(request, account.username, replacement, secrets);
     } finally {
       await publicApi(`/users/${activeAccount.id}`, 'PUT', activeAccount);
     }
-    const runtime = verifyRuntime
-      ? await verifyRuntime({
-          directory,
-          env,
-          settings,
-          kcPort,
-          cert,
-          keyFile,
-          account: { username: account.username, password: replacement },
-          verifiedTokens,
-          secrets,
-          closeGateway: () => new Promise((resolve) => gateway.close(resolve)),
-        })
-      : undefined;
     requireCondition(
       (await provisionDemoAccount({ settings, account })).status === 'unchanged',
       'Repeat after password change failed',
@@ -421,7 +508,7 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
     // The full runtime suite can exceed the administrator Access Token lifetime.
     // Reauthenticate the test control plane; never extend or relax provider lifetimes.
     publicApi = await adminApi(settings, publicRealmName);
-    const [completedAccount] = await publicApi('/users?username=demo-a123&exact=true');
+    const [completedAccount] = await publicApi(`/users?username=${account.username}&exact=true`);
     requireCondition(
       !completedAccount.requiredActions.includes('UPDATE_PASSWORD'),
       'Repeat restored the initial password action',
@@ -437,12 +524,77 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       accountConflict = true;
     }
     requireCondition(accountConflict, 'Conflicting account was not rejected');
-    const [unchangedConflict] = await publicApi('/users?username=demo-a123&exact=true');
+    const [unchangedConflict] = await publicApi(`/users?username=${account.username}&exact=true`);
     requireCondition(
       unchangedConflict.lastName === 'Conflicting',
       'Conflicting account was overwritten',
     );
+    await publicApi(`/users/${completedAccount.id}`, 'PUT', completedAccount);
     const legacy = await verifyStandardFlow(legacySettings, env, secrets);
+    let restart;
+    if (postgres) {
+      const keyFingerprints = async (api) =>
+        (await api('/keys')).keys
+          .map(({ kid, algorithm, publicKey, certificate }) => ({
+            kid,
+            algorithm,
+            publicKey,
+            certificate,
+          }))
+          .sort((first, second) => first.kid.localeCompare(second.kid));
+      const fingerprints = async () => {
+        const currentLegacy = await adminApi(legacySettings);
+        const currentPublic = await adminApi(settings, publicRealmName);
+        return createHash('sha256')
+          .update(
+            JSON.stringify({
+              legacy: await preservationSnapshot(currentLegacy),
+              public: await preservationSnapshot(currentPublic),
+              legacyKeys: await keyFingerprints(currentLegacy),
+              publicKeys: await keyFingerprints(currentPublic),
+            }),
+          )
+          .digest('hex');
+      };
+      const beforeRestart = await fingerprints();
+      docker('restart', '--time', '60', container);
+      await waitForProvider();
+      requireCondition(
+        (await fingerprints()) === beforeRestart,
+        'Fresh PostgreSQL realms/users/keys changed across provider restart',
+      );
+      await verifyStandardFlow(legacySettings, env, secrets);
+      verifiedTokens.length = 0;
+      await verifyStandardFlow(
+        settings,
+        {
+          ...env,
+          KEYCLOAK_VERIFICATION_USERNAME: account.username,
+          TEST_USER_PASSWORD: replacement,
+        },
+        secrets,
+        { issuer: publicIssuer, request, onTokens: (tokens) => verifiedTokens.push(tokens) },
+      );
+      requireCondition(
+        (await configurePublicRealm({ settings, action: 'apply' })).status === 'unchanged',
+        'Public provisioning changed persisted state after restart',
+      );
+      restart = 'passed; persisted fresh realms/users/keys and both protocol profiles';
+    }
+    const runtime = verifyRuntime
+      ? await verifyRuntime({
+          directory,
+          env,
+          settings,
+          kcPort,
+          cert,
+          keyFile,
+          account: { username: account.username, password: replacement },
+          verifiedTokens,
+          secrets,
+          closeGateway: () => new Promise((resolve) => gateway.close(resolve)),
+        })
+      : undefined;
     legacyApi = await adminApi(legacySettings);
     requireCondition(
       (await preservationSnapshot(legacyApi)) === before,
@@ -455,6 +607,7 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
     );
     const result = {
       status: 'passed',
+      provider: postgres ? { version: '26.8.2', database: 'postgres', restart } : undefined,
       runtime,
       publicChecks: flow,
       legacyChecks: legacy,
@@ -465,7 +618,9 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       epaPreservation: 'passed',
       disclosure: 'passed',
       tls: 'private test CA, normal hostname/chain verification',
-      providerProductionGate: 'open; isolated start-dev only',
+      providerProductionGate: postgres
+        ? 'production PostgreSQL candidate verified; live handoff/public acceptance remain unapproved'
+        : 'open; isolated start-dev only',
     };
     await writeFile(join(directory, 'results.json'), JSON.stringify(result, null, 2), {
       mode: 0o600,

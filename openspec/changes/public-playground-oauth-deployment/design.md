@@ -9,10 +9,12 @@ separate `keycloak` database on the existing PostgreSQL 16 instance, with least-
 both realms and fresh synthetic accounts from versioned configuration. No H2 migration.
 Keep the original H2 volume offline for recovery until the new installation is accepted.
 
-**Planning only:** no live repair, DDL, database reset, container replacement or public
-activation. Revised preparation, specific operational actions and tasks 6.1/6.2 follow
-their separate authorization gates. The 11 completed descriptions, existing OAuth code
-and public SPA/BFF candidate identities remain unchanged.
+**Preparation resumed, 2026-11-16:** the owner explicitly authorized 5.3–5.5 and accepted
+recreated users, regenerated keys, invalidated sessions and incompatible old tokens and
+credentials, without H2 migration. Live PostgreSQL changes/DDL need separate approval;
+live Keycloak replacement and public activation remain excluded. Tasks 6.1/6.2 are still
+unapproved. The 11 completed descriptions, existing OAuth code and public SPA/BFF candidate
+identities remain unchanged. See [current preparation](fresh-keycloak-preparation.md).
 
 The retained-H2 beta decision and legacy-data migration procedures in the dated
 [execution evidence](keycloak-production-verification.md) and [release packet](release-packet.md)
@@ -28,7 +30,11 @@ default builds and the deployed public site remain fixture-only. The existing Ke
 runs `start-dev --import-realm` with `KC_DB=dev-file`. The owner now chooses a fresh
 production-mode PostgreSQL installation rather than carrying that state forward. The
 recorded PostgreSQL availability failure must be resolved before the shared instance can
-host the fresh Keycloak database. No new availability diagnosis or repair is claimed here.
+host the fresh Keycloak database. The [current evidence](fresh-keycloak-preparation.md#approved-targeted-recovery-completed)
+records the owner-approved single-container restart and successful private TCP/SQL/HAPI
+postchecks. The owner then approved the fresh database/role/schema creation. Those objects
+and isolated production-mode protocol/browser/restart verification now pass; the original
+live provider remains unchanged. See the [sanitized results](fresh-keycloak-results.json).
 
 The historical [preflight report](repository-verification.md) is retained. Its isolated
 Cloudflare 403 does not establish an infrastructure outage or override owner-confirmed
@@ -160,8 +166,8 @@ After separate release approval, replace the public SPA with the production targ
 apply only reviewed, necessary BFF/Keycloak/HAPI binding changes. Keep unrelated services,
 Tunnel routing, databases and data intact. Verify the actual public browser journey before
 claiming OAuth is available; staged/private success is supporting evidence, not public acceptance.
-The fresh provider must first pass private ePA/PAR and OAuth acceptance, and the owner must
-confirm the identity-reset consequences before the existing service is replaced.
+The fresh provider must first pass private ePA/PAR and OAuth acceptance. The owner's
+identity-reset acceptance is recorded; actual replacement still needs separate approval.
 
 On failure restore the saved fixture image/project routing and previous standard/HAPI trust
 settings as needed, invalidate affected BFF sessions and withdraw new OAuth/provider forwarding.
@@ -213,15 +219,17 @@ reject conflicts without overwriting realms. Generate new signing keys; do not i
 users, password hashes, keys, sessions, revoked-token records or other H2 content.
 [Fresh realm provisioning](https://www.keycloak.org/server/importExport).
 
-**Confirm identity-reset consequences before live replacement.** The owner must explicitly
-acknowledge that old accounts/passwords and Keycloak user IDs/`sub` references do not carry
-over, signing keys change, existing provider sessions/SSO/offline and refresh tokens cannot
-be continued, and pending logins must restart. Verify client secrets/configuration match
+**Identity-reset consequences accepted, 2026-11-16.** The owner explicitly permits recreated
+users, regenerated signing keys, invalidated sessions and incompatibility of old tokens and
+credentials. Old account/user-ID continuity, SSO/offline/refresh-token continuity and pending
+logins are not promised; see the [confirmation record](fresh-keycloak-preparation.md#owner-authorization-and-accepted-discontinuity).
+Verify client secrets/configuration match
 the BFF and any ePA consumer; deliver fresh demo credentials privately. Existing signed
 bearers may still validate against cached old JWKS until expiry/cache refresh: record and
 verify a token-drain/cache/session invalidation plan, rather than claiming instant revocation.
 Do not remap HAPI records to new users or change HAPI data to conceal an identity mismatch.
-The fresh architecture is decided; this impact acknowledgement is a remaining prerequisite.
+Owner acceptance closes the discontinuity decision; fresh binding, cache/session and real
+protocol checks remain implementation/verification work, not a reason to request acceptance again.
 
 **Focused verification.** After recovery and approved fresh provisioning, exercise an
 isolated production-mode 26.8.2 candidate on the new PostgreSQL database, with private
@@ -252,29 +260,30 @@ These gates block unsafe activation, not unrelated SPA/proxy preparation:
 
 | Gate                         | Focused evidence / action                                                                                                                                                                                                                       |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Available isolated storage   | Restore the existing PostgreSQL 16 instance's availability through a separately approved targeted operation; verify fresh `keycloak` database and least-privilege `keycloak_app` without modifying HAPI database/data/configuration.            |
-| Fresh production provider    | Verify pinned 26.8.2 production startup, versioned provisioning of both realms, fresh synthetic users, ePA/PAR and standard OAuth/restart behavior. No H2 state transfer or legacy-data migration rehearsal.                                    |
+| Available isolated storage   | PASSED: separately approved restart and fresh database/role/schema provisioning; actual password/own-schema access and zero effective HAPI data privileges verified, with HAPI configuration/catalog unchanged.                                 |
+| Fresh production provider    | CANDIDATE PASSED: pinned 26.8.2 production startup, versioned realms/fresh users, real ePA/PAR and OAuth/browser/restart checks. Live handoff/public acceptance remain separate; no H2 state transfer.                                          |
 | Confirmed reset and recovery | Record owner acknowledgement of regenerated users/keys and session/token/client consequences. Preserve the original H2 volume offline with matching recovery settings until acceptance; verify targeted recovery/fixture withdrawal boundaries. |
 | Correct public authority     | Real browser/BFF/HAPI discovery, callback and JWKS requests use the fixed HTTPS authority; issuer, signature, audience, expiry and permission checks pass. No TLS bypass, alternate issuer or unauthenticated fallback.                         |
 | Safe public boundary         | New auth routes enforce trusted proxy/canonical host, secure cookies, CSRF, bounded requests, cache isolation and secret-safe logs. Keycloak administration, legacy ePA and HAPI remain outside public ingress/direct access.                   |
 | Compatibility and recovery   | Real ePA/PAR regressions and targeted fixture rollback pass. If public realm/hostname settings affect ePA, stop for a narrowly reviewed correction rather than changing legacy policy.                                                          |
 
 The owner has resolved storage/startup: fresh PostgreSQL-backed 26.8.2 production mode.
-Specific PostgreSQL recovery/provisioning and provider-maintenance approvals remain separate
-from this planning request. Tasks 6.1/6.2 need release approval and actual public HTTPS
-acceptance. The historical Cloudflare probe and broad follow-ups do not replace these checks.
+Specific PostgreSQL recovery/provisioning approvals were granted and executed; they do not
+authorize provider maintenance. Tasks 6.1/6.2 still need release approval and actual public
+HTTPS acceptance. The historical Cloudflare probe and broad follow-ups do not replace these checks.
 
 ### Remaining concrete blockers
 
-1. Existing PostgreSQL availability has not been restored/verified after the recorded
-   missing-task/private-TCP failure. A specific safe recovery and DDL plan is needed.
-2. Owner acknowledgement of the fresh user/signing-key reset and the exact client,
-   session/token/cache consequences is not yet recorded.
-3. Fresh production PostgreSQL-backed 26.8.2 provisioning, role-isolation/restart and real
-   ePA/PAR/OAuth acceptance evidence are missing. Tasks 5.3–5.5 remain unchecked.
-4. The packet needs the original H2 offline-retention/recovery plan and fresh-provider
-   evidence. Live replacement and public activation still require separate approval and
-   actual public acceptance; this update performs none of them.
+There is no unresolved database/provider-verification blocker in preparation; see the
+[completed checks](fresh-keycloak-results.json). Only the live release gates remain:
+
+1. **6.1 requires separate approval** for the exact packet and provider-maintenance handoff.
+   Original H2 is preserved on the unchanged live provider and becomes offline only after
+   its approved clean stop/detachment. Recheck actual peers, hostname/client/credential
+   bindings and fresh private ePA/PAR before activating the reviewed public boundary.
+2. **6.2 requires actual public HTTPS acceptance** through the existing Tunnel, with real
+   BFF/HAPI discovery/JWKS, browser journey and security checks. Staged success does not
+   establish this acceptance.
 
 ## Risks / Trade-offs
 

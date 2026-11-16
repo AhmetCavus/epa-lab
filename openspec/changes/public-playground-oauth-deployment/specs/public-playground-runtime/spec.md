@@ -13,9 +13,20 @@ security/UX baseline. Earlier acceptance does not verify the fresh provider or p
 `keycloak`, least-privilege `keycloak_app` and production-mode Keycloak 26.8.2 in the
 existing service. Provision both realms and fresh synthetic users from versioned
 configuration. No H2 migration, data transfer or legacy-data migration rehearsal; retain
-the original H2 volume offline for recovery until fresh-install acceptance. Planning only:
-no live repair/DDL/reset, container replacement or public activation. The 11 completed
-tasks, existing OAuth implementation and SPA/BFF candidate identities remain unchanged.
+the original H2 volume offline for recovery until fresh-install acceptance.
+
+**Owner apply confirmation, 2026-11-16:** preparation 5.3–5.5 is authorized and discontinuity
+of users, signing keys, sessions, tokens and credentials is accepted. This closes the
+identity-reset decision, not the verification or live-release gates. Live PostgreSQL
+changes/DDL need separate approval; no live Keycloak replacement or public activation.
+The 11 completed tasks, OAuth implementation and SPA/BFF candidate identities remain unchanged.
+
+**Subsequent operational approvals:** the owner approved the exact PostgreSQL restart and
+read-only postchecks, then explicitly approved the fresh database/role/schema addition.
+Those scoped operations and isolated fresh-provider production-mode ePA/PAR, OAuth/browser
+and restart verification pass under 5.4; see the [current evidence](../../fresh-keycloak-preparation.md)
+and [sanitized results](../../fresh-keycloak-results.json). These approvals do not authorize
+replacing live Keycloak or activating public OAuth.
 
 ## ADDED Requirements
 

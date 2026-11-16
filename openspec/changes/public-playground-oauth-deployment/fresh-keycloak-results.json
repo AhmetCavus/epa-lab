@@ -1,0 +1,210 @@
+{
+  "status": "passed",
+  "date": "2026-11-16",
+  "scope": "preparation 5.3–5.5; no live Keycloak replacement or public activation",
+  "sourceAtInvocation": "d0117d8cb5f7402ada97c803bbb21d2361950116",
+  "databaseProvisioning": {
+    "status": "provisioned",
+    "ownerApproval": "explicit approval of fresh keycloak database, keycloak_app role and schema",
+    "metadata": {
+      "database": "keycloak",
+      "databaseOwner": "hapi",
+      "schemaOwner": "keycloak_app",
+      "role": {
+        "rolname": "keycloak_app",
+        "rolsuper": false,
+        "rolcreatedb": false,
+        "rolcreaterole": false,
+        "rolinherit": false,
+        "rolreplication": false,
+        "rolbypassrls": false,
+        "rolconnlimit": 6,
+        "rolcanlogin": true
+      },
+      "memberships": 0
+    },
+    "passwordAuthentication": "passed",
+    "ownSchemaTransactionalDdl": "passed; probe rolled back",
+    "effectiveHapiAccess": {
+      "relations": 0,
+      "sequences": 0,
+      "functions": 0,
+      "createInHapi": false,
+      "createInPublic": false
+    },
+    "hapiCatalogFingerprintPreserved": "dc24b5390061f9701b0b82bfe5451d63728c648e00ab34997c09dea6bc1b1eb7",
+    "credentialFile": ".local-backups/public-playground-oauth-deployment/20261116-fresh-keycloak-cegvpvg4/keycloak-postgres.env",
+    "credentialFileMode": "0o600",
+    "liveKeycloakUnchanged": true
+  },
+  "freshStorage": {
+    "keycloakTables": 101,
+    "unexpectedTableOwners": 0,
+    "unexpectedPublicTables": 0,
+    "appMemberships": 0,
+    "activeCandidateConnections": 0
+  },
+  "verification": {
+    "status": "passed",
+    "provider": {
+      "version": "26.8.2",
+      "database": "postgres",
+      "restart": "passed; persisted fresh realms/users/keys and both protocol profiles"
+    },
+    "runtime": {
+      "status": "passed",
+      "images": {
+        "spa": "sha256:00ebed371cafcf4aef6947bcc3f23201dce8571ace6dce97b63a0005d65c1bd4",
+        "bff": "sha256:213618efa90f9f91dfbaa35c736f9de3aa299278a95e7da32eeb47c453a3c302",
+        "hapi": "sha256:ba8049c9074f35f931af8878dd6eda71b728c37bc143bfdaac81a172446a4927"
+      },
+      "journey": "real HTTPS login/callback/refresh/read/Inspector/CSRF logout/old-auth/history",
+      "proxy": "actual Traefik/Nginx, path/method/trust/limit/cache/error-log negatives",
+      "publicAccessibility": "DE/EN, 1366/390px, reduced motion, WCAG 2A/AA/2.1AA/2.2AA, stable run on language change",
+      "withdrawal": "targeted Compose recreation to saved fixture image; catalog/ePA restored, OAuth/provider forwarding closed",
+      "limitations": "Loopback staging only; live provider handoff and actual public acceptance remain gated."
+    },
+    "publicChecks": {
+      "passed": 27,
+      "checks": [
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid demo.fhir.read)",
+        "public Access Token lifetime is at most five minutes",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "requested resource permission is present",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid)",
+        "public Access Token lifetime is at most five minutes",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "narrow grant omits resource permission while retaining audience",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "PKCE missing-challenge is rejected before login",
+        "PKCE missing-method is rejected before login",
+        "PKCE plain is rejected before login",
+        "PKCE invalid-method is rejected before login",
+        "wrong-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "wrong-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "unregistered callback is rejected",
+        "password grant is disabled",
+        "client_credentials grant is disabled"
+      ]
+    },
+    "legacyChecks": {
+      "passed": 27,
+      "checks": [
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid demo.fhir.read)",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "requested resource permission is present",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "standard authorization uses no PAR reference",
+        "client secret and verifier are absent from browser authorization URL",
+        "authorization code exchange succeeds (openid)",
+        "Access Token has resource audience, authorized client and bearer purpose",
+        "narrow grant omits resource permission while retaining audience",
+        "ID Token has only the client audience and matching nonce",
+        "authorization code replay is rejected",
+        "PKCE missing-challenge is rejected before login",
+        "PKCE missing-method is rejected before login",
+        "PKCE plain is rejected before login",
+        "PKCE invalid-method is rejected before login",
+        "wrong-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-verifier is rejected at token exchange (HTTP 400, OAuth invalid_grant)",
+        "missing-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "wrong-secret is rejected at token exchange (HTTP 401, OAuth unauthorized_client)",
+        "unregistered callback is rejected",
+        "password grant is disabled",
+        "client_credentials grant is disabled",
+        "existing ePA client rejects authorization without PAR",
+        "existing ePA client accepts genuine PAR and opens login"
+      ]
+    },
+    "freshRepeatConflict": "passed",
+    "requiredPasswordChange": "passed",
+    "accountRepeatConflict": "passed",
+    "unprovisionedAndDisabledAccounts": "rejected",
+    "epaPreservation": "passed",
+    "disclosure": "passed",
+    "tls": "private test CA, normal hostname/chain verification",
+    "providerProductionGate": "production PostgreSQL candidate verified; live handoff/public acceptance remain unapproved"
+  },
+  "verificationDirectory": "/tmp/epa-public-keycloak-EO2ELX",
+  "preservation": {
+    "originalContainerIdentitiesImagesMounts": 6,
+    "unrestartedOtherContainers": 5,
+    "protectedConfigurationHashes": 10,
+    "hapiCatalogFingerprintUnchanged": true,
+    "originalH2StillAttachedToUnchangedLiveProvider": true,
+    "temporaryVerificationContainersRemoved": true
+  },
+  "remainingReleaseGates": [
+    "6.1 separate provider-handoff/public-release approval",
+    "6.2 actual public HTTPS acceptance"
+  ],
+  "actualPublicAcceptance": false,
+  "productionReadinessClaim": false,
+  "originalProviderRecovery": {
+    "directory": ".local-backups/public-playground-oauth-deployment/20261116-fresh-keycloak-cegvpvg4/original-provider",
+    "image": "sha256:b0f60d489d51c5d113390bdf5461d4c06e6051be026c05549f2e1e10ec352bcc",
+    "archiveSha256": "0cec7e10d2fa64cc6785c94c010f8cdbe30a21441001beb5c083a15272857977",
+    "archiveBytes": 265416192,
+    "ociBlobsVerified": 10,
+    "privateOriginalConfigurationSaved": true,
+    "h2Copied": false,
+    "liveProviderStopped": false
+  },
+  "preparationClosingChecks": {
+    "status": "passed",
+    "configurationModels": [
+      {
+        "model": "private",
+        "valid": true,
+        "onlyExistingKeycloakChanged": true,
+        "originalH2Detached": true,
+        "freshCredentialBindingsMatch": true
+      },
+      {
+        "model": "public",
+        "valid": true,
+        "onlyExistingKeycloakChanged": true,
+        "originalH2Detached": true,
+        "freshCredentialBindingsMatch": true
+      },
+      {
+        "model": "withdrawal",
+        "valid": true,
+        "onlyExistingKeycloakChanged": true,
+        "originalH2Detached": true,
+        "freshCredentialBindingsMatch": true
+      }
+    ],
+    "originalRecoveryModel": "valid",
+    "originalArchiveHash": "verified",
+    "protectedConfigurationHashes": 10,
+    "originalContainersPreserved": 6,
+    "otherOriginalContainersUnrestarted": 5,
+    "hapiCatalogFingerprintUnchanged": true,
+    "candidateImagesUnchanged": true,
+    "ownedTemporaryContainersRemoved": true,
+    "strictOpenSpecIssues": 0,
+    "definitionTestsPassed": 6,
+    "changedFileCredentialScan": "passed",
+    "protectedCredentialValuesChecked": 14,
+    "localMarkdownLinkOccurrencesResolved": 53,
+    "originalCompletedTaskDescriptionsPreserved": 11,
+    "trackedProgress": {
+      "total": 16,
+      "complete": 14,
+      "remaining": 2
+    }
+  }
+}

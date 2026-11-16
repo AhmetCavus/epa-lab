@@ -1,0 +1,25 @@
+# Preparation only. Use with the host model after specific provider-handoff approval.
+# The existing PostgreSQL instance needs separately approved recovery and fresh DDL first.
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak@sha256:4da21f9a53bcbac1026a0d654b740a81e98e5de4c45457076acc74b4d94b1551
+    platform: linux/amd64
+    command: ['start', '--import-realm']
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://res-server-db:5432/keycloak
+      KC_DB_USERNAME: keycloak_app
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?Supply the separately provisioned Keycloak database password}
+      KC_DB_SCHEMA: keycloak
+      KC_DB_POOL_INITIAL_SIZE: '1'
+      KC_DB_POOL_MIN_SIZE: '1'
+      KC_DB_POOL_MAX_SIZE: '4'
+      KC_HTTP_ENABLED: 'true'
+      KC_HOSTNAME_STRICT: 'true'
+    # Replace, rather than extend, the inherited list so original H2 stays detached.
+    # This JSON is versioned fresh configuration, never an export of the H2 provider.
+    volumes: !override
+      - ./keycloak/epa-demo-realm.json:/opt/keycloak/data/import/epa-demo-realm.json:ro
+    depends_on:
+      res-server-db:
+        condition: service_healthy
