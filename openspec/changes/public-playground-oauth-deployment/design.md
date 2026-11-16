@@ -3,17 +3,21 @@
 **APPROVED narrowed preparation: 2026-11-14 — public deployment is not authorized.**
 See [proposal.md](proposal.md) for scope and [tasks.md](tasks.md) for preserved tracking.
 
-**Final owner decision, 2026-11-16:** keep H2 `dev-file` and the existing development
-startup for an experimental public beta. Tasks 5.3–5.5 retain their earlier preparation
-authorization but now cover only Keycloak 26.8.0 → 26.8.2, consistent H2 backup and tested
-rollback. This planning update performs no implementation or live operation; a live backup
-pause, provider upgrade and tasks 6.1/6.2/public activation still need specific approval.
-The 11 completed tasks and existing public release candidate remain unchanged.
+**Final owner architecture decision, 2026-11-16:** provision fresh Keycloak state in a
+separate `keycloak` database on the existing PostgreSQL 16 instance, with least-privilege
+`keycloak_app`, patched 26.8.2 and production startup. Reuse `epa-lab-keycloak`; initialize
+both realms and fresh synthetic accounts from versioned configuration. No H2 migration.
+Keep the original H2 volume offline for recovery until the new installation is accepted.
 
-The storage-transition proposals and production-storage gate in the dated
+**Planning only:** no live repair, DDL, database reset, container replacement or public
+activation. Revised preparation, specific operational actions and tasks 6.1/6.2 follow
+their separate authorization gates. The 11 completed descriptions, existing OAuth code
+and public SPA/BFF candidate identities remain unchanged.
+
+The retained-H2 beta decision and legacy-data migration procedures in the dated
 [execution evidence](keycloak-production-verification.md) and [release packet](release-packet.md)
 are superseded by decision 7 below. Retain their actual observations and saved artifacts;
-task 5.5 refreshes the executable packet only after new backup/upgrade/rollback evidence exists.
+task 5.5 refreshes the executable packet after fresh-install verification, not migration tests.
 
 ## Context
 
@@ -21,9 +25,10 @@ The owner confirms the public site and private OAuth integration work. The repos
 already has the React mission adapter, NestJS OAuth lifecycle/events, Keycloak and secured
 HAPI. Preparation tasks 1.1–5.2 now have verified production SPA/Nginx and backend candidates;
 default builds and the deployed public site remain fixture-only. The existing Keycloak
-runs `start-dev --import-realm` with `KC_DB=dev-file`. The owner explicitly retains this
-unsupported production storage/startup combination for the experimental beta; provider
-preparation now addresses the recorded security patch, state preservation and recovery.
+runs `start-dev --import-realm` with `KC_DB=dev-file`. The owner now chooses a fresh
+production-mode PostgreSQL installation rather than carrying that state forward. The
+recorded PostgreSQL availability failure must be resolved before the shared instance can
+host the fresh Keycloak database. No new availability diagnosis or repair is claimed here.
 
 The historical [preflight report](repository-verification.md) is retained. Its isolated
 Cloudflare 403 does not establish an infrastructure outage or override owner-confirmed
@@ -37,12 +42,13 @@ Publish the implemented mission through existing Cloudflare Tunnel → Traefik �
 with the existing BFF, Keycloak and private HAPI. Follow ADR-0001 through ADR-0004; preserve
 Mission Control visuals, DE/EN behavior, accessibility and truthful observations.
 
-Retain `epa-lab-keycloak`, the existing `epa-auth-lab_keycloak-data` H2 volume, all existing
-realms/users/clients/keys and OAuth implementation. Preserve the prepared SPA/BFF candidates
-and fixture rollback. Exclude Keycloak PostgreSQL migration, database provisioning, role
-creation, export/import state transfer and storage/startup transitions. HAPI PostgreSQL
-settings/data/privileges, new services/dependencies, fleet restructuring and broad readiness
-reviews remain outside scope. Existing ePA/PAR issuer, policies and data are the baseline.
+Reuse `epa-lab-keycloak`, existing PostgreSQL 16, OAuth implementation, prepared SPA/BFF
+candidates and fixture rollback. Add only a fresh Keycloak database/role and production
+provider configuration. Preserve HAPI's database/data/settings/privileges. Keep ePA/PAR
+endpoint, issuer and policy contracts, but explicitly regenerate its users and signing
+keys from fresh configuration. Retain the original H2 installation offline for recovery;
+exclude H2 export/import, data transfer and legacy-data migration rehearsals, new PostgreSQL
+instances, generic migration tooling, fleet restructuring and broad readiness reviews.
 
 ## Decisions
 
@@ -87,17 +93,21 @@ Use these fixed bindings; credentials remain server-side:
 | Standard client    | Confidential `playground-oidc`, Code + PKCE S256, no PAR     |
 | Resource grant     | Audience `playground-fhir`, permission `demo.fhir.read`      |
 
-Configure the dedicated demo realm in the existing Keycloak instance using owned settings,
-fresh credentials and owner-provisioned individual synthetic accounts; registration stays
-disabled. Reuse existing client tooling with repeat/conflict checks. Do not copy legacy
-users into the public realm or recreate `epa-demo` from fixtures. Keep demo Access Tokens
-at most five minutes.
+Provision `epa-demo` from versioned `infrastructure/keycloak/epa-demo-realm.json` and its
+existing client definitions, and `playground-public` from versioned
+`infrastructure/keycloak/public-realm.mjs` and the existing public-account tooling. These
+are declarative fresh-install inputs, not exports from the existing H2 provider. Supply
+credentials through protected server-side inputs, generate fresh keys and synthetic users,
+keep public registration disabled and public Access Tokens at most five minutes. Repeated
+setup verifies owned state and rejects conflicts; it never resets credentials or overwrites
+an unrelated realm. Keep the public and legacy ePA client/profile boundaries distinct.
 
 Add standard-only `PLAYGROUND_OIDC_ISSUER` with legacy fallback. Bind origin/callback/issuer
 and cookies to the server-selected profile; retain transaction/token validation. Preserve
-legacy `OIDC_*`, the ePA issuer, signing keys, clients, users and mandatory PAR. Use the
-public realm's frontend URL rather than silently changing the global legacy hostname;
-prove pinned-version dual-realm behavior. Keycloak documents explicit hostname/proxy
+legacy `OIDC_*` endpoint/issuer contracts and mandatory PAR; match configured client secrets
+to the fresh clients. Old users, signing keys, credentials and sessions are not preserved
+in the fresh database. Use the public realm's frontend URL rather than silently changing
+the global legacy hostname; prove fresh production-mode dual-realm behavior. Keycloak documents explicit hostname/proxy
 configuration and realm frontend URLs. [Hostname guidance](https://www.keycloak.org/server/hostname)
 
 The BFF currently has one standard profile. At approved cutover its standard origin moves
@@ -131,11 +141,12 @@ credentials/ownership, dependencies, implementation, data, resource policy or se
 Verify the real BFF/HAPI path, 200/401/403 and denied external access. Observations retain
 schema 1, actual BFF observer/time and explicit HAPI reports; no invented Keycloak internals.
 
-The recorded HAPI/PostgreSQL availability issue is a separate operational concern. Do not
-repair it or change its PostgreSQL configuration in tasks 5.3–5.5. It does not block
-Keycloak backup, patch compatibility or provider rollback rehearsal. If still present at
-public acceptance, report the actual unavailable resource outcome and withhold a successful
-resource-journey claim; no database migration or recovery project is implied.
+The recorded PostgreSQL availability failure is now a prerequisite for Keycloak because
+the fresh database will use that same instance. Task 5.3 covers a focused diagnosis and
+separately approved availability recovery, preserving HAPI's database and data. Do not
+change HAPI's PostgreSQL configuration, ownership or permissions. Verify recovered service
+and private SQL connectivity, then the real resource path; a health label alone is not
+availability evidence. No reset, shared-volume replacement or broad HAPI rework is implied.
 
 ### 6. Targeted release and rollback
 
@@ -149,122 +160,132 @@ After separate release approval, replace the public SPA with the production targ
 apply only reviewed, necessary BFF/Keycloak/HAPI binding changes. Keep unrelated services,
 Tunnel routing, databases and data intact. Verify the actual public browser journey before
 claiming OAuth is available; staged/private success is supporting evidence, not public acceptance.
+The fresh provider must first pass private ePA/PAR and OAuth acceptance, and the owner must
+confirm the identity-reset consequences before the existing service is replaced.
 
 On failure restore the saved fixture image/project routing and previous standard/HAPI trust
 settings as needed, invalidate affected BFF sessions and withdraw new OAuth/provider forwarding.
-Keep ePA and data intact; disable rather than delete owned public configuration. Restore the saved fixture image with the reviewed withdrawal configuration: close OAuth/provider forwarding and suppress raw URL/error logs, including late callbacks. Verify
+Keep HAPI data intact; disable rather than delete owned public configuration. Restore the saved fixture image with the reviewed withdrawal configuration: close OAuth/provider forwarding and suppress raw URL/error logs, including late callbacks. Verify
 fixture navigation and private ePA/PAR after rollback. Ordinary SPA withdrawal requires
-no provider-data restore and does not downgrade Keycloak. A failed provider image upgrade
-uses the separately tested H2 recovery below. Neither recovery touches HAPI PostgreSQL.
+no provider-data restore. Provider recovery selects either the accepted fresh PostgreSQL
+installation or the retained original private H2 installation as described below; it never
+copies state between them or restores the shared PostgreSQL volume.
 
-### 7. Retained H2 beta and focused Keycloak security upgrade
+### 7. Fresh PostgreSQL Keycloak installation, no H2 migration
 
-**Accepted beta boundary.** Retain the existing `epa-lab-keycloak` service/container name,
-H2 `dev-file` volume/data and development startup; add no persistent provider service or
-database. The public deployment is an **experimental beta**, with **owner-provisioned
-individual demo accounts**, **synthetic-only data** and **no production-readiness claim**.
-The owner accepts the unsupported production storage/startup risk, including availability
-and durability limitations. This is not evidence of production suitability, high
-availability or supported H2 schema upgrades. Keep registration disabled, credentials
-privately delivered, no administrative grants for demo users and existing token bounds.
-Keycloak documents `dev-file` as development-only and warns against production `start-dev`.
-[Database guidance](https://www.keycloak.org/server/db),
-[container startup guidance](https://www.keycloak.org/server/containers#_trying_keycloak_in_development_mode).
+**Availability first.** Diagnose the recorded missing PostgreSQL container task/refused TCP
+path without assuming corruption. Prepare a targeted recovery operation and obtain its
+specific approval before any live restart, recreation or repair. Do not reset/reinitialize
+PostgreSQL, replace its volume, change HAPI credentials/configuration or perform shared-stack
+operations. Verify PostgreSQL 16 availability using private TCP, SQL and HAPI connectivity;
+inspect only the catalogs, effective grants and connection headroom needed for this addition.
+If recovery cannot preserve HAPI's database/data, stop for a separately reviewed resolution.
 
-**Patch only.** Prepare `quay.io/keycloak/keycloak:26.8.2` pinned to a verified immutable
-digest, replacing the recorded 26.8.0 image only after separate live-maintenance approval.
-Preserve the existing container/service identity, volume attachment, realms, user IDs,
-credentials, clients, signing keys, issuers and PAR policies. Keep existing OAuth code,
-SPA/BFF candidate identities and reviewed HTTPS/proxy settings. There is no PostgreSQL
-provisioning, role creation, storage-engine conversion or production-startup requirement.
-The [26.8.2 security release](https://github.com/keycloak/keycloak/releases/tag/26.8.2)
-includes the recorded theme-resource disk-exhaustion fix. Check only 26.8.1/26.8.2 changes
-relevant to existing realms, login, mapper tooling and recovery; no unrelated upgrade work.
+**Fresh database and least privilege.** Use the existing PostgreSQL 16 instance/volume.
+After specific DDL approval, create only fresh database `keycloak`, dedicated login role
+`keycloak_app` and its own `keycloak` schema. Administration creates the database; the app
+role owns only its schema/objects and receives connection/schema privileges needed for
+Keycloak initialization and operation. Give it no superuser, role/database creation,
+replication, bypass-RLS, HAPI-role membership or HAPI data grants. Verify effective access,
+including PUBLIC/inherited grants, cannot read/write HAPI data. If isolation would require
+changing HAPI ACLs, report that conflict instead of modifying HAPI. Reject pre-existing
+unowned/conflicting `keycloak` resources; repeat setup verifies owned state without dropping
+databases, broadening grants or resetting credentials. No extra PostgreSQL instance/volume.
 
-**Consistent source.** Use an administrator-supplied, verifiably consistent H2 backup or
-obtain approval for a bounded stop/copy/start window for `epa-lab-keycloak` only. After a
-clean shutdown, copy the complete persisted `/opt/keycloak/data` state and preserve the
-matching 26.8.0 image/configuration, mounts and any required provider/theme assets. Record
-version, provenance, clean-stop consistency, checksums and restore verification. Keep the
-backup protected and immutable, with 0700 directories/0600 files; no secrets or state dumps
-in Git/reports/logs. A hot H2 file copy, fixture export, partial/masked realm export or SPA
-rollback archive is not a substitute. Preserve the existing named volume and data; do not
-reset it or execute a live pause during this planning update.
+**Production provider.** Pin `quay.io/keycloak/keycloak:26.8.2` to a verified immutable
+digest. Reuse the existing service/container name `epa-lab-keycloak`; prepare production
+`start` with `KC_DB=postgres`, the private database URL, `keycloak_app`, its schema and a
+protected server-held password. An optimized build is optional, not a new architecture.
+Preserve health checks, strict legacy hostname, public realm HTTPS frontend authority and
+trust only the verified Nginx peer. Administration, management and PostgreSQL stay private.
+Keep current SPA/BFF candidates and verify the unchanged OAuth implementation against this
+provider. Production startup/storage is required, but does not establish production readiness.
+[Database configuration](https://www.keycloak.org/server/db),
+[production configuration](https://www.keycloak.org/server/configuration-production).
 
-**Isolated upgrade and rollback rehearsal.** Restore a working copy of that backup into
-an isolated, loopback-only candidate, without mounting the live volume or joining live
-ingress/provider clustering. Establish the 26.8.0 baseline, then exercise 26.8.2 and a
-restart against the copied H2 state. Verify administrative recovery, realm/user IDs,
-credential behavior, client configuration/secrets, signing-key fingerprints, legacy
-issuer/required PAR and standard OAuth with real components. Keep public synthetic accounts
-separate from legacy users. Do not use fixture import, password resets or key regeneration
-to conceal missing state. Reuse the existing public candidate for focused HTTPS/proxy,
-discovery/JWKS, session/logout and disclosure checks; HAPI availability is separate.
+**Versioned fresh provisioning.** Initialize `epa-demo` and `playground-public` using the
+versioned definitions/tooling in decision 3, with protected credential inputs and fresh
+synthetic demo accounts. JSON startup provisioning, if used, reads only the versioned
+fresh-realm definition, never a dump of existing H2 state. Verify both realms, clients,
+required PAR for ePA, public Code/S256 without PAR, audience/permission and five-minute public
+Access Tokens. Repeated provisioning and restart must preserve this new owned state and
+reject conflicts without overwriting realms. Generate new signing keys; do not import old
+users, password hashes, keys, sessions, revoked-token records or other H2 content.
+[Fresh realm provisioning](https://www.keycloak.org/server/importExport).
 
-Keycloak explicitly does not support schema migration with H2 `dev-file`; this rehearsal
-must demonstrate the exact patch on the actual preserved copy and cannot confer vendor
-support. On failure, stop and report it without adding a database transition. The
-[26.8.2 upgrade guide](https://www.keycloak.org/docs/26.8.2/upgrading/)
-also requires old installation and backup recovery instead of a database downgrade.
-Test rollback by stopping the upgraded isolated candidate, retaining its state separately,
-restoring a fresh copy of the untouched pre-upgrade H2 backup and running the saved 26.8.0
-image/configuration. Never point 26.8.0 at files written by 26.8.2 or run both against one
-H2 store. Verify the same state comparisons, administrative recovery and ePA/standard
-regressions after restore. No live restore or volume deletion is part of preparation.
+**Confirm identity-reset consequences before live replacement.** The owner must explicitly
+acknowledge that old accounts/passwords and Keycloak user IDs/`sub` references do not carry
+over, signing keys change, existing provider sessions/SSO/offline and refresh tokens cannot
+be continued, and pending logins must restart. Verify client secrets/configuration match
+the BFF and any ePA consumer; deliver fresh demo credentials privately. Existing signed
+bearers may still validate against cached old JWKS until expiry/cache refresh: record and
+verify a token-drain/cache/session invalidation plan, rather than claiming instant revocation.
+Do not remap HAPI records to new users or change HAPI data to conceal an identity mismatch.
+The fresh architecture is decided; this impact acknowledgement is a remaining prerequisite.
 
-**Release handoff.** Record exact source/target image digests, backup manifest, isolated
-results and targeted upgrade/restore commands in task 5.5's packet refresh; keep existing
-SPA/BFF candidate and fixture rollback identities. Resolve maintenance duration, in-flight
-login restart, possible reauthentication, token/session/revocation effects and post-upgrade
-identity writes before live approval. Preserve changed state for investigation; do not
-silently restore stale passwords/policies/revocations. The rollback decision must reconcile
-such writes and any already issued tokens. An approved provider image upgrade targets only
-the existing Keycloak service and retains its H2 volume; public forwarding remains disabled
-until separately approved. Neither a backup nor a successful patch rehearsal authorizes
-live changes, activates public OAuth or warrants a production-readiness claim.
+**Focused verification.** After recovery and approved fresh provisioning, exercise an
+isolated production-mode 26.8.2 candidate on the new PostgreSQL database, with private
+test listeners and no live ingress/provider replacement. Verify readiness/restart, effective
+role isolation, repeat/conflict checks, administrative recovery, fresh ePA header/browser
+PAR success and non-PAR rejection, standard Code/S256/OAuth session/logout and real HTTPS
+metadata/JWKS. Reuse existing SPA/BFF and resource-security checks, including HAPI 200/401/403
+on synthetic reads and no HAPI data writes. Record new evidence; completed tasks do not
+prove that this fresh provider works. No H2 transfer or legacy-data migration rehearsal.
+
+**Offline H2 recovery and release handoff.** During a separately approved handoff, cleanly
+stop the original provider and retain `epa-auth-lab_keycloak-data` detached/offline with
+its matching original image, private settings and administrative recovery inputs. Never
+mount it in the 26.8.2 PostgreSQL candidate, upgrade it, export it or delete/reset it. Keep
+it until the new installation is accepted; disposal would require a separate owner decision.
+The packet records exact fresh-provider/database settings, image identities, fresh-flow
+results, confirmed reset/token impact, H2 retention and targeted recovery/withdrawal commands.
+No identity data moves between the two installations. If the fresh provider fails, withdraw
+public auth first and use only an explicitly approved return to the saved original private
+H2 provider; retain the fresh PostgreSQL state for investigation and account for new users,
+keys and tokens issued since cutover. Do not serve both states under the same live authority
+or restore/drop HAPI/shared volumes. Public fixtures remain available until separate release
+approval; no live service is stopped or replaced by this planning update.
 
 ## Public-authentication activation gates
 
 These gates block unsafe activation, not unrelated SPA/proxy preparation:
 
-| Gate                               | Focused evidence / action                                                                                                                                                                                                                                                                                                |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Patched, recoverable beta provider | Complete the focused 26.8.2 H2-copy upgrade/restart and old-image/pre-upgrade-backup rollback rehearsal, state comparisons and packet refresh in 5.3–5.5. Obtain specific approval before live backup/upgrade maintenance. H2/development startup is the accepted experimental-beta risk, not a production-storage gate. |
-| Correct public authority           | Real browser/BFF/HAPI discovery, callback and JWKS requests use the fixed HTTPS authority; issuer, signature, audience, expiry and permission checks pass. No TLS bypass, alternate issuer or unauthenticated fallback.                                                                                                  |
-| Safe public boundary               | New auth routes enforce trusted proxy/canonical host, secure cookies, CSRF, bounded requests, cache isolation and secret-safe logs. Keycloak administration, legacy ePA and HAPI remain outside public ingress/direct access.                                                                                            |
-| Compatibility and recovery         | Real ePA/PAR regressions and targeted fixture rollback pass. If public realm/hostname settings affect ePA, stop for a narrowly reviewed correction rather than changing legacy policy.                                                                                                                                   |
+| Gate                         | Focused evidence / action                                                                                                                                                                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Available isolated storage   | Restore the existing PostgreSQL 16 instance's availability through a separately approved targeted operation; verify fresh `keycloak` database and least-privilege `keycloak_app` without modifying HAPI database/data/configuration.            |
+| Fresh production provider    | Verify pinned 26.8.2 production startup, versioned provisioning of both realms, fresh synthetic users, ePA/PAR and standard OAuth/restart behavior. No H2 state transfer or legacy-data migration rehearsal.                                    |
+| Confirmed reset and recovery | Record owner acknowledgement of regenerated users/keys and session/token/client consequences. Preserve the original H2 volume offline with matching recovery settings until acceptance; verify targeted recovery/fixture withdrawal boundaries. |
+| Correct public authority     | Real browser/BFF/HAPI discovery, callback and JWKS requests use the fixed HTTPS authority; issuer, signature, audience, expiry and permission checks pass. No TLS bypass, alternate issuer or unauthenticated fallback.                         |
+| Safe public boundary         | New auth routes enforce trusted proxy/canonical host, secure cookies, CSRF, bounded requests, cache isolation and secret-safe logs. Keycloak administration, legacy ePA and HAPI remain outside public ingress/direct access.                   |
+| Compatibility and recovery   | Real ePA/PAR regressions and targeted fixture rollback pass. If public realm/hostname settings affect ePA, stop for a narrowly reviewed correction rather than changing legacy policy.                                                          |
 
-The owner has resolved storage/startup: retain H2 and development mode. No database/role
-approval or production-storage transition is a remaining gate. Separate release approval
-for tasks 6.1/6.2 and actual public HTTPS acceptance remain necessary. The historical
-Cloudflare probe and broad operational follow-ups do not replace these concrete checks.
+The owner has resolved storage/startup: fresh PostgreSQL-backed 26.8.2 production mode.
+Specific PostgreSQL recovery/provisioning and provider-maintenance approvals remain separate
+from this planning request. Tasks 6.1/6.2 need release approval and actual public HTTPS
+acceptance. The historical Cloudflare probe and broad follow-ups do not replace these checks.
 
 ### Remaining concrete blockers
 
-1. No consistent Keycloak H2 backup was verified in the inspected saved artifacts. Supply
-   a verifiable backup or approve the bounded Keycloak-only cold-backup maintenance window.
-2. The exact immutable 26.8.2 candidate, real H2 preservation/upgrade/restart and restore-based
-   rollback evidence are still missing. Tasks 5.3–5.5 remain unchecked; the packet needs
-   the resulting digests, backup/recovery commands and maintenance/session decisions.
-3. Live provider maintenance and public release tasks 6.1/6.2 are not approved. Actual
-   Tunnel/BFF/HAPI authority, ingress and browser/resource acceptance must be demonstrated
-   at the approved release; staged results do not establish those actual-edge results.
-
-**Separate HAPI availability issue:** the last report records an unavailable PostgreSQL
-task/private TCP path. It has not been repaired or freshly diagnosed in this planning
-update. It is not a Keycloak preparation blocker; if still present, it prevents successful
-resource acceptance and needs its own targeted operational handling. Do not change HAPI's
-PostgreSQL configuration or treat its historical privilege findings as upgrade prerequisites.
+1. Existing PostgreSQL availability has not been restored/verified after the recorded
+   missing-task/private-TCP failure. A specific safe recovery and DDL plan is needed.
+2. Owner acknowledgement of the fresh user/signing-key reset and the exact client,
+   session/token/cache consequences is not yet recorded.
+3. Fresh production PostgreSQL-backed 26.8.2 provisioning, role-isolation/restart and real
+   ePA/PAR/OAuth acceptance evidence are missing. Tasks 5.3–5.5 remain unchecked.
+4. The packet needs the original H2 offline-retention/recovery plan and fresh-provider
+   evidence. Live replacement and public activation still require separate approval and
+   actual public acceptance; this update performs none of them.
 
 ## Risks / Trade-offs
 
-- Unsupported H2/development startup and H2 upgrade behavior → explicit owner-accepted
-  experimental beta, synthetic-only access, tested copies/backups and no production claim;
-  a passing rehearsal does not make that configuration supported.
-- Patch failure or incompatible persisted state → protected pre-upgrade H2 backup, saved
-  image/settings and tested restore; never downgrade the upgraded store in place.
-- Maintenance interruption or stale-state recovery → separately approved bounded window,
-  explicit login/session/token impact and reconciliation of later identity/revocation writes.
+- Shared PostgreSQL outage or provisioning error → recover availability and verify limited
+  effective grants before use; preserve HAPI data/configuration and reject conflicts.
+- Regenerated identities/keys break old access → owner-confirmed impact, fresh credentials,
+  explicit client/cache/token handling and real fresh-flow acceptance; no identity continuity claim.
+- Recovery returns to different identity state → retain original H2 offline with its image,
+  withdraw public auth first and reconcile newly issued credentials/tokens before a private return.
+- Production-mode software is mistaken for readiness → retain experimental-beta/synthetic-only
+  access and no production-readiness claim; public approval/acceptance remain separate.
 
 ## Operational follow-ups and verification
 
