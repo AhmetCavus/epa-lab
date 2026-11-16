@@ -47,7 +47,7 @@ The mission SHALL open in Explore and provide explicit Explore/Inspect navigatio
 #### Scenario: Restore after callback or reload
 
 - **WHEN** the browser returns through the fixed clean callback route or reloads either mode
-- **THEN** the UI reads authoritative session and owned events, and catalog eligibility when needed
+- **THEN** the UI reads authoritative session and owned events only, enabling the Explorer form immediately when the current session is authenticated
 - **AND** no login, token exchange or FHIR read is initiated merely by viewing the workspace
 - **AND** no credentials, run state or resource payload are recovered from browser storage.
 
@@ -61,7 +61,8 @@ Explore SHALL show a clear mission title/objective, prominent authentication sta
 - **WHEN** Explore is displayed
 - **THEN** authentication is the dominant action and the external redirect is explained
 - **WHEN** a current session is established
-- **THEN** the dominant action becomes an explicit protected-access check, followed by the Resource Explorer's fetch action when permission is confirmed
+- **THEN** the Resource Explorer form is enabled immediately and its explicit Fetch action becomes dominant
+- **AND** no preliminary FHIR read, resource-catalog request or authorization eligibility state is required
 - **AND** logout and Inspect remain secondary; Start/Retry does not stay visually dominant after success.
 
 #### Scenario: Loading and failures have honest next actions
@@ -99,6 +100,7 @@ The OAuth mission SHALL supply Authenticate, Validate tokens / establish session
 
 - **WHEN** a recorded BFF ID-token validation and session establishment are shown
 - **THEN** the session stage describes those outcomes without claiming that every token was validated by the browser or provider internals were observed
+- **AND** enabling Explorer from the authenticated session does not mark the resource stage successful or imply HAPI permission
 - **AND** resource success requires an actual validated allowed resource response.
 
 #### Scenario: Navigate learning without executing

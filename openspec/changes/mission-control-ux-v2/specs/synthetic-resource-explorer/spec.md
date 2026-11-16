@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Let an authenticated, authorized learner request an explicitly approved fictional FHIR resource through the existing BFF, understand the actual result and inspect a bounded safe JSON representation without expanding resource permissions or exposing OAuth credentials.
+Let an authenticated learner explicitly request the approved fictional FHIR resource through the existing BFF, understand the actual resource authorization outcome and inspect a bounded safe JSON representation without expanding resource permissions or exposing OAuth credentials.
 
 ## ADDED Requirements
 
@@ -12,54 +12,55 @@ Explorer SHALL match `docs/design/mission-control-v2/04-resource-explorer.png`, 
 
 #### Scenario: Review a permitted successful read
 
-- **GIVEN** an active session with confirmed resource access
+- **GIVEN** an active session and a selected read that returned a validated 200
 - **WHEN** Explorer is rendered at 1672×941 and compared to the approved resource image
 - **THEN** the authentication banner, resource card, aligned form, left result summary and larger JSON/metadata area match the reference hierarchy and proportions
 - **AND** the primary German action is `Ressource abrufen`, with a corresponding English translation
 - **AND** the result uses actual validated data rather than the illustrated profile URL, body, latency or byte count.
 
-### Requirement: Explorer requires current authentication and confirmed resource access
+### Requirement: Current authentication immediately enables Explorer
 
-Explorer's controls and data SHALL be available only for the current authenticated owning context with confirmed permission for the allowed operation. Login alone SHALL NOT imply authorization. An explicit existing protected read SHALL establish availability only on validated success for the current authentication; the BFF SHALL enforce this independently of frontend state.
+Explorer's form SHALL be enabled immediately for the current authenticated owning standard session, without a preliminary FHIR read, permission preflight or separate authorization eligibility store. Authentication SHALL NOT imply HAPI permission or a successful resource result. Each explicit fetch SHALL enforce BFF session/selection checks and HAPI authorization independently.
 
-#### Scenario: Establish permission through real work
+#### Scenario: Enable the first fetch immediately after authentication
 
-- **GIVEN** an authenticated session without confirmed FHIR access
-- **WHEN** the learner explicitly requests the protected-access check from Explore
-- **THEN** the existing fixed resource operation performs a real HAPI read with the server-held Access Token
-- **AND** only a validated current-session 200 unlocks Explorer and its approved catalog entry
-- **AND** the check counts against the real resource budget and records existing resource observations.
+- **WHEN** successful authentication establishes the current owning standard session
+- **THEN** the type/ID form and Fetch action are enabled without any earlier resource request
+- **AND** the first explicit fetch is the actual selected read, using the server-held Access Token and existing resource budget/observations
+- **AND** no separate permission-check action or stored eligibility flag is required
+- **AND** resource success remains unknown until that read returns a validated 200.
 
-#### Scenario: Reject unavailable eligibility
+#### Scenario: Require the owning standard session
 
-- **GIVEN** anonymous, expired, logged-out, ePA-only or unconfirmed/denied state
+- **GIVEN** an anonymous, expired, logged-out or ePA-only context without current standard authentication
 - **WHEN** the user navigates directly to the Explorer panel or crafts a selected-resource API request
-- **THEN** the form/result is unavailable and the BFF refuses selected work without contacting HAPI
-- **AND** the owning active session receives an appropriate permission/recovery explanation, while missing authentication is 401
+- **THEN** the form/result is unavailable, login is required and the BFF returns 401 without contacting HAPI
 - **AND** a forged frontend enabled flag or known run ID grants no access.
 
-#### Scenario: Restore eligibility without repeating the read
+#### Scenario: Restore the form without a resource or catalog request
 
-- **WHEN** an eligible learner reloads the workspace
-- **THEN** a protected versioned catalog read can restore current eligibility and approved entries without making a HAPI request
-- **AND** stale eligibility from another authentication, pending current attempt, expired context or backend restart does not enable Explorer
+- **WHEN** authoritative session restoration confirms the current authenticated owning context
+- **THEN** the form becomes enabled using the single-entry selector without a FHIR preflight or resource-catalog request
+- **AND** no resource-catalog endpoint or eligibility DTO/store is introduced for this version
+- **AND** a stale or missing session, another browser, or retained history alone cannot enable the form
 - **AND** a prior FHIR response is not reconstructed from browser storage or silently fetched again.
 
 ### Requirement: A finite server allowlist controls resource selection
 
-The BFF SHALL expose and accept only a finite approved synthetic resource catalog, initially exactly `Basic/playground-demo` with read permission `demo.fhir.read`. It SHALL validate type and ID against that catalog on every request and reject unapproved pairs before upstream contact. Frontend controls SHALL NOT be the security boundary.
+The BFF SHALL accept only the finite server allowlist, initially exactly `Basic/playground-demo` with read permission `demo.fhir.read`. It SHALL validate type and ID on every request and reject unapproved pairs before upstream contact. The form SHALL present only this single type/ID entry; frontend controls SHALL NOT be the security boundary or promise resource permission.
 
 #### Scenario: Fetch the only approved entry
 
-- **WHEN** an eligible learner selects type `Basic`, supplies ID `playground-demo` and activates fetch
-- **THEN** the BFF resolves that exact catalog operation and calls only its configured trusted fixed HAPI target
+- **WHEN** a currently authenticated learner selects type `Basic`, supplies ID `playground-demo` and activates fetch
+- **THEN** the BFF validates the owning session and exact allowlist pair, then calls only its configured trusted fixed HAPI target
+- **AND** HAPI independently authenticates the JWT and authorizes the actual operation
 - **AND** no caller-provided origin, arbitrary path or upstream query is used.
 
 #### Scenario: Reject additional types IDs and operations
 
 - **WHEN** an authenticated caller submits `Patient`, `Observation`, another Basic ID, search, history, batch, write or another undeclared operation
 - **THEN** the BFF returns a safe 403 for a well-formed unapproved pair, or 400 for malformed input, before any upstream call
-- **AND** the catalog offers no enabled entry for those resources.
+- **AND** the form offers no enabled entry for those resources.
 
 #### Scenario: Add a resource only through a later reviewed extension
 
@@ -69,7 +70,7 @@ The BFF SHALL expose and accept only a finite approved synthetic resource catalo
 
 ### Requirement: Selected requests accept only bounded resource selectors
 
-The selected resource request SHALL accept exactly one scalar resource type and ID with bounded canonical syntax. It SHALL reject extra/duplicate/array/object selectors, traversal, encoded path separators, bodies and caller-selected credentials. Catalog and resource responses SHALL retain same-origin/proxy checks, no-store and current ownership protections.
+Selected reads SHALL reuse `GET /api/oauth/resource` with exactly one bounded scalar `resourceType` and `resourceId`. They SHALL reject extra/duplicate/array/object selectors, traversal, encoded path separators, bodies and caller-selected credentials. Resource responses SHALL retain same-origin/proxy checks, no-store and current ownership protections. No resource-catalog endpoint SHALL be added.
 
 #### Scenario: Reject crafted request shapes and credentials
 
@@ -82,11 +83,12 @@ The selected resource request SHALL accept exactly one scalar resource type and 
 - **WHEN** an existing client calls `GET /api/oauth/resource` without selectors
 - **THEN** its existing status/body schema and fixed-resource behavior remain compatible
 - **AND** the strict session and version-1 event contracts do not acquire unrelated new fields
-- **AND** the selected Explorer response and catalog use their own explicitly versioned validated representations.
+- **AND** providing exactly `resourceType=Basic&resourceId=playground-demo` selects the separately versioned validated Explorer response on the same route
+- **AND** no catalog route, catalog DTO or additional proxy allowance is required.
 
 ### Requirement: HAPI independently authenticates and authorizes every read
 
-Every upstream read SHALL retain HAPI's independent trusted JWT, issuer, audience, expiry, purpose, scope and exact-operation checks. BFF session/catalog eligibility SHALL NOT bypass them. The resource server SHALL remain limited to the existing synthetic Basic read; no policy weakening or live data alteration is permitted.
+Every upstream read SHALL retain HAPI's independent trusted JWT, issuer, audience, expiry, purpose, scope and exact-operation checks. An authenticated BFF session, enabled form or earlier successful read SHALL NOT bypass them. The resource server SHALL remain limited to the existing synthetic Basic read; no policy weakening or live data alteration is permitted.
 
 #### Scenario: Verify real token and scope denials
 
@@ -123,7 +125,8 @@ Explorer SHALL distinguish real 200, 401, 403, 404 and 429 outcomes without inve
 - **WHEN** the BFF returns 401 for missing/current-session loss
 - **THEN** Explorer is cleared and login is offered
 - **WHEN** HAPI returns 401 or 403
-- **THEN** the UI describes resource authentication/permission rejection and removes current Explorer eligibility without falsely claiming that provider SSO or BFF authentication has ended
+- **THEN** the UI clears any prior success payload and describes the actual resource authentication/permission rejection without falsely claiming that provider SSO or BFF authentication has ended
+- **AND** the form remains enabled while the authoritative BFF session remains current; no preliminary success is required to retry
 - **AND** BFF allowlist rejection is not labeled a HAPI decision.
 
 #### Scenario: Explain an actual authorized not-found response
@@ -150,21 +153,21 @@ Explorer SHALL distinguish real 200, 401, 403, 404 and 429 outcomes without inve
 
 ### Requirement: Ownership expiry logout and rate limits remain effective
 
-Catalog eligibility and resource results SHALL remain tied to the current authentication and owning context, within existing bounds. Expiry, replacement, logout and upstream authentication/permission denial SHALL invalidate eligibility. Superseded responses SHALL be discarded, and existing resource/read/aggregate rate protections SHALL apply without blocking cleanup.
+Form availability and resource results SHALL follow current authentication and ownership. Expiry, replacement, logout or ownership loss SHALL clear superseded resource data. HAPI rejection SHALL clear the previous success payload and remain distinct from BFF session loss; it SHALL NOT create a separate eligibility gate. Superseded responses SHALL be discarded, and existing rate protections SHALL apply without blocking cleanup.
 
 #### Scenario: Discard a late protected response after logout
 
-- **GIVEN** a resource check or selected read is in flight
+- **GIVEN** an explicit selected read is in flight
 - **WHEN** local logout or authentication replacement occurs before completion
-- **THEN** no late response establishes eligibility or repopulates JSON/status as authenticated
+- **THEN** no late response re-enables an ended session or repopulates JSON/status for superseded authentication
 - **AND** the BFF rechecks the original authentication before returning data
 - **AND** safe retained history does not restore resource permission.
 
 #### Scenario: Exhaust budgets or event capacity
 
-- **WHEN** repeated resource checks/reads exhaust the resource budget or trace capacity
+- **WHEN** repeated explicit resource fetches exhaust the resource budget or trace capacity
 - **THEN** existing throttling/capacity behavior rejects additional work honestly without an automatic retry loop
-- **AND** catalog/viewing reads cannot amplify into HAPI reads
+- **AND** viewing, session/event restoration and presentation changes cannot amplify into HAPI reads
 - **AND** session invalidation, cancellation and credential cleanup remain available even if teaching events cannot be stored.
 
 ### Requirement: Resource controls remain localized responsive and accessible
