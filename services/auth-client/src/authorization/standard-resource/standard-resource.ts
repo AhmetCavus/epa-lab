@@ -1,5 +1,4 @@
 import type { ConfigType } from '@nestjs/config';
-import { z } from 'zod';
 import type { configuration } from '../../config/configuration';
 import { isSafeDemoResourceUrl } from '../../config/configuration.validation';
 import { BoundedJsonError, readBoundedJson } from '../../common/http/response-json';
@@ -9,41 +8,33 @@ import type {
 } from '../run-observations/protocol-event';
 import { readResourceServerReport } from './resource-report';
 
-const syntheticBasicSchema = z.strictObject({
-  resourceType: z.literal('Basic'),
-  id: z.literal('playground-demo'),
-  meta: z
-    .strictObject({
-      versionId: z.string().max(64).optional(),
-      lastUpdated: z.string().datetime({ offset: true }).optional(),
-      source: z.string().max(2048).optional(),
-    })
-    .optional(),
-  code: z.strictObject({
-    coding: z.tuple([
-      z.strictObject({
-        system: z.literal('https://example.invalid/playground/demo'),
-        code: z.literal('oauth-learning-demo'),
-        display: z.literal('Fictional protocol learning resource'),
-      }),
-    ]),
-    text: z.literal('Synthetic non-clinical OAuth demonstration; no patient data'),
-  }),
-});
+import {
+  syntheticBasicSchema,
+  safeSyntheticBasicSchema,
+  type SafeSyntheticBasic,
+} from './synthetic-basic';
+
 export interface SyntheticBasicView {
   resourceType: 'Basic';
   id: 'playground-demo';
   code: 'oauth-learning-demo';
 }
 export type ResourceResult =
-  | { kind: 'allowed'; resource: SyntheticBasicView; report: ResourceServerReport }
+  | {
+      kind: 'allowed';
+      resource: SyntheticBasicView;
+      report: ResourceServerReport;
+      fhir?: SafeSyntheticBasic;
+    }
   | { kind: 'denied'; status: 401 | 403; report: ResourceServerReport }
+  | { kind: 'not-found' }
   | { kind: 'failed'; reason: ResourceFailureReason };
 
 export async function readStandardResource(
   config: ConfigType<typeof configuration>,
   accessToken: string,
   received: (status: number, report: ResourceServerReport) => void,
+  selected = false,
 ): Promise<ResourceResult> {
   const profile = config.standardProfile;
   if (!profile || !isSafeDemoResourceUrl(profile.resourceUrl, config.allowPrivateNetworkHttp)) {
@@ -61,6 +52,7 @@ export async function readStandardResource(
     received(response.status, report);
     if (response.status !== 200) {
       await response.body?.cancel().catch(() => undefined);
+      if (selected && response.status === 404) return { kind: 'not-found' };
       return response.status === 401 || response.status === 403
         ? { kind: 'denied', status: response.status, report }
         : { kind: 'failed', reason: 'unexpected-status' };
@@ -74,8 +66,28 @@ export async function readStandardResource(
     if (!parsed.success) {
       return { kind: 'failed', reason: 'invalid-response' };
     }
+    let fhir: SafeSyntheticBasic | undefined;
+    if (selected) {
+      const meta = parsed.data.meta;
+      const candidate = safeSyntheticBasicSchema.safeParse({
+        resourceType: parsed.data.resourceType,
+        id: parsed.data.id,
+        code: parsed.data.code,
+        ...(meta && (meta.versionId !== undefined || meta.lastUpdated !== undefined)
+          ? {
+              meta: {
+                ...(meta.versionId !== undefined ? { versionId: meta.versionId } : {}),
+                ...(meta.lastUpdated !== undefined ? { lastUpdated: meta.lastUpdated } : {}),
+              },
+            }
+          : {}),
+      });
+      if (!candidate.success) return { kind: 'failed', reason: 'invalid-response' };
+      fhir = candidate.data;
+    }
     return {
       kind: 'allowed',
+      ...(fhir ? { fhir } : {}),
       report,
       resource: {
         resourceType: parsed.data.resourceType,

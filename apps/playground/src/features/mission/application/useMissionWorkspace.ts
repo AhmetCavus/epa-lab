@@ -1,11 +1,20 @@
 import { useState } from 'react';
-import { useProtocolSelection } from '../../protocol-flow/selection';
+import {
+  useEventFilter,
+  useProtocolPlayback,
+  useProtocolSelection,
+} from '../../protocol-flow/selection';
 import type { Mission } from '../domain/mission';
 import { useOAuthMission } from './useOAuthMission';
 
 type WorkspaceAnnouncement = 'loaded' | 'replayed' | 'reset' | 'fitted';
 
-export function useMissionWorkspace(mission: Mission, runtimeEnabled = false) {
+export function useMissionWorkspace(
+  mission: Mission,
+  runtimeEnabled = false,
+  playbackEnabled = false,
+  inspectionEnabled = false,
+) {
   const execution = useOAuthMission(runtimeEnabled && mission.execution === 'oauth-standard');
   const [checkpointId, setCheckpointId] = useState(mission.checkpoints[0]?.id ?? null);
   const [hasLoadedSamples, setHasLoadedSamples] = useState(false);
@@ -19,6 +28,19 @@ export function useMissionWorkspace(mission: Mission, runtimeEnabled = false) {
     actors,
     events,
     contextActorIds: checkpoint?.actorIds ?? [],
+  });
+  const inspectionFilters = useEventFilter(
+    events,
+    inspection.event?.id ?? null,
+    inspection.selectEvent,
+    runtimeEnabled && inspectionEnabled,
+  );
+  const playback = useProtocolPlayback({
+    events,
+    selectedId: inspection.event?.id ?? null,
+    select: inspection.selectEvent,
+    traceId: execution?.runId,
+    enabled: runtimeEnabled && playbackEnabled,
   });
   const selectedIndex = mission.checkpoints.findIndex((entry) => entry.id === checkpointId);
 
@@ -57,6 +79,8 @@ export function useMissionWorkspace(mission: Mission, runtimeEnabled = false) {
     actors,
     announcement,
     ...inspection,
+    inspectionFilters,
+    playback,
     selectCheckpoint,
     loadSamples,
     replayExplanation,
@@ -64,3 +88,5 @@ export function useMissionWorkspace(mission: Mission, runtimeEnabled = false) {
     announce: setAnnouncement,
   };
 }
+
+export type MissionWorkspace = ReturnType<typeof useMissionWorkspace>;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Actor, FlowEvent } from '../domain/protocol-flow';
 import { interactionActorIds } from '../domain/protocol-flow';
 
@@ -28,13 +28,13 @@ export function useProtocolSelection({
   const highlightedContextIds = actor ? [actor.id] : contextActorIds;
   const highlightedActorIds = event ? interactionActorIds(event) : highlightedContextIds;
 
-  function selectActor(id: string) {
+  const selectActor = useCallback((id: string) => {
     setSelection({ kind: 'actor', id });
-  }
+  }, []);
 
-  function selectEvent(id: string) {
+  const selectEvent = useCallback((id: string) => {
     setSelection({ kind: 'interaction', id });
-  }
+  }, []);
 
   function clearSelection() {
     setSelection({ kind: 'learning' });

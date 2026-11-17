@@ -20,7 +20,18 @@ const { default: AxeBuilder } = appRequire('@axe-core/playwright');
 const root = fileURLToPath(new URL('../', import.meta.url));
 const spaImage =
   process.env.PUBLIC_RUNTIME_SPA_IMAGE ?? 'epa-lab/playground:public-candidate-20261114';
-const bffImage = 'epa-lab/auth-client:public-candidate-20261114';
+const bffImage =
+  process.env.PUBLIC_RUNTIME_BFF_IMAGE ?? 'epa-lab/auth-client:public-candidate-20261114';
+const missionControl = process.env.PUBLIC_RUNTIME_MISSION_CONTROL === 'true';
+if (missionControl) {
+  assert.equal(
+    process.env.KEYCLOAK_POSTGRES_ENV_FILE,
+    undefined,
+    'UX verification must use disposable storage',
+  );
+  process.env.KEYCLOAK_ISOLATED_IMAGE =
+    'quay.io/keycloak/keycloak@sha256:4da21f9a53bcbac1026a0d654b740a81e98e5de4c45457076acc74b4d94b1551';
+}
 const hapiImage =
   process.env.PUBLIC_RUNTIME_HAPI_IMAGE ??
   'sha256:ba8049c9074f35f931af8878dd6eda71b728c37bc143bfdaac81a172446a4927';
@@ -387,6 +398,22 @@ async function verifyRuntime(context) {
       });
       const page = await browser.newPage();
       const consoleOutput = [];
+      const executionCounts = { login: 0, resource: 0, logout: 0 };
+      const selections = [];
+      const unexpectedCatalog = [];
+      page.on('request', (request) => {
+        const url = new URL(request.url());
+        if (url.origin !== publicOrigin) return;
+        const operation = url.pathname.slice('/api/oauth/'.length);
+        if (operation in executionCounts) executionCounts[operation] += 1;
+        if (operation === 'resource') selections.push([...url.searchParams]);
+        if (url.pathname.startsWith('/api/') && /catalog|eligibility/.test(url.pathname))
+          unexpectedCatalog.push(url.pathname);
+      });
+      const runIdentity = () =>
+        page.evaluate(
+          async () => (await (await fetch('/api/oauth/session')).json()).currentRun?.runId,
+        );
       page.on('console', (message) => consoleOutput.push(message.text()));
       page.setDefaultTimeout(20000);
       stage = 'mission-catalog-navigation';
@@ -403,20 +430,46 @@ async function verifyRuntime(context) {
       await page.waitForURL(`${publicOrigin}/missions/oauth-oidc/workspace`);
       stage = 'workspace-refresh-and-resource';
       await page.locator('[data-runtime-action="resource"]:enabled').waitFor();
-      const runId = await page.locator('.runtime-status code').textContent();
+      const runId = missionControl
+        ? await runIdentity()
+        : await page.locator('.runtime-status code').textContent();
+      check(runId, 'Current run unavailable');
+      if (missionControl) {
+        check(executionCounts.resource === 0, 'Preliminary FHIR read before explicit fetch');
+        assert.deepEqual(unexpectedCatalog, []);
+      }
       await page.reload();
       await page.locator('[data-runtime-action="resource"]:enabled').waitFor();
       check(
-        (await page.locator('.runtime-status code').textContent()) === runId,
+        (missionControl
+          ? await runIdentity()
+          : await page.locator('.runtime-status code').textContent()) === runId,
         'Refresh changed current run',
       );
       await page.locator('[data-runtime-action="resource"]').click();
-      await page
-        .getByText(
-          'Letztes Ressourcenergebnis: synthetischer Lesezugriff auf Basic/playground-demo erlaubt.',
-          { exact: true },
-        )
-        .waitFor();
+      if (missionControl) {
+        await page.locator('.mc-resource-result[data-outcome="allowed"]').waitFor();
+        check(executionCounts.resource === 1, 'Resource action not explicit-only');
+        assert.deepEqual(selections, [
+          [
+            ['resourceType', 'Basic'],
+            ['resourceId', 'playground-demo'],
+          ],
+        ]);
+        check(new URL(page.url()).search === '', 'Callback material remained in workspace URL');
+        await page.screenshot({
+          path: join(directory, 'mission-control-real-explore.png'),
+          fullPage: true,
+        });
+        await page.locator('.mc-navigation a').last().click();
+      } else {
+        await page
+          .getByText(
+            'Letztes Ressourcenergebnis: synthetischer Lesezugriff auf Basic/playground-demo erlaubt.',
+            { exact: true },
+          )
+          .waitFor();
+      }
       const document = await page.evaluate(
         async (id) => (await fetch(`/api/oauth/runs/${id}/events`)).json(),
         runId,
@@ -449,6 +502,61 @@ async function verifyRuntime(context) {
         (await page.locator('.inspector').textContent()).includes('res-server'),
         'Reported HAPI evidence absent from Inspector',
       );
+      if (missionControl) {
+        stage = 'mission-control-inspect-and-recorded-playback';
+        const beforePresentation = { ...executionCounts };
+        await page.screenshot({
+          path: join(directory, 'mission-control-real-inspect.png'),
+          fullPage: true,
+        });
+        stage = 'mission-control-inspect-filter-toggle';
+        await page.locator('.mc-event-filter-disclosure summary').click();
+        await page.locator('.mc-event-filters select').first().selectOption('bff');
+        await page.locator('.mc-event-filters select').first().selectOption('');
+        await page.locator('.mc-event-filter-disclosure summary').click();
+        stage = 'mission-control-explore-navigation';
+        await page.locator('.mc-navigation a').nth(1).click();
+        await page.locator('.mc-quick-links a').nth(1).click();
+        await page.locator('.flow-transport[data-playing="false"]').waitFor();
+        stage = 'mission-control-callback-frame';
+        await page.locator('.flow-overview button').nth(2).click();
+        check(
+          (await page.locator('.flow-path > path').getAttribute('data-source')) === 'browser',
+          'Callback source fabricated',
+        );
+        check(
+          (await page.locator('.flow-path > path').getAttribute('data-target')) === 'bff',
+          'Callback target fabricated',
+        );
+        stage = 'mission-control-manual-playback';
+        await page.locator('.flow-transport button').last().click();
+        await page.locator('.flow-transport button').first().click();
+        stage = 'mission-control-play';
+        await page.locator('.flow-transport button').nth(1).click();
+        await page.locator('.flow-transport[data-playing="true"]').waitFor();
+        await page.locator('.flow-transport button').nth(1).click();
+        await page.locator('.flow-transport[data-playing="false"]').waitFor();
+        stage = 'mission-control-locale-presentation';
+        await page.locator('.language-control select:visible').selectOption('en');
+        await page.locator('.language-control select:visible').selectOption('de');
+        assert.deepEqual(
+          executionCounts,
+          beforePresentation,
+          'Presentation initiated protocol execution',
+        );
+        check((await runIdentity()) === runId, 'Presentation changed owning run');
+        await page.screenshot({
+          path: join(directory, 'mission-control-real-flow.png'),
+          fullPage: true,
+        });
+        stage = 'mission-control-retained-resource-panel';
+        await page.locator('.mc-panel-tabs a').first().click();
+        await page.locator('.mc-resource-result[data-outcome="allowed"]').waitFor();
+        await page.screenshot({
+          path: join(directory, 'mission-control-real-resource.png'),
+          fullPage: true,
+        });
+      }
       const oldCookies = await browser.cookies();
       const session = await page.evaluate(async () => (await fetch('/api/oauth/session')).json());
       secrets.add(session.csrfToken);
@@ -460,6 +568,11 @@ async function verifyRuntime(context) {
       stage = 'ui-local-logout';
       await page.locator('[data-runtime-action="logout"]').click();
       await page.locator('[data-runtime-action="start"]:enabled').waitFor();
+      if (missionControl)
+        check(
+          (await page.locator('.mc-resource-result').count()) === 0,
+          'Resource payload survived logout',
+        );
       stage = 'logout-authentication-invalidated';
       const restored = await page.evaluate(async () => {
         const response = await fetch('/api/oauth/session');
@@ -512,9 +625,11 @@ async function verifyRuntime(context) {
       stage = 'public-localization-and-accessibility';
       await page.emulateMedia({ reducedMotion: 'reduce' });
       for (const locale of ['de', 'en']) {
-        await page.getByRole('combobox').selectOption(locale);
+        await page.locator('.language-control select:visible').selectOption(locale);
         check(
-          (await page.locator('.runtime-status code').textContent()) === runId,
+          (missionControl
+            ? await runIdentity()
+            : await page.locator('.runtime-status code').textContent()) === runId,
           'Language change lost the current run',
         );
         for (const width of [1366, 390]) {
@@ -709,15 +824,29 @@ async function verifyRuntime(context) {
         'DE/EN, 1366/390px, reduced motion, WCAG 2A/AA/2.1AA/2.2AA, stable run on language change',
       withdrawal:
         'targeted Compose recreation to saved fixture image; catalog/ePA restored, OAuth/provider forwarding closed',
+      missionControl: missionControl
+        ? {
+            explicitSelectedRead: true,
+            preliminaryResourceRequests: 0,
+            stableRun: true,
+            presentationExecutionRequests: 0,
+            safeHistoryAfterLogout: true,
+            resourceClearedOnLogout: true,
+          }
+        : undefined,
       limitations:
-        'Loopback staging only; production-provider suitability and actual public acceptance remain gated.',
+        'Loopback staging with temporary test CA and disposable provider/HAPI data. This is not public deployment or public-host acceptance.',
     };
     await writeFile(join(directory, 'runtime-results.json'), JSON.stringify(result, null, 2), {
       mode: 0o600,
     });
     return result;
-  } catch {
+  } catch (error) {
     failed = true;
+    let diagnostic = error instanceof Error ? error.message : 'Verification error';
+    for (const secret of secrets)
+      if (secret.length > 8) diagnostic = diagnostic.replaceAll(secret, '[redacted]');
+    await writeFile(join(directory, 'runtime-private-failure.txt'), diagnostic, { mode: 0o600 });
     throw new Error(`Candidate runtime verification failed at stage: ${stage}`);
   } finally {
     if (browser) await browser.close();

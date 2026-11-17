@@ -1,5 +1,16 @@
 # Mission Control Workspace — UX Design
 
+**Current OAuth presentation: Mission Control v2, approved for isolated implementation
+2026-11-16.** The runtime workspace uses default Explore and separate `mode=inspect`,
+with `panel=resources|flow` for Explore's secondary area. Navigation preserves one mounted
+runtime coordinator, owning run and event selection and performs no execution. The
+[approved v2 references](mission-control-v2/README.md) replace the earlier OAuth canvas-first
+composition below. Catalog, labeled fixture previews and conceptual ePA retain their
+existing presentation and routes; generic protocol-flow components remain mission-neutral.
+The language selector still uses the existing application preference boundary.
+See [implementation evidence](../../openspec/changes/mission-control-ux-v2/implementation-verification.md).
+This implementation grant does not authorize a public deployment.
+
 **Status:** APPROVED BASELINE — LOCAL/PRIVATE `001-oidc-pkce` · **Screen:** `/missions/:missionId/workspace`
 
 ## Goal
@@ -173,3 +184,100 @@ The generic Workspace must display both [`fixtures/oauth-oidc.md`](fixtures/oaut
 ![Mission Workspace visual reference](assets/workspace-concept.png)
 
 See [visual-references.md](visual-references.md) for guidance. The illustrative sequence lines are **not** an authoritative protocol trace. “Raw Data” must be renamed **Safe Evidence**.
+
+### Implemented V2 Explore states (2026-11-16)
+
+The authenticated runtime opens Explore. The mission supplies three learning stages:
+authenticate, BFF ID-token validation/session establishment, and explicit resource read.
+Stage selection changes explanation only. Stage completion requires recorded evidence;
+an active session remains usable if teaching history is missing.
+
+| State | Main explanation | Dominant action |
+| --- | --- | --- |
+| Restoring / navigation / pending | Outcome not yet confirmed | None while pending |
+| Anonymous | BFF starts the external Keycloak redirect | Authenticate |
+| Current authenticated standard session | Session active; HAPI decides each read independently | Fetch resource |
+| Later failed/pending attempt with older session | Current attempt and retained authentication are distinct | Retry when settled |
+| Expired / failed / cancelled | Known current state and safe recovery | Fresh authentication |
+| Locally signed out | Session ended; safe history and provider SSO may remain | Fresh authentication |
+
+A FHIR denial does not turn a valid BFF session into a failed login. No preliminary
+resource request, eligibility state or resource catalog unlocks the resource action.
+Logout and status restoration remain secondary and independent of teaching storage.
+The status region announces authoritative state; stage explanation has a separate polite
+live region. Runtime action completion restores focus only when the action held focus;
+mode navigation does not steal focus. German and English share the same state keys.
+
+### Implemented V2 Inspect
+
+Inspect lists only the owned validated event sequence. Actor/channel/outcome filters are
+local presentation: they preserve original IDs and order and explicitly select the first
+visible event if the old selection becomes hidden. An empty filtered set shows no selected
+evidence. Previous/next traverse only that visible set; there is no run-history discovery.
+
+The center separates the observed summary/provenance, expandable allowlisted evidence,
+and explanatory interpretation. Browser→BFF is the callback transport; the issued redirect
+does not prove provider authentication. BFF-local checks have no network arrow. Observer
+`auth-client` and reporter `res-server` mean different things: a HAPI reason is shown only
+when its validated report exists. HTTP success does not invent that report. Provider
+password checks and internal PKCE processing remain unobservable.
+
+The right panel uses the existing safe run ID, first observation, history expiry, event
+count and session presentation. Token values, identity claims, inferred durations and
+provider lifetimes are unavailable to this UI and are not fabricated to fill mockup cards.
+Missing/unsupported history stays explicit. The detail viewport and timeline have keyboard
+access; evidence disclosure uses native summary/Enter/Space behavior in both languages.
+
+### Implemented V2 recorded playback
+
+Animated Flow reconstructs the owned validated event sequence; it starts paused after
+external login or reload. The browser was absent during provider login. Play advances
+recorded IDs at a presentation cadence, pauses at the end or a failure, and invents no
+missing frames. Timing, pulses and moving dashes are explanatory presentation, not measured
+network duration or continuous observation. A HAPI report is still distinct from its BFF
+observer. Keycloak groups AS/IdP roles into one deployed participant; no provider-internal
+password/PKCE event is fabricated.
+
+Previous/next/replay, overview and position selection only change presentation and pause
+manual selection. Locale changes preserve selected IDs and play/pause intent. Leaving the
+panel, replacing the run or unmounting clears timers. Reduced motion disables autoplay,
+pulses and moving paths, with instant named keyboard controls and the same recorded frames.
+There are no execution endpoints in the neutral playback controller or renderer.
+
+
+### Implemented V2 Resource Explorer
+
+Current owning standard authentication immediately enables the single Basic/playground-demo
+form. It needs no preliminary FHIR read, catalog endpoint or eligibility store; missing or
+full teaching history is not an authorization gate. Form fields are presentation only.
+The BFF independently validates its active owner/current-run guards and exact bounded pair
+on every explicit fetch. HAPI independently validates JWT authentication and authorization.
+
+The result view separates current session state from the latest actual resource outcome.
+200 shows the same validated synthetic Basic in summary/escaped JSON/copy; safe optional
+version/time metadata is actual, while unmeasured latency/size is labeled unavailable.
+No raw-response toggle exists. A HAPI 401/403 is explained as a resource security rejection
+and keeps a still-current authenticated form enabled. A BFF 401 clears data and requires
+login; a BFF allowlist 403 is distinct from a HAPI denial. Actual selected 404 means the
+allowed fixture was not found, not that another resource may be queried. Boundary 429
+honors bounded Retry-After with deliberate retry and independently available logout; it
+invents no HAPI observation. See the [API status/source table](../../services/auth-client/README.md#selected-resource-extension-mission-control-v2).
+
+Starting another fetch clears the old payload; logout, expiry, restoration and ownership
+replacement clear resource data, and superseded completions cannot restore it. Language,
+result tabs, mode changes and playback never trigger a read. Native tab keyboard behavior,
+status announcements, narrow form/summary stacking and local JSON scrolling preserve access.
+Extending the single entry requires separate fixture, allowlist, HAPI policy and security-test
+approval. These branch changes are verified privately and are not publicly deployed.
+
+
+The bare mission URL keeps Explore's protocol overview and compact inline read result.
+Resource Explorer quick access focuses that same resource area with the compact authentication
+banner; both use the existing panel query and mounted coordinator with no additional read.
+Inspect filters live in a compact native disclosure (Escape closes and restores focus),
+apply only to inspection, and cannot constrain playback after leaving the technical view.
+
+V2 Inspect fits the desktop viewport with independently scrolling evidence and focusable
+metadata. At narrow widths the recorded diagram retains readable participant labels in
+one locally scrollable coordinate system; focused arrow keys scroll it without page overflow.
+Native page zoom remains independent of this diagram scrolling.

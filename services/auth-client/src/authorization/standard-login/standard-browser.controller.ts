@@ -6,6 +6,7 @@ import { configuration } from '../../config/configuration';
 import { AuthorizationError } from '../../common/errors/authorization-error';
 import { requirePublicProxy } from '../../common/http/public-proxy';
 import { readOpaqueCookie } from '../browser-login/opaque-cookie';
+import { readResourceSelection } from '../standard-resource/resource-selection';
 import { StandardBrowserService } from './standard-browser.service';
 import type { StandardContext } from './standard-browser-state';
 
@@ -60,7 +61,6 @@ export class StandardBrowserController {
   @Get('resource')
   async resource(@Req() request: Request, @Res() response: Response): Promise<void> {
     this.requireHost(request, response);
-    this.noQuery(request);
     if (request.method !== 'GET') {
       throw new AuthorizationError(
         { status: 405, code: 'malformedRequest' },
@@ -77,7 +77,10 @@ export class StandardBrowserController {
         'This operation accepts no caller credentials or body.',
       );
     }
-    const result = await this.browser.resource(readOpaqueCookie(request, standardContextCookie));
+    const result = await this.browser.resource(
+      readOpaqueCookie(request, standardContextCookie),
+      readResourceSelection(request.query),
+    );
     response.status(result.status).json(result.body);
   }
 

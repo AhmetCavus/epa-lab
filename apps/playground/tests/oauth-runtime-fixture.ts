@@ -12,6 +12,22 @@ export const workspacePath = '/missions/oauth-oidc/workspace';
 export const csrfSentinel = 'c'.repeat(43);
 export const unsafeSentinel = 'fictional-sensitive-protocol-data';
 
+export const syntheticFhir = {
+  resourceType: 'Basic',
+  id: 'playground-demo',
+  code: {
+    coding: [
+      {
+        system: 'https://example.invalid/playground/demo',
+        code: 'oauth-learning-demo',
+        display: 'Fictional protocol learning resource',
+      },
+    ],
+    text: 'Synthetic non-clinical OAuth demonstration; no patient data',
+  },
+  meta: { versionId: '1', lastUpdated: '2026-11-16T12:00:00Z' },
+};
+
 export function observedEvent(runId: string, sequence: number, observation: object): OAuthEvent {
   return oauthEventSchema.parse({
     ...observation,
@@ -115,7 +131,7 @@ export function runtimeFixture(authenticated = true) {
     complete: true,
     events: authenticated ? loginEvents(runId) : [],
   };
-  let resourceStatus: 200 | 401 | 403 = 200;
+  let resourceStatus: 200 | 401 | 403 | 404 | 429 = 200;
   let reportAvailable = true;
   let eventsOverride: unknown;
   let sessionOverride: unknown;
@@ -129,6 +145,7 @@ export function runtimeFixture(authenticated = true) {
     csrfValid: boolean;
     sameOrigin: boolean;
     bearer: boolean;
+    selectors: { resourceType: string | null; resourceId: string | null } | null;
   }[] = [];
 
   const append = (observation: object) => {
@@ -154,6 +171,13 @@ export function runtimeFixture(authenticated = true) {
         csrfValid: headers['x-playground-csrf'] === session.csrfToken,
         sameOrigin: url.origin === privateBaseUrl,
         bearer: 'authorization' in headers,
+        selectors:
+          url.pathname === '/api/oauth/resource'
+            ? {
+                resourceType: url.searchParams.get('resourceType'),
+                resourceId: url.searchParams.get('resourceId'),
+              }
+            : null,
       });
       if (url.pathname === '/api/oauth/login') {
         const freshId = randomUUID();
@@ -176,21 +200,32 @@ export function runtimeFixture(authenticated = true) {
         await json(route, eventStatus, eventsOverride ?? document);
       } else if (url.pathname === '/api/oauth/resource') {
         await responseGate;
-        const report = !reportAvailable
-          ? { available: false }
-          : resourceStatus === 200
-            ? {
-                available: true,
-                reportedBy: 'res-server',
-                decision: 'allowed',
-                reason: 'demo-read-allowed',
-              }
-            : {
-                available: true,
-                reportedBy: 'res-server',
-                decision: 'denied',
-                reason: resourceStatus === 401 ? 'invalid-token' : 'insufficient-permission',
-              };
+        if (resourceStatus === 429) {
+          await route.fulfill({
+            status: 429,
+            contentType: 'text/html',
+            headers: { 'Retry-After': '2' },
+            body: unsafeSentinel,
+          });
+          return;
+        }
+        const selected = url.searchParams.has('resourceType');
+        const report =
+          !reportAvailable || resourceStatus === 404
+            ? { available: false }
+            : resourceStatus === 200
+              ? {
+                  available: true,
+                  reportedBy: 'res-server',
+                  decision: 'allowed',
+                  reason: 'demo-read-allowed',
+                }
+              : {
+                  available: true,
+                  reportedBy: 'res-server',
+                  decision: 'denied',
+                  reason: resourceStatus === 401 ? 'invalid-token' : 'insufficient-permission',
+                };
         append({
           kind: 'resource-requested',
           channel: 'back-channel',
@@ -211,6 +246,22 @@ export function runtimeFixture(authenticated = true) {
             resourceServerReport: report,
           },
         });
+        if (resourceStatus === 404) {
+          append({
+            kind: 'resource-failed',
+            channel: 'actor-local',
+            actorId: 'bff',
+            outcome: 'failed',
+            evidence: { operation: 'read-demo-basic', reason: 'unexpected-status' },
+          });
+          await json(route, 404, {
+            schemaVersion: 2,
+            outcome: 'not-found',
+            source: 'hapi',
+            runId: document.runId,
+          });
+          return;
+        }
         append({
           kind: resourceStatus === 200 ? 'resource-allowed' : 'resource-denied',
           channel: 'actor-local',
@@ -219,16 +270,15 @@ export function runtimeFixture(authenticated = true) {
           evidence: { operation: 'read-demo-basic', httpStatus: resourceStatus },
         });
         await json(route, resourceStatus, {
+          ...(selected ? { schemaVersion: 2, source: 'hapi' } : {}),
           outcome: resourceStatus === 200 ? 'allowed' : 'denied',
           runId: document.runId,
           resourceServerReport: report,
           ...(resourceStatus === 200
             ? {
-                resource: {
-                  resourceType: 'Basic',
-                  id: 'playground-demo',
-                  code: 'oauth-learning-demo',
-                },
+                resource: selected
+                  ? syntheticFhir
+                  : { resourceType: 'Basic', id: 'playground-demo', code: 'oauth-learning-demo' },
               }
             : {}),
         });
@@ -274,7 +324,7 @@ export function runtimeFixture(authenticated = true) {
     setSession(value: OAuthSession) {
       session = value;
     },
-    setResourceStatus(value: 200 | 401 | 403) {
+    setResourceStatus(value: 200 | 401 | 403 | 404 | 429) {
       resourceStatus = value;
     },
     setReportAvailable(value: boolean) {

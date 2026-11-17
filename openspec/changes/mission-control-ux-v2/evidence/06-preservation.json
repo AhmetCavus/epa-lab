@@ -1,0 +1,50 @@
+{
+  "protectedFiles": 14,
+  "changedProtectedFiles": 0,
+  "baselineContainers": 49,
+  "identicalExistingContainers": 43,
+  "unrelatedHostDrift": [
+    {
+      "name": "/teberru-api",
+      "change": "replaced outside this task",
+      "newStartedAt": "2026-11-16T22:55:44.673077575Z"
+    },
+    {
+      "name": "/teberru-admin",
+      "change": "replaced outside this task",
+      "newStartedAt": "2026-11-16T22:55:44.833339369Z"
+    },
+    {
+      "name": "/teberru-collector",
+      "change": "replaced outside this task",
+      "newStartedAt": "2026-11-16T22:55:44.498723428Z"
+    },
+    {
+      "name": "/yappai-web",
+      "change": "replaced outside this task",
+      "newStartedAt": "2026-11-16T23:04:39.926640845Z"
+    },
+    {
+      "name": "/yappai-server",
+      "change": "replaced outside this task",
+      "newStartedAt": "2026-11-16T23:04:34.294087113Z"
+    },
+    {
+      "name": "/yappai-admin",
+      "change": "replaced outside this task",
+      "newStartedAt": "2026-11-16T23:04:40.127997053Z"
+    }
+  ],
+  "projectContainerNames": [
+    "/epa-lab-playground",
+    "/epa-lab-auth-client",
+    "/epa-lab-keycloak",
+    "/epa-lab-res-server",
+    "/epa-lab-playground-private",
+    "/epa-lab-res-server-db"
+  ],
+  "projectContainersUnchanged": true,
+  "hapiSubmoduleClean": true,
+  "productionMutationsPerformed": false,
+  "databaseOrVolumeResetPerformed": false
+}

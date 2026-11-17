@@ -1,0 +1,27 @@
+{
+  "browser": "141.0.7390.37",
+  "evidence": [
+    {
+      "locale": "en",
+      "requestedZoom": 1,
+      "readbackZoom": 1,
+      "innerWidth": 1366,
+      "innerHeight": 761,
+      "outerWidth": 1366,
+      "devicePixelRatio": 1,
+      "visualScale": 1,
+      "cssZoom": ""
+    },
+    {
+      "locale": "en",
+      "requestedZoom": 2,
+      "readbackZoom": 2,
+      "innerWidth": 683,
+      "innerHeight": 380,
+      "outerWidth": 1366,
+      "devicePixelRatio": 2,
+      "visualScale": 1,
+      "cssZoom": ""
+    }
+  ]
+}

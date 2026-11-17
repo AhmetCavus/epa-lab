@@ -1,3 +1,4 @@
+import { selectedResourceResponseSchema } from '../src/authorization/standard-resource/selected-resource-response';
 import { Logger } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
 import { ConfigModule, registerAs } from '@nestjs/config';
@@ -495,6 +496,118 @@ describe('standard OAuth browser lifecycle over isolated loopback HTTP', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('accepts only the exact selected pair and keeps the legacy fixed path and no-store behavior', async () => {
+    const { agent } = await authenticate();
+    const fetch = resourceFetch();
+    await agent
+      .get('/api/oauth/resource?resourceType=Basic&resourceId=playground-demo')
+      .set('Host', canonicalHost)
+      .expect(200)
+      .expect('Cache-Control', 'no-store');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch.mock.calls[0]?.[0]).toBe(profileTestConfiguration.standardProfile?.resourceUrl);
+  });
+
+  it.each([
+    ['resourceType=Patient&resourceId=playground-demo', 403],
+    ['resourceType=Observation&resourceId=playground-demo', 403],
+    ['resourceType=Basic&resourceId=another-id', 403],
+    ['resourceType=Basic&resourceId=playground-demo&url=https://attacker.example', 400],
+    ['resourceType=Basic&resourceType=Basic&resourceId=playground-demo', 400],
+    ['resourceType=Basic&resourceId=playground-demo&resourceId=playground-demo', 400],
+    ['resourceType[]=Basic&resourceId=playground-demo', 400],
+    ['resourceType=Basic&resourceId[x]=playground-demo', 400],
+    ['resourceType=Basic', 400],
+    ['resourceType=Basic&resourceId=..', 400],
+    ['resourceType=Basic&resourceId=%2Fplayground-demo', 400],
+    ['resourceType=Basic&resourceId=%252fplayground-demo', 400],
+    ['resourceType=Basic&resourceId=' + 'a'.repeat(65), 400],
+  ])('rejects crafted selected resource %s before upstream contact', async (query, status) => {
+    const { agent } = await authenticate();
+    const fetch = resourceFetch();
+    await agent
+      .get(`/api/oauth/resource?${query}`)
+      .set('Host', canonicalHost)
+      .expect(Number(status));
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('selected reads retain current-run ownership while the legacy no-query contract stays compatible', async () => {
+    const { agent } = await authenticate();
+    const fetch = resourceFetch();
+    await start(agent);
+    await agent
+      .get('/api/oauth/resource?resourceType=Basic&resourceId=playground-demo')
+      .set('Host', canonicalHost)
+      .expect(401);
+    expect(fetch).not.toHaveBeenCalled();
+    await resource(agent).expect(200);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns separately versioned validated FHIR for selected reads and retains the legacy summary', async () => {
+    const { agent } = await authenticate();
+    resourceFetch();
+    const selected = await agent
+      .get('/api/oauth/resource?resourceType=Basic&resourceId=playground-demo')
+      .set('Host', canonicalHost)
+      .expect(200);
+    expect(selectedResourceResponseSchema.safeParse(selected.body).success).toBe(true);
+    expect(selected.body).toMatchObject({
+      schemaVersion: 2,
+      outcome: 'allowed',
+      source: 'hapi',
+      resource: {
+        resourceType: 'Basic',
+        id: 'playground-demo',
+        code: syntheticFhirResponse.code,
+        meta: { versionId: '1', lastUpdated: '2026-11-12T12:00:00.000Z' },
+      },
+    });
+    expect(JSON.stringify(selected.body)).not.toContain('fictional-resource-metadata');
+    const legacy = await resource(agent).expect(200);
+    expect(legacy.body).not.toHaveProperty('schemaVersion');
+    expect(legacy.body.resource.code).toBe('oauth-learning-demo');
+    const history = await events(agent, selected.body.runId);
+    expect(history.schemaVersion).toBe(1);
+  });
+
+  it('selected requests reject anonymous, ePA-only, ended and expired ownership before HAPI contact', async () => {
+    const selected = '/api/oauth/resource?resourceType=Basic&resourceId=playground-demo';
+    const fetch = resourceFetch();
+    await request(app.getHttpServer()).get(selected).set('Host', canonicalHost).expect(401);
+    await request(app.getHttpServer())
+      .get(selected)
+      .set('Host', canonicalHost)
+      .set('Cookie', `epa_session=${'a'.repeat(43)}`)
+      .expect(401);
+    const { agent, view } = await authenticate();
+    await logout(agent, view.csrfToken).expect(200);
+    await agent.get(selected).set('Host', canonicalHost).expect(401);
+    const expired = await authenticate();
+    jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 300001);
+    await expired.agent.get(selected).set('Host', canonicalHost).expect(401);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('selected requests reject supplied credentials, bodies and HEAD before HAPI contact', async () => {
+    const { agent } = await authenticate();
+    const fetch = resourceFetch();
+    const selected = '/api/oauth/resource?resourceType=Basic&resourceId=playground-demo';
+    await agent
+      .get(selected)
+      .set('Host', canonicalHost)
+      .set('Authorization', 'Bearer fictional-sensitive-token')
+      .expect(400);
+    await agent
+      .get(selected)
+      .set('Host', canonicalHost)
+      .send({ token: 'fictional-sensitive-body' })
+      .expect(400);
+    await agent.head(selected).set('Host', canonicalHost).expect(405);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('rejects supplied credentials, bodies and HEAD without creating upstream work', async () => {
     const { agent } = await authenticate();
     const fetch = resourceFetch();
@@ -539,72 +652,97 @@ describe('standard OAuth browser lifecycle over isolated loopback HTTP', () => {
       .expect(404);
   });
 
-  it('rejects resource work before upstream contact at trace capacity, while logout and owned bounded history still succeed', async () => {
-    const capture = jest.spyOn(store.standard, 'record');
-    const { agent, view } = await authenticate();
-    const run = capture.mock.calls.at(-1)?.[0];
-    if (!run) {
-      throw new Error('Expected owned observations');
-    }
-    while (run.history.length < standardHistoryLimit) {
-      store.standard.record(run, {
-        kind: 'authorization-started',
-        channel: 'actor-local',
-        actorId: 'bff',
-        outcome: 'pending',
-        evidence: { responseType: 'code', pkceMethod: 'S256', authorizationMode: 'direct' },
-      });
-    }
-    const snapshot = run.history.map((event) => event.eventId);
-    const fetch = resourceFetch();
-    await resource(agent).expect(503);
-    await logout(agent, view.csrfToken).expect(200);
-    expect(sessionBody(await session(agent)).authenticated).toBe(false);
-    const document = await events(agent, view.currentRun?.runId);
-    expect(document.complete).toBe(false);
-    expect(document.events.map((event) => event.eventId)).toEqual(snapshot);
-    expect(fetch).not.toHaveBeenCalled();
-  });
+  it.each([false, true])(
+    'rejects resource work before upstream contact at trace capacity, while logout and owned bounded history still succeed (selected=%s)',
+    async (selected) => {
+      const capture = jest.spyOn(store.standard, 'record');
+      const { agent, view } = await authenticate();
+      const run = capture.mock.calls.at(-1)?.[0];
+      if (!run) {
+        throw new Error('Expected owned observations');
+      }
+      while (run.history.length < standardHistoryLimit) {
+        store.standard.record(run, {
+          kind: 'authorization-started',
+          channel: 'actor-local',
+          actorId: 'bff',
+          outcome: 'pending',
+          evidence: { responseType: 'code', pkceMethod: 'S256', authorizationMode: 'direct' },
+        });
+      }
+      const snapshot = run.history.map((event) => event.eventId);
+      const fetch = resourceFetch();
+      const limited = selected
+        ? agent
+            .get('/api/oauth/resource?resourceType=Basic&resourceId=playground-demo')
+            .set('Host', canonicalHost)
+        : resource(agent);
+      await limited.expect(503);
+      await logout(agent, view.csrfToken).expect(200);
+      expect(sessionBody(await session(agent)).authenticated).toBe(false);
+      const document = await events(agent, view.currentRun?.runId);
+      expect(document.complete).toBe(false);
+      expect(document.events.map((event) => event.eventId)).toEqual(snapshot);
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
 
-  it('discards an in-flight resource result after logout and preserves honest received-response provenance', async () => {
-    const { agent, view } = await authenticate();
-    let entered: (() => void) | undefined;
-    const waiting = new Promise<void>((resolve) => {
-      entered = resolve;
-    });
-    let release: ((response: Response) => void) | undefined;
-    jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-      entered?.();
-      return new Promise<Response>((resolve) => {
-        release = resolve;
+  it.each([
+    [false, 'logout'],
+    [true, 'logout'],
+    [true, 'replacement'],
+  ] as const)(
+    'discards an in-flight resource result and preserves honest received-response provenance (selected=%s, change=%s)',
+    async (selected, change) => {
+      const { agent, view } = await authenticate();
+      let entered: (() => void) | undefined;
+      const waiting = new Promise<void>((resolve) => {
+        entered = resolve;
       });
-    });
-    releaseGate = () =>
-      release?.(
-        new Response(JSON.stringify(syntheticFhirResponse), {
-          status: 200,
-          headers: {
-            'content-type': 'application/fhir+json',
-            'x-playground-decision': 'allowed',
-            'x-playground-reason': 'demo-read-allowed',
-          },
-        }),
-      );
-    const inFlight = resource(agent).then((response) => response);
-    await waiting;
-    await logout(agent, view.csrfToken).expect(200);
-    releaseGate();
-    const response = await inFlight;
-    expect(response.status).toBe(401);
-    expect(response.body).toEqual({ outcome: 'rejected', reason: 'session-no-longer-active' });
-    expect(cookies(response).length).toBe(0);
-    const document = await events(agent, view.currentRun?.runId);
-    expect(document.events.slice(-2).map((event) => event.kind)).toEqual([
-      'resource-response-received',
-      'resource-rejected',
-    ]);
-    expect(document.events.some((event) => event.kind === 'resource-allowed')).toBe(false);
-  });
+      let release: ((response: Response) => void) | undefined;
+      jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+        entered?.();
+        return new Promise<Response>((resolve) => {
+          release = resolve;
+        });
+      });
+      releaseGate = () =>
+        release?.(
+          new Response(JSON.stringify(syntheticFhirResponse), {
+            status: 200,
+            headers: {
+              'content-type': 'application/fhir+json',
+              'x-playground-decision': 'allowed',
+              'x-playground-reason': 'demo-read-allowed',
+            },
+          }),
+        );
+      const pendingRead = selected
+        ? agent
+            .get('/api/oauth/resource?resourceType=Basic&resourceId=playground-demo')
+            .set('Host', canonicalHost)
+        : resource(agent);
+      const inFlight = pendingRead.then((response) => response);
+      await waiting;
+      if (change === 'logout') await logout(agent, view.csrfToken).expect(200);
+      else await start(agent);
+      releaseGate();
+      const response = await inFlight;
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        ...(selected ? { schemaVersion: 2, source: 'bff' } : {}),
+        outcome: 'rejected',
+        reason: 'session-no-longer-active',
+      });
+      expect(cookies(response).length).toBe(0);
+      const document = await events(agent, view.currentRun?.runId);
+      expect(document.events.slice(-2).map((event) => event.kind)).toEqual([
+        'resource-response-received',
+        'resource-rejected',
+      ]);
+      expect(document.events.some((event) => event.kind === 'resource-allowed')).toBe(false);
+    },
+  );
 
   it('assigns resource work to the authenticated run while a later login is pending', async () => {
     const { agent, view } = await authenticate();

@@ -177,8 +177,9 @@ frontend storage. Public API routing remains outside this local/private implemen
 
 ## Protected synthetic resource
 
-The resource handler accepts no query settings, caller Authorization header or request body;
-HEAD is rejected. Missing, expired, signed-out or ePA-only authentication returns 401 with
+The legacy no-query resource call retains the summary contract below. The compatible selected
+variant is documented separately in this section. Both reject caller Authorization headers,
+request bodies and HEAD. Missing, expired, signed-out or ePA-only authentication returns 401 with
 `{"outcome":"rejected","reason":"authentication-required"}` before any HAPI call.
 The fixed request sends only the server-held standard Access Token and FHIR Accept header,
 follows no redirect, and uses `OIDC_HTTP_TIMEOUT_MS` (default 5000 ms, validated 100–30000 ms).
@@ -222,6 +223,88 @@ are 200/allowed/`demo-read-allowed`, 401/denied/`missing-token` or `invalid-toke
 oversized or status-inconsistent values project to exactly `{"available":false}`. Other
 headers are ignored. A nested report is an explicit HAPI assertion; the containing response
 event is observed and timed by auth-client. It contains no inferred internal checks or HAPI timestamp.
+
+### Selected-resource extension (Mission Control v2)
+
+Implemented and verified on `feat/mission-control-v2`; **not deployed by this change**.
+The existing route accepts exactly two scalar query selectors for an explicit read:
+
+```http
+GET /api/oauth/resource?resourceType=Basic&resourceId=playground-demo
+```
+
+There is no resource-catalog route, eligibility DTO/store, preliminary FHIR permission request
+or automatic resource read. Authoritative current owning standard authentication immediately
+enables the one-entry form, independently of teaching-history availability. It does not
+promise HAPI permission. Anonymous, expired, signed-out, ePA-only, missing-current-run and
+later pending/failed contexts cannot use the selected operation. The no-query API retains
+its existing originating-authentication behavior during a later pending attempt.
+
+Every selected request validates current session/run ownership, scalar type/ID bounds and the
+finite server allowlist **Basic/playground-demo only**, before contacting the configured
+fixed HAPI URL. Type/ID are never interpolated into an upstream URL. Duplicate/extra/array/
+object selectors, traversal/separators, oversized values, caller credentials and bodies
+reject safely; well-formed unapproved pairs return 403 without contacting HAPI. HAPI separately
+validates the server-held JWT, issuer, audience, purpose, expiry, scope and exact read policy.
+The BFF rechecks the same authentication/current selected run after asynchronous work.
+
+A selected success uses the separately versioned response below. This is a fictional contract
+example, not a usable run or an observed live result. The code object is the actual approved
+synthetic fixture shape, not a fabricated wrapper around the legacy summary:
+
+```json
+{
+  "schemaVersion": 2,
+  "outcome": "allowed",
+  "source": "hapi",
+  "runId": "6dcdd9c6-66f4-49c2-9508-75ba1b39396d",
+  "resource": {
+    "resourceType": "Basic",
+    "id": "playground-demo",
+    "code": {
+      "coding": [
+        {
+          "system": "https://example.invalid/playground/demo",
+          "code": "oauth-learning-demo",
+          "display": "Fictional protocol learning resource"
+        }
+      ],
+      "text": "Synthetic non-clinical OAuth demonstration; no patient data"
+    }
+  },
+  "resourceServerReport": { "available": false }
+}
+```
+
+Only actual validated optional `meta.versionId` (1–64 bounded FHIR-ID characters) and
+`meta.lastUpdated` (ISO datetime) may additionally appear. Source URLs are discarded;
+narratives, extensions, subject/author/patient content and other fields are rejected.
+The existing decoded 64KiB/media/identity/time/redirect bounds remain in force. The SPA
+validates version/status/report consistency and renders/copies only this escaped projection.
+There is no raw-response toggle or FHIR payload in teaching events. Session/event schemas
+remain unchanged at their existing version; unknown input has no raw fallback.
+
+| HTTP/outcome | Meaning and recovery |
+| --- | --- |
+| 200 / allowed / hapi | Validated actual approved Basic. Only this completes the resource step. |
+| 401 / rejected / bff | Current application authentication is absent or no longer owns this request. Clear data and authenticate again. |
+| 401 / denied / hapi | HAPI rejected JWT authentication. Clear the payload; a still-current BFF session keeps the form enabled. Do not claim provider SSO ended. |
+| 403 / rejected / bff | Exact server allowlist rejected the pair before HAPI contact. No resource permission was established. |
+| 403 / denied / hapi | HAPI independently rejected resource authorization. Clear the payload; a current BFF session permits deliberate retry. |
+| 404 / not-found / hapi | The allowed fixture was not found after the actual HAPI request. This is distinct from a missing/foreign owned-event 404. |
+| 429 at proxy/BFF boundary | Throttled; no HAPI decision is inferred. Only numeric Retry-After of 1–300 seconds is honored. Retry deliberately, never automatically; logout uses its independent budget. |
+| 400 | Malformed selectors/body/credentials; no selected upstream request. |
+| 502 / unavailable | Network, invalid/oversized response or unexpected upstream status; no raw diagnostics/payload. |
+| 504 / unavailable | Configured upstream deadline elapsed. Retry deliberately after recovery. |
+| 503 trace capacity | Work was rejected before upstream contact. Authentication cleanup/logout remains independent. |
+
+A `source: hapi` response denotes the actual HTTP boundary; it does not invent an internal
+reason. Only validated report headers support `reportedBy: res-server`; event receipt is
+still `observedBy: auth-client` at the BFF time. Unavailable timings/size/headers stay unavailable.
+Logout, expiry, restoration or authentication replacement clears superseded JSON; aborted/late
+responses cannot repopulate it. Locale/view/result-tab changes and playback execute no reads.
+Additional entries require separately approved synthetic fixtures, server allowlist/HAPI
+policy and real positive/negative security tests; this is not a generic FHIR proxy.
 
 ## Owned version-1 protocol events
 

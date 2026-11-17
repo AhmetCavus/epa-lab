@@ -481,5 +481,180 @@
     "catalogIntro_public": "Explore the learning previews or start the OAuth mission with your demo account.",
     "catalogNoticeTitle_public": "Synthetic demo · safe observations",
     "subtitle_public": "Authorization Code + PKCE S256 · synthetic demo"
+  },
+  "control": {
+    "beta": "Beta",
+    "navigation": "Workspace",
+    "missionControl": "Mission Control",
+    "explore": "Explore",
+    "inspect": "Inspect",
+    "missions": "Missions",
+    "missionLabel": "MISSION · AUTHENTICATION",
+    "syntheticNotice": "Experimental demo. Synthetic data and individual demo accounts only.",
+    "quickAccess": "Quick access",
+    "resourceExplorer": "Resource Explorer",
+    "flow": "Flow & details",
+    "inspectHeading": "Technical analysis (Inspect)",
+    "inspectDescription": "Observed events and safe evidence from your current run.",
+    "details": "Mission details",
+    "panels": "Explore panels",
+    "chooseEvent": "Select a recorded event in Inspect. Changing the view performs no protocol operation.",
+    "brand": "Yappai",
+    "stageNavigation": "Mission learning stages",
+    "flowExplanation": "Flow in detail",
+    "explanationNote": "Understand roles and safe evidence.",
+    "participantOverview": "Explained system overview, not an observed network trace",
+    "recordedProgress": "Learning stages supported by evidence",
+    "sessionActions": "Session actions",
+    "retainedAuthentication": "An earlier application session is still active. It does not make this attempt successful.",
+    "incompleteEvidence": "Some observations are unavailable. Session status is checked independently.",
+    "resourceTitle": "Fetch a protected FHIR resource",
+    "resourceDescription": "Request the synthetic resource through your session. The BFF keeps the Access Token on the server.",
+    "firstFetch": "The session is active. HAPI checks permission on every explicit request.",
+    "loginRequired": "Log in to request the resource through your own session.",
+    "fetchResource": "Fetch resource",
+    "actions": {
+      "start": "Log in again",
+      "restore": "Status",
+      "logout": "Log out"
+    },
+    "stageOutcomes": {
+      "complete": "Supported by evidence",
+      "current": "Next stage",
+      "pending": "Pending",
+      "unavailable": "Evidence unavailable",
+      "failed": "Not completed"
+    },
+    "stages": {
+      "authenticate": {
+        "title": "Authenticate",
+        "description": "The browser starts login through the BFF. Authentication at Keycloak leaves this view."
+      },
+      "session": {
+        "title": "Validate tokens",
+        "description": "The BFF validates the ID Token and creates the application session. HAPI checks the Access Token when a resource is requested."
+      },
+      "resource": {
+        "title": "Fetch data",
+        "description": "Request the allowed synthetic resource. HAPI checks JWT and permission independently of the BFF."
+      }
+    },
+    "participants": {
+      "browser": {
+        "title": "Browser",
+        "description": "Interface & navigation"
+      },
+      "bff": {
+        "title": "BFF",
+        "description": "OAuth client & session"
+      },
+      "provider": {
+        "title": "Keycloak",
+        "description": "AS & identity provider"
+      },
+      "resource": {
+        "title": "Resource Server",
+        "description": "Protected FHIR API"
+      }
+    },
+    "states": {
+      "anonymous": {
+        "title": "Ready to log in",
+        "description": "Start the real login flow. The BFF redirects your browser to Keycloak."
+      },
+      "restoring": {
+        "title": "Checking the session",
+        "description": "The current session status is being checked with the BFF. Success is not yet known."
+      },
+      "navigating": {
+        "title": "Starting authentication",
+        "description": "The browser starts the login managed by the BFF. Session status is checked after returning."
+      },
+      "pending": {
+        "title": "Authentication is pending",
+        "description": "The current attempt has no confirmed session completion yet."
+      },
+      "authenticated": {
+        "title": "Authentication successful",
+        "description": "Your application session is active. HAPI checks permission on every request."
+      },
+      "resource": {
+        "title": "Fetching the resource",
+        "description": "Waiting for the validated response. The result and security decision are still pending."
+      },
+      "expired": {
+        "title": "Session expired",
+        "description": "This application session can no longer be used. Authenticate again."
+      },
+      "failed": {
+        "title": "Authentication not confirmed",
+        "description": "The current attempt was not confirmed successfully. Start a new authentication attempt."
+      },
+      "signed-out": {
+        "title": "Locally signed out",
+        "description": "The application session has ended. Safe evidence may remain; Keycloak SSO may still exist."
+      },
+      "logout": {
+        "title": "Signing out locally",
+        "description": "The application session is being ended. Cleanup is independent of observation storage."
+      }
+    },
+    "form": {
+      "title": "Select synthetic resource",
+      "type": "Resource type",
+      "id": "Resource ID",
+      "allowlist": "Only Basic/playground-demo is allowed. HAPI independently checks every actual request."
+    },
+    "explorerTitle": "Resource Explorer (FHIR)",
+    "results": {
+      "heading": "Resource result",
+      "notFound": "The allowed resource was not found at HAPI (HTTP 404). The application session remains independent.",
+      "throttled": "The request was throttled at the proxy/BFF boundary (HTTP 429). No HAPI decision was recorded.",
+      "selectionRejected": "The BFF rejected the resource selection (HTTP 403). HAPI was not contacted.",
+      "sessionRejected": "The BFF rejected the current session (HTTP 401). Authenticate again.",
+      "loading": "Requesting the resource. No security outcome is known yet.",
+      "source": "HTTP source",
+      "views": "Result views",
+      "copy": "Copy JSON",
+      "safeJson": "Safely projected FHIR JSON",
+      "noPayload": "No safe FHIR content is available for this outcome.",
+      "coding": "Code",
+      "system": "Coding system",
+      "version": "Version",
+      "updated": "Last updated",
+      "unavailable": "Not available",
+      "measurements": "Latency / size",
+      "unmeasured": "Not measured; no illustrative values are shown.",
+      "projection": "Representation",
+      "projectionNote": "Only validated synthetic FHIR fields. Source URLs, narratives and unapproved fields are not displayed.",
+      "copied": "JSON copied.",
+      "failed": "JSON could not be copied.",
+      "retryAfter": "The boundary requested a {{seconds}} second wait. Retry explicitly afterwards.",
+      "retryUnknown": "Retry explicitly later. No reliable waiting period is available.",
+      "states": {
+        "allowed": "OK",
+        "denied": "Access denied",
+        "not-found": "Not found",
+        "rejected": "BFF request rejected",
+        "unavailable": "Unavailable",
+        "throttled": "Too many requests",
+        "loading": "Fetching",
+        "empty": "No read yet"
+      },
+      "sources": {
+        "hapi": "HAPI",
+        "bff": "BFF",
+        "boundary": "Proxy/BFF · exact source unavailable",
+        "unavailable": "Unavailable"
+      },
+      "tabs": {
+        "json": "FHIR (JSON)",
+        "overview": "Overview",
+        "metadata": "Metadata"
+      },
+      "allowed": "Synthetic resource read allowed."
+    },
+    "exploreHeading": "Understand authentication",
+    "objective": "Understand authentication with PKCE and protected FHIR resource access."
   }
 }

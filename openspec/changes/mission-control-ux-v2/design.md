@@ -2,7 +2,7 @@
 
 ## Context
 
-**DRAFT; planning only.** See [proposal.md](proposal.md) for motivation. The working authentication and current public deployment are the baseline, not implementation work for this change.
+**APPROVED for isolated implementation, 2026-11-16.** See [proposal.md](proposal.md) for motivation. The owner authorized all 26 tasks in order on `feat/mission-control-v2`. The working authentication and current public deployment remain the preservation baseline; no production deployment or infrastructure change is authorized.
 
 Repository inspection found:
 
@@ -34,7 +34,7 @@ The [reference README](../../../docs/design/mission-control-v2/README.md) and th
 | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [docs/design/mission-control-v2/00-current-navy-baseline.png](../../../docs/design/mission-control-v2/00-current-navy-baseline.png), 706×1249 | Existing Yappai identity: deep navy page and panel surfaces, subdued blue borders, white primary text, cyan/blue accents, technical secondary typography. Preserve this theme in every state; its long sequence composition is the problem being replaced.                                   |
 | [docs/design/mission-control-v2/01-explore.png](../../../docs/design/mission-control-v2/01-explore.png), 1672×941                             | Compact top navigation, roughly 245px mission sidebar, title/objective and three-stage row, broad status/actor card, one prominent action and a secondary Resource Explorer area below. Match spacing, card proportions and emphasis.                                                        |
-| [docs/design/mission-control-v2/02-inspect.png](../../../docs/design/mission-control-v2/02-inspect.png), 1585×992                             | Run heading above three columns: compact timeline left, selected-event detail center, contextual metadata right (approximately 26/46/28%). Inspect reclaims the Explore sidebar area; do not add another full mission sidebar beside it.                                                     |
+| [docs/design/mission-control-v2/02-inspect.png](../../../docs/design/mission-control-v2/02-inspect.png), 1585×992                             | Run heading above three columns: compact timeline left, selected-event detail center, contextual metadata right (approximately 26.5/47/26.5%). Inspect reclaims the Explore sidebar area; do not add another full mission sidebar beside it.                                                     |
 | [docs/design/mission-control-v2/03-animated-flow.png](../../../docs/design/mission-control-v2/03-animated-flow.png), 1672×941                 | Navy mission shell, bounded actor-flow panel, highlighted current actor/path, progress rail, contextual step card, right overview and transport controls. Compress to four real deployed participants; preserve the composition rather than repeating Browser/BFF cards as separate systems. |
 | [docs/design/mission-control-v2/04-resource-explorer.png](../../../docs/design/mission-control-v2/04-resource-explorer.png), 1672×941         | Authentication banner, dominant resource card, aligned type/ID/action row, left human-readable result and larger right JSON/overview/metadata pane. Keep the primary cyan action and restrained green success treatment.                                                                     |
 
@@ -47,6 +47,8 @@ Do not copy illustrative usernames, event totals, dates, durations, token lifeti
 ### 2. Keep navigation and presentation state separate from execution
 
 Retain `/missions/oauth-oidc/workspace`, the fixed clean callback return and `?view=fixture` semantics. Use a non-sensitive `mode=inspect` query for Inspect; absent/`mode=explore` opens Explore. An optional `panel=flow|resources` selects Explore's secondary panel. Invalid presentation values fall back safely. Do not place run IDs, callbacks or credentials in these parameters.
+
+The bare mission URL retains the Explore overview and an inline result. Explicit Resource Explorer panel navigation focuses the same resource area with the compact authentication banner, matching the two approved compositions without another route or execution.
 
 Explore/Inspect links, browser back/forward and panel switches preserve the mounted runtime coordinator, current run and selected event. They never start login, logout, token exchange or resource reads. Callback returns to default Explore and reconstructs from session/owned events. Reload retrieves authoritative session and owned events only. An active current session enables the Explorer form immediately; no catalog, permission preflight or FHIR request is needed. It does not restore a JSON response from storage or re-fetch FHIR automatically. Explicit locale remains the only persisted browser preference.
 
@@ -163,7 +165,7 @@ Use existing Playwright/axe, TypeScript, architecture/localization checks, BFF s
 
 ## Migration Plan
 
-This step writes planning artifacts only. All implementation tasks remain unchecked, and the running public Playground remains unchanged.
+Implementation is authorized on `feat/mission-control-v2`; task checkboxes record actual verified progress. The running public Playground remains unchanged throughout this work.
 
 After explicit implementation approval, deliver the six task groups on the feature branch with isolated verification. Keep existing route/callback behavior and no-query resource/session/event contracts compatible; no data or session migration is required. Update the UX/reference interpretation documents with the implemented states without rewriting historical acceptance records.
 

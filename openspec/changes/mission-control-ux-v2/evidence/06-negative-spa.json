@@ -1,0 +1,19 @@
+{
+  "passed": 79,
+  "failed": 0,
+  "suites": [
+    "mission-resource (22)",
+    "oauth-runtime (26)",
+    "synthetic-resource (10)",
+    "oauth-adapter (21)"
+  ],
+  "checks": [
+    "forged DOM disabled state cannot authorize work",
+    "late response after logout discarded",
+    "expiry/replacement/reload clear validated JSON without resource refetch",
+    "version/status/media/64KiB/identity validation",
+    "independent HAPI denial and current-session availability",
+    "BFCache and history failure/capacity",
+    "strict event provenance and disclosure sentinels"
+  ]
+}

@@ -24,57 +24,51 @@ async function accessible(page: Page) {
   expect((await page.locator('body').textContent())?.includes(csrfSentinel)).toBe(false);
 }
 
+async function nativeScreenshot(page: Page, path: string) {
+  // Capture the actual compositor viewport. Playwright fullPage clipping uses CSS
+  // dimensions at native page zoom and can crop the physical screenshot in half.
+  const session = await page.context().newCDPSession(page);
+  try {
+    const { data } = await session.send('Page.captureScreenshot', {
+      format: 'png',
+      fromSurface: true,
+      captureBeyondViewport: false,
+    });
+    const png = Buffer.from(data, 'base64');
+    expect(png.readUInt32BE(16)).toBe(await page.evaluate(() => outerWidth));
+    await writeFile(path, png);
+  } finally {
+    await session.detach();
+  }
+}
+
 for (const locale of ['de', 'en'] as const) {
   for (const width of [1366, 1024, 390, 320]) {
-    test(`${locale} observed runtime preserves accessible panels and readable map at ${width}px`, async ({
-      page,
-    }) => {
+    test(`${locale} Explore preserves accessible actions at ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: width < 760 ? 844 : 768 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
       const fixture = runtimeFixture();
       await fixture.install(page);
       await page.goto(workspacePath);
-      await page.getByRole('combobox').selectOption(locale);
-      await expect(page.locator('.timeline button')).toHaveCount(9);
-      const response = page.locator('[data-runtime-action="resource"]');
-      await response.focus();
-      await expect(response).toHaveCSS('outline-style', 'solid');
-      await page.keyboard.press('Enter');
-      await expect(page.locator('.timeline button')).toHaveCount(12);
-      await page.locator('.timeline button').nth(10).focus();
+      await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
+      const fetch = page.locator('[data-runtime-action="resource"]');
+      await expect(fetch).toBeEnabled();
+      await fetch.focus();
+      await expect(fetch).toHaveCSS('outline-style', 'solid');
+      const calls = fixture.calls.length;
+      await page.locator('.mc-stage').nth(1).focus();
       await page.keyboard.press('Space');
-      await expect(page.locator('.timeline button').nth(10)).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
-      await expect(page.locator('.inspector')).toContainText('res-server');
+      await expect(page.locator('.mc-stage').nth(1)).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.mc-stages [data-outcome="complete"]')).toHaveCount(2);
+      expect(fixture.calls.length).toBe(calls);
+      await expect(page.locator('.mc-stage-explanation')).toHaveAttribute('aria-live', 'polite');
+      await expect(page.locator('.runtime-status')).toHaveAttribute('role', 'status');
       await accessible(page);
-      await page
-        .getByRole('button', { name: locale === 'en' ? 'Zoom in' : 'Vergrößern', exact: true })
-        .click();
-      await page
-        .getByRole('button', { name: locale === 'en' ? 'Fit' : 'Einpassen', exact: true })
-        .click();
-      await expect(page.locator('output')).toHaveText('100%');
-      const map = page.locator('.actor-map-scroll');
-      expect(
-        await map.evaluate((element) => {
-          const label = element.querySelector('.actor strong');
-          return label !== null && Number.parseFloat(getComputedStyle(label).fontSize) >= 13;
-        }),
-      ).toBe(true);
-      if (width < 1200) {
-        const inspector = await page.locator('.inspector').boundingBox();
-        const canvas = await page.locator('.canvas-panel').boundingBox();
-        expect(Boolean(inspector && canvas && inspector.y >= canvas.y + canvas.height)).toBe(true);
-      }
-      await page
-        .getByText(
-          locale === 'en' ? 'Actor map text alternative' : 'Textalternative zur Akteursübersicht',
-          { exact: true },
-        )
-        .click();
-      await expect(page.locator('.text-alternative')).toContainText('auth-client');
+      await fetch.focus();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('.mc-resource-message')).toContainText(
+        locale === 'en' ? 'read allowed' : 'Lesezugriff erlaubt',
+      );
       await accessible(page);
       await page.screenshot({
         path: test.info().outputPath(`runtime-observed-${locale}-${width}.png`),
@@ -83,7 +77,9 @@ for (const locale of ['de', 'en'] as const) {
     });
   }
 
-  test(`${locale} runtime state screenshots retain the existing hierarchy`, async ({ page }) => {
+  test(`${locale} runtime state screenshots retain the navy Explore hierarchy`, async ({
+    page,
+  }) => {
     test.setTimeout(90000);
     for (const state of [
       'empty',
@@ -113,15 +109,16 @@ for (const locale of ['de', 'en'] as const) {
       }
       try {
         await page.goto(workspacePath);
-        await page.getByRole('combobox').selectOption(locale);
+        await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
         if (state === 'allowed' || state === 'denied') {
           fixture.setResourceStatus(state === 'allowed' ? 200 : 403);
           await page.locator('[data-runtime-action="resource"]').click();
-          await expect(page.locator('.timeline button')).toHaveCount(12);
-          await page.locator('.timeline button').nth(10).click();
+          await expect(page.locator('.mc-resource-message')).toBeVisible();
         } else if (state === 'signed-out') {
           await page.locator('[data-runtime-action="logout"]').click();
-          await expect(page.locator('.timeline button')).toHaveCount(10);
+          await expect(page.locator('.runtime-status')).toContainText(
+            locale === 'en' ? 'Locally signed out' : 'Lokal abgemeldet',
+          );
         } else if (state === 'restoring') {
           await expect(page.locator('[data-runtime-action="start"]')).toBeDisabled();
           await expect(page.locator('.timeline button')).toHaveCount(0);
@@ -181,7 +178,7 @@ for (const locale of ['de', 'en'] as const) {
         const fixture = runtimeFixture();
         await fixture.install(page);
         await page.goto(`http://127.0.0.1:4173${workspacePath}`);
-        await page.getByRole('combobox').selectOption(locale);
+        await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
         await page
           .getByRole('button', {
             name: locale === 'en' ? 'Load fixture samples' : 'Beispiele laden',
@@ -190,14 +187,14 @@ for (const locale of ['de', 'en'] as const) {
           .click();
         await page.locator('.timeline button').nth(2).click();
         await accessible(page);
-        await page.screenshot({
-          path: test.info().outputPath(`native-${locale}-${zoom * 100}-fixture.png`),
-          fullPage: true,
-        });
+        await nativeScreenshot(
+          page,
+          test.info().outputPath(`native-${locale}-${zoom * 100}-fixture.png`),
+        );
         await page.goto(`${privateBaseUrl}${workspacePath}`);
-        await page.getByRole('combobox').selectOption(locale);
-        await expect(page.locator('.timeline button')).toHaveCount(9);
-        await page.locator('.timeline button').nth(6).click();
+        await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
+        await expect(page.locator('[data-runtime-action="resource"]')).toBeEnabled();
+        await page.locator('.mc-stage').nth(1).click();
         await accessible(page);
         const metrics = await page.evaluate(() => ({
           innerWidth,
@@ -211,39 +208,64 @@ for (const locale of ['de', 'en'] as const) {
         expect(metrics.visualScale).toBe(1);
         expect(metrics.cssZoom).toBe('');
         evidence.push({ locale, requestedZoom: zoom, readbackZoom: actual, ...metrics });
-        await page.screenshot({
-          path: test.info().outputPath(`native-${locale}-${zoom * 100}-observed.png`),
-          fullPage: true,
-        });
+        await nativeScreenshot(
+          page,
+          test.info().outputPath(`native-${locale}-${zoom * 100}-observed.png`),
+        );
+        await page.locator('[data-runtime-action="resource"]').click();
+        await expect(page.locator('.mc-resource-result')).toHaveAttribute(
+          'data-outcome',
+          'allowed',
+        );
+        await accessible(page);
+        await nativeScreenshot(
+          page,
+          test.info().outputPath(`native-${locale}-${zoom * 100}-resource.png`),
+        );
         fixture.setResourceStatus(403);
         await page.locator('[data-runtime-action="resource"]').click();
-        await expect(page.locator('.timeline button')).toHaveCount(12);
-        await page.locator('.timeline button').nth(10).click();
+        await expect(page.locator('.mc-resource-message')).toContainText('403');
         await accessible(page);
+        await page.locator('.mc-panel-tabs a').nth(1).click();
+        await expect(page.locator('.flow-transport')).toHaveAttribute('data-playing', 'false');
+        await page.locator('.flow-transport button').last().focus();
+        await page.keyboard.press('Enter');
+        await expect(page.locator('.flow-transport')).toHaveAttribute('data-playback-index', '1');
+        await accessible(page);
+        await nativeScreenshot(
+          page,
+          test.info().outputPath(`native-${locale}-${zoom * 100}-flow.png`),
+        );
+        await page.locator('.mc-navigation a').last().click();
+        await expect(page.locator('.timeline button')).toHaveCount(15);
+        await page.locator('.timeline button').nth(2).click();
+        const filterToggle = page.locator('.mc-event-filter-disclosure summary');
+        await filterToggle.focus();
+        await page.keyboard.press('Enter');
+        await expect(page.locator('.mc-event-filters')).toBeVisible();
+        await page.locator('.mc-event-filters select').first().focus();
+        await page.keyboard.press('Escape');
+        await expect(filterToggle).toBeFocused();
+        await accessible(page);
+        await nativeScreenshot(
+          page,
+          test.info().outputPath(`native-${locale}-${zoom * 100}-inspect.png`),
+        );
+        await page.locator('.mc-navigation a').nth(1).click();
+        await page.locator('.mc-quick-links a').first().click();
         await page.locator('[data-runtime-action="logout"]').click();
         await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
         await expect(page.locator('[data-runtime-action="restore"]')).toBeEnabled();
         const calls = fixture.calls.length;
-        await page
-          .getByRole('button', {
-            name: locale === 'en' ? 'Replay explanation' : 'Erklärung wiederholen',
-            exact: true,
-          })
-          .click();
-        await page
-          .getByRole('button', {
-            name: locale === 'en' ? 'Reset view' : 'Ansicht zurücksetzen',
-            exact: true,
-          })
-          .click();
+        await page.locator('.mc-stage').nth(0).click();
+        await page.locator('.mc-stage').nth(2).click();
         expect(fixture.calls.length).toBe(calls);
-        await expect(page.locator('output')).toHaveText('100%');
         expect(await page.evaluate(() => devicePixelRatio)).toBe(zoom);
         await accessible(page);
-        await page.screenshot({
-          path: test.info().outputPath(`native-${locale}-${zoom * 100}-signed-out.png`),
-          fullPage: true,
-        });
+        await nativeScreenshot(
+          page,
+          test.info().outputPath(`native-${locale}-${zoom * 100}-signed-out.png`),
+        );
         await page.close();
       }
       const normal = evidence[0];

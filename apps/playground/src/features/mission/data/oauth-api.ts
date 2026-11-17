@@ -1,3 +1,5 @@
+import type { ResourceSelection } from '../domain/synthetic-resource';
+import { selectedResourceResponseSchema } from './synthetic-resource-contract';
 import type { z } from 'zod';
 import {
   oauthEventDocumentSchema,
@@ -23,7 +25,7 @@ export class OAuthApiError extends Error {
 const maximumResponseBytes = 131072;
 const requestTimeoutMs = 10000;
 
-async function readJson(response: Response): Promise<unknown> {
+async function readJson(response: Response, maximumBytes = maximumResponseBytes): Promise<unknown> {
   if (
     response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json'
   ) {
@@ -39,7 +41,7 @@ async function readJson(response: Response): Promise<unknown> {
         break;
       }
       size += chunk.value.byteLength;
-      if (size > maximumResponseBytes) {
+      if (size > maximumBytes) {
         await reader.cancel();
         throw new OAuthApiError('unsupported-response');
       }
@@ -63,7 +65,12 @@ async function readJson(response: Response): Promise<unknown> {
 async function call(
   path: string,
   signal: AbortSignal,
-  options: { csrfToken?: string; statuses?: readonly number[] } = {},
+  options: {
+    csrfToken?: string;
+    statuses?: readonly number[];
+    maximumBytes?: number;
+    unparsedStatuses?: readonly number[];
+  } = {},
 ) {
   const timeout = AbortSignal.timeout(requestTimeoutMs);
   const csrfToken = options.csrfToken;
@@ -86,7 +93,20 @@ async function call(
     if (!(options.statuses ?? [200]).includes(response.status)) {
       requireSuccess(response);
     }
-    return { status: response.status, body: await readJson(response) };
+    if (options.unparsedStatuses?.includes(response.status)) {
+      const retry = response.headers.get('retry-after');
+      const retryAfterSeconds =
+        retry && /^\d{1,3}$/.test(retry) && Number(retry) > 0 && Number(retry) <= 300
+          ? Number(retry)
+          : null;
+      await response.body?.cancel().catch(() => undefined);
+      return { status: response.status, body: null, retryAfterSeconds };
+    }
+    return {
+      status: response.status,
+      body: await readJson(response, options.maximumBytes),
+      retryAfterSeconds: null,
+    };
   } catch (error) {
     if (error instanceof OAuthApiError) {
       throw error;
@@ -170,4 +190,54 @@ export async function endOAuthSession(csrfToken: string, signal: AbortSignal) {
     throw new OAuthApiError('unsupported-response');
   }
   return session;
+}
+
+/** Selected reads share the existing same-origin transport and exact fixed API route. */
+export async function readSelectedOAuthResource(selection: ResourceSelection, signal: AbortSignal) {
+  if (
+    !/^[A-Z][A-Za-z0-9]{0,63}$/.test(selection.resourceType) ||
+    !/^[A-Za-z0-9.-]{1,64}$/.test(selection.resourceId) ||
+    selection.resourceId.includes('..')
+  ) {
+    throw new OAuthApiError('request-rejected');
+  }
+  const query = new URLSearchParams({
+    resourceType: selection.resourceType,
+    resourceId: selection.resourceId,
+  });
+  const response = await call(`/api/oauth/resource?${query}`, signal, {
+    statuses: [200, 400, 401, 403, 404, 429, 502, 504],
+    unparsedStatuses: [400, 429],
+    maximumBytes: 65536,
+  });
+  if (response.status === 429)
+    return {
+      status: 429,
+      result: {
+        outcome: 'throttled',
+        source: 'boundary',
+        retryAfterSeconds: response.retryAfterSeconds,
+      } as const,
+    };
+  if (response.status === 400)
+    return {
+      status: 400,
+      result: { outcome: 'rejected', source: 'bff', reason: 'invalid-selection' } as const,
+    };
+  const result = decode(selectedResourceResponseSchema, response.body);
+  const consistent =
+    (result.outcome === 'allowed' && response.status === 200) ||
+    (result.outcome === 'denied' && [401, 403].includes(response.status)) ||
+    (result.outcome === 'not-found' && response.status === 404) ||
+    (result.outcome === 'rejected' &&
+      response.status === (result.reason === 'selection-not-permitted' ? 403 : 401)) ||
+    (result.outcome === 'unavailable' &&
+      response.status === (result.reason === 'timeout' ? 504 : 502));
+  if (
+    !consistent ||
+    ('resourceServerReport' in result &&
+      !resourceReportMatchesStatus(response.status, result.resourceServerReport))
+  )
+    throw new OAuthApiError('unsupported-response');
+  return { status: response.status, result };
 }

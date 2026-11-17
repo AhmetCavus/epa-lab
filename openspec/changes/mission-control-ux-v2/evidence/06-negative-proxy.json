@@ -1,0 +1,11 @@
+{
+  "verified": true,
+  "existingRouteQueryForwarding": true,
+  "trustMethodAndPathDenials": true,
+  "noCatalogRoute": true,
+  "actualNginx429": true,
+  "explicitRetryRecovery": true,
+  "independentLogout": true,
+  "safeOperationOnlyLogs": true,
+  "liveRoutingUnchanged": true
+}

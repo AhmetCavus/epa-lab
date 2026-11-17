@@ -1,0 +1,101 @@
+{
+  "fixtureEvidence": true,
+  "browser": "141.0.7390.37",
+  "scenario": {
+    "name": "02-inspect",
+    "width": 1585,
+    "height": 992,
+    "panel": "?mode=inspect",
+    "read": false
+  },
+  "viewport": {
+    "width": 1585,
+    "height": 992
+  },
+  "document": {
+    "width": 1585,
+    "height": 992
+  },
+  "devicePixelRatio": 1,
+  "cssZoom": "",
+  "visualScale": 1,
+  "elements": [
+    {
+      "selector": ".mc-header",
+      "x": 0,
+      "y": 0,
+      "width": 1585,
+      "height": 58,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-sidebar",
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-main",
+      "x": 0,
+      "y": 58,
+      "width": 1585,
+      "height": 934,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-page-heading h1",
+      "x": 42,
+      "y": 104.140625,
+      "width": 576.65625,
+      "height": 37.5,
+      "fontSize": "30px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".timeline-panel",
+      "x": 12,
+      "y": 188.4375,
+      "width": 406.703125,
+      "height": 781.5625,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".inspector",
+      "x": 432.703125,
+      "y": 188.4375,
+      "width": 719.578125,
+      "height": 781.5625,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-run-metadata",
+      "x": 1166.28125,
+      "y": 188.4375,
+      "width": 406.71875,
+      "height": 781.5625,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    }
+  ]
+}

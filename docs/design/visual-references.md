@@ -1,5 +1,13 @@
 # Visual References — Mission Control
 
+**OAuth runtime precedence, 2026-11-16:** the four
+[Mission Control v2 target compositions and navy baseline](mission-control-v2/README.md)
+govern the approved runtime redesign. Explore replaces the giant default sequence surface;
+Inspect owns technical details. The older references below remain the Catalog/fixture/
+conceptual ePA preservation baseline and historical design context. Preserve their navy
+identity without retaining the superseded OAuth panel hierarchy. Required v2 acceptance
+uses actual rendered reference-size captures and explicit comparison/correction.
+
 **Status:** Design reference for the first UI slice.
 
 These two images belong to the project's UX baseline. Review them before implementing the Mission Catalog or the Mission Workspace; do not substitute an unrelated generic dashboard template.

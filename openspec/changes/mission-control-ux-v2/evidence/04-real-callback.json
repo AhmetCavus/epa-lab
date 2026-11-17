@@ -1,0 +1,15 @@
+{
+  "verified": true,
+  "provider": "isolated Keycloak 26.8.2; tmpfs only",
+  "realBff": true,
+  "cleanReturn": true,
+  "recordedEvents": 9,
+  "pausedAfterCallbackAndReload": true,
+  "callback": "Browser -> BFF",
+  "noPreliminaryResourceRequest": true,
+  "counts": {
+    "login": 1,
+    "resource": 0,
+    "logout": 0
+  }
+}

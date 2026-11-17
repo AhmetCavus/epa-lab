@@ -88,6 +88,16 @@ documents the minimal DTO; `observationsAvailable` reflects safe history complet
 | `GET /api/oauth/resource`           | Require standard application authentication; call only the configured synthetic HAPI read using its server-held Access Token; return a bounded safe result                             |
 | `GET /api/oauth/runs/:runId/events` | Require browser viewing ownership and unexpired run; return versioned allowlisted event projections                                                                                    |
 
+Mission Control v2 adds a compatible **isolated, not-yet-deployed** selected variant on the
+same resource route: exactly `resourceType=Basic&resourceId=playground-demo` requests a
+separately validated/version-2 safe FHIR projection. No-query consumers keep the existing
+summary; session and version-1 events are unchanged. Current owning standard authentication
+enables the form immediately, independently of teaching history, with zero preliminary
+FHIR/catalog requests or eligibility store. BFF session/selector/allowlist checks and HAPI
+JWT/authorization remain independent on every explicit fetch. See the
+[selected API contract](../../services/auth-client/README.md#selected-resource-extension-mission-control-v2)
+for source-specific 200/401/403/404/429 outcomes and bounded recovery.
+
 The fixed return is `/missions/oauth-oidc/workspace`. Correlated success, provider denial and exchange/validation failure return there with safe server-side outcome state, without callback parameters. An uncorrelated callback grants no run access. Do not accept caller-selected clients, issuers, callback settings, upstream URLs or `returnTo` destinations.
 
 Login and callback use the same canonical application host and running auth-client instance. Missing/mismatched binding, unknown/expired/lost transactions, cross-profile substitution, replay and concurrent duplicate completion fail safely. A restart loses process-local context and requires a fresh login. A fresh session request with the same cookie restores authentication/current-run state without repeating protocol actions. Owned-event reads preserve event identities and do not repeat protocol actions. The private SPA restores these reads on return/refresh; full group-9 acceptance remains pending.

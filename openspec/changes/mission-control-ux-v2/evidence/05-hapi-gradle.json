@@ -1,0 +1,71 @@
+{
+  "verified": true,
+  "java": "Temurin 21.0.13 isolated existing build image",
+  "source": "current read-only HAPI checkout; no source/policy/data change",
+  "suites": [
+    {
+      "name": "ca.uhn.fhir.jpa.starter.security.PlaygroundResourceSecurityTest",
+      "tests": "56",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.42"
+    },
+    {
+      "name": "ca.uhn.fhir.jpa.starter.security.HealthProbeSecurityConfigurationTest",
+      "tests": "34",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.522"
+    },
+    {
+      "name": "ca.uhn.fhir.jpa.starter.demo.PlaygroundDemoResourceTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.192"
+    },
+    {
+      "name": "Scenario 3: management server uses a different port",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.019"
+    },
+    {
+      "name": "Scenario 1: defaults (no context-path or management web base path set)",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.002"
+    },
+    {
+      "name": "Scenario 2: either context-path or management web base path is set",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.003"
+    },
+    {
+      "name": "ca.uhn.fhir.jpa.starter.security.ResourceServerTrustTest",
+      "tests": "18",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.289"
+    },
+    {
+      "name": "ca.uhn.fhir.jpa.starter.security.PlaygroundResourceSecurityIT",
+      "tests": "62",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "3.322"
+    }
+  ]
+}

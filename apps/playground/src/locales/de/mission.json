@@ -481,5 +481,180 @@
     "catalogIntro_public": "Erkunde die Lernvorschauen oder starte die OAuth-Mission mit deinem Demokonto.",
     "catalogNoticeTitle_public": "Synthetische Demo · sichere Beobachtungen",
     "subtitle_public": "Authorization Code + PKCE S256 · synthetische Demo"
+  },
+  "control": {
+    "beta": "Beta",
+    "navigation": "Arbeitsbereich",
+    "missionControl": "Mission Control",
+    "explore": "Explore",
+    "inspect": "Inspect",
+    "missions": "Missionen",
+    "missionLabel": "MISSION · AUTHENTIFIZIERUNG",
+    "syntheticNotice": "Experimentelle Demo. Nur synthetische Daten und eigene Demokonten.",
+    "quickAccess": "Schnellzugriff",
+    "resourceExplorer": "Resource Explorer",
+    "flow": "Ablauf & Details",
+    "inspectHeading": "Technische Analyse (Inspect)",
+    "inspectDescription": "Beobachtete Ereignisse und sichere Nachweise deiner aktuellen Ausführung.",
+    "details": "Missionsdetails",
+    "panels": "Explore-Bereiche",
+    "chooseEvent": "Wähle ein aufgezeichnetes Ereignis in Inspect. Der Wechsel der Ansicht führt keine Protokolloperation aus.",
+    "brand": "Yappai",
+    "stageNavigation": "Lernschritte der Mission",
+    "flowExplanation": "Ablauf im Detail",
+    "explanationNote": "Rollen und sichere Nachweise verstehen.",
+    "participantOverview": "Erklärte Systemübersicht, keine beobachtete Netzwerkspur",
+    "recordedProgress": "Durch Nachweise belegte Lernschritte",
+    "sessionActions": "Sitzungsaktionen",
+    "retainedAuthentication": "Eine frühere Anwendungssitzung ist noch aktiv. Sie belegt diesen Versuch nicht als Erfolg.",
+    "incompleteEvidence": "Einzelne Beobachtungen sind nicht verfügbar. Der Sitzungsstatus wird unabhängig davon geprüft.",
+    "resourceTitle": "Geschützte FHIR-Ressource abrufen",
+    "resourceDescription": "Rufe die synthetische Ressource über deine Sitzung ab. Der BFF hält den Access Token serverseitig.",
+    "firstFetch": "Die Sitzung ist aktiv. HAPI prüft die Berechtigung bei jedem expliziten Abruf.",
+    "loginRequired": "Melde dich an, um die Ressource über deine eigene Sitzung abzurufen.",
+    "fetchResource": "Ressource abrufen",
+    "actions": {
+      "start": "Neu anmelden",
+      "restore": "Status",
+      "logout": "Abmelden"
+    },
+    "stageOutcomes": {
+      "complete": "Belegt",
+      "current": "Nächster Schritt",
+      "pending": "Noch offen",
+      "unavailable": "Nachweis nicht verfügbar",
+      "failed": "Nicht abgeschlossen"
+    },
+    "stages": {
+      "authenticate": {
+        "title": "Anmelden",
+        "description": "Der Browser startet die Anmeldung über den BFF. Die Anmeldung bei Keycloak verlässt diese Ansicht."
+      },
+      "session": {
+        "title": "Token prüfen",
+        "description": "Der BFF validiert den ID Token und erstellt die Anwendungssitzung. HAPI prüft den Access Token erst beim Ressourcenabruf."
+      },
+      "resource": {
+        "title": "Daten abrufen",
+        "description": "Fordere die erlaubte synthetische Ressource an. HAPI prüft JWT und Berechtigung unabhängig vom BFF."
+      }
+    },
+    "participants": {
+      "browser": {
+        "title": "Browser",
+        "description": "Oberfläche & Navigation"
+      },
+      "bff": {
+        "title": "BFF",
+        "description": "OAuth-Client & Sitzung"
+      },
+      "provider": {
+        "title": "Keycloak",
+        "description": "AS & Identity Provider"
+      },
+      "resource": {
+        "title": "Resource Server",
+        "description": "Geschütztes FHIR-API"
+      }
+    },
+    "states": {
+      "anonymous": {
+        "title": "Bereit zur Anmeldung",
+        "description": "Starte den echten Anmeldeablauf. Der BFF leitet deinen Browser zu Keycloak weiter."
+      },
+      "restoring": {
+        "title": "Sitzung wird geprüft",
+        "description": "Der aktuelle Sitzungsstatus wird beim BFF geprüft. Ein Erfolg steht noch nicht fest."
+      },
+      "navigating": {
+        "title": "Anmeldung wird gestartet",
+        "description": "Der Browser startet die vom BFF geführte Anmeldung. Nach der Rückkehr wird die Sitzung geprüft."
+      },
+      "pending": {
+        "title": "Anmeldung noch offen",
+        "description": "Für den aktuellen Versuch liegt noch kein bestätigter Sitzungsabschluss vor."
+      },
+      "authenticated": {
+        "title": "Anmeldung erfolgreich",
+        "description": "Deine Anwendungssitzung ist aktiv. HAPI prüft die Berechtigung bei jedem Abruf."
+      },
+      "resource": {
+        "title": "Ressourcenabruf läuft",
+        "description": "Warte auf den validierten Rückgabewert. Ergebnis und Sicherheitsentscheidung sind noch offen."
+      },
+      "expired": {
+        "title": "Sitzung abgelaufen",
+        "description": "Diese Anwendungssitzung kann nicht mehr verwendet werden. Melde dich erneut an."
+      },
+      "failed": {
+        "title": "Anmeldung nicht bestätigt",
+        "description": "Der aktuelle Versuch wurde nicht erfolgreich bestätigt. Starte einen neuen Anmeldeversuch."
+      },
+      "signed-out": {
+        "title": "Lokal abgemeldet",
+        "description": "Die Anwendungssitzung ist beendet. Sichere Nachweise können bleiben; Keycloak-SSO kann weiterhin bestehen."
+      },
+      "logout": {
+        "title": "Lokale Abmeldung läuft",
+        "description": "Die Anwendungssitzung wird beendet. Die Bereinigung ist unabhängig von der Beobachtungsspeicherung."
+      }
+    },
+    "form": {
+      "title": "Synthetische Ressource auswählen",
+      "type": "Ressourcentyp",
+      "id": "Ressourcen-ID",
+      "allowlist": "Erlaubt ist ausschließlich Basic/playground-demo. HAPI prüft jeden tatsächlichen Abruf unabhängig."
+    },
+    "explorerTitle": "Resource Explorer (FHIR)",
+    "results": {
+      "heading": "Ressourcenergebnis",
+      "notFound": "Die erlaubte Ressource wurde bei HAPI nicht gefunden (HTTP 404). Die Anwendungssitzung bleibt davon unabhängig.",
+      "throttled": "Die Anfrage wurde an der Proxy-/BFF-Grenze gedrosselt (HTTP 429). Es ist keine HAPI-Entscheidung aufgezeichnet.",
+      "selectionRejected": "Der BFF hat die Ressourcenauswahl abgelehnt (HTTP 403). HAPI wurde nicht kontaktiert.",
+      "sessionRejected": "Der BFF hat die aktuelle Sitzung abgelehnt (HTTP 401). Melde dich erneut an.",
+      "loading": "Ressource wird angefordert. Ein Sicherheitsergebnis ist noch nicht bekannt.",
+      "source": "HTTP-Quelle",
+      "views": "Ergebnisansichten",
+      "copy": "JSON kopieren",
+      "safeJson": "Sicher projiziertes FHIR JSON",
+      "noPayload": "Kein sicherer FHIR-Inhalt für dieses Ergebnis verfügbar.",
+      "coding": "Code",
+      "system": "Codesystem",
+      "version": "Version",
+      "updated": "Zuletzt aktualisiert",
+      "unavailable": "Nicht verfügbar",
+      "measurements": "Latenz / Größe",
+      "unmeasured": "Nicht gemessen; es werden keine Beispielwerte angezeigt.",
+      "projection": "Darstellung",
+      "projectionNote": "Nur validierte synthetische FHIR-Felder. Quell-URLs, Narrative und nicht freigegebene Felder werden nicht angezeigt.",
+      "copied": "JSON kopiert.",
+      "failed": "JSON konnte nicht kopiert werden.",
+      "retryAfter": "Die Grenze verlangt {{seconds}} Sekunden Wartezeit. Danach bewusst erneut abrufen.",
+      "retryUnknown": "Später bewusst erneut abrufen. Es ist keine verlässliche Wartezeit verfügbar.",
+      "states": {
+        "allowed": "OK",
+        "denied": "Zugriff abgelehnt",
+        "not-found": "Nicht gefunden",
+        "rejected": "BFF-Anfrage abgelehnt",
+        "unavailable": "Nicht verfügbar",
+        "throttled": "Zu viele Anfragen",
+        "loading": "Abruf läuft",
+        "empty": "Noch kein Abruf"
+      },
+      "sources": {
+        "hapi": "HAPI",
+        "bff": "BFF",
+        "boundary": "Proxy/BFF · genaue Quelle nicht verfügbar",
+        "unavailable": "Nicht verfügbar"
+      },
+      "tabs": {
+        "json": "FHIR (JSON)",
+        "overview": "Übersicht",
+        "metadata": "Metadaten"
+      },
+      "allowed": "Synthetischer Lesezugriff erlaubt."
+    },
+    "exploreHeading": "Authentifizierung verstehen",
+    "objective": "Authentifizierung verstehen – mit PKCE und sicherem Ressourcenzugriff (FHIR)."
   }
 }

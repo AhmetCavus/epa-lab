@@ -23,11 +23,26 @@ test('private proxy failure omits callback queries and upstream diagnostics', as
 async function open(page: Page, fixture = runtimeFixture(), locale: 'de' | 'en' = 'en') {
   await fixture.install(page);
   await page.goto(workspacePath);
-  await page.getByRole('combobox').selectOption(locale);
-  await expect(page.locator('.workspace-status [role="status"]')).toHaveText(
-    locale === 'en' ? 'Private integration' : 'Private Integration',
+  await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
+  await expect(page.locator('.mc-runtime-badge')).toHaveText(
+    locale === 'en' ? 'Private integration test' : 'Privater Integrationstest',
   );
+  await expect(page.locator('[data-runtime-action="restore"]')).toBeEnabled();
   return fixture;
+}
+
+async function inspect(page: Page) {
+  await page
+    .getByRole('navigation', { name: /Workspace|Arbeitsbereich/, exact: true })
+    .getByRole('link', { name: 'Inspect', exact: true })
+    .click();
+}
+
+async function explore(page: Page) {
+  await page
+    .getByRole('navigation', { name: /Workspace|Arbeitsbereich/, exact: true })
+    .getByRole('link', { name: 'Explore', exact: true })
+    .click();
 }
 
 async function safeSurface(page: Page) {
@@ -47,15 +62,13 @@ async function safeSurface(page: Page) {
   });
 }
 
-test('private restoration is read-only and event/actor/Inspector provenance stays synchronized', async ({
+test('private restoration is read-only and Inspector provenance stays synchronized', async ({
   page,
 }) => {
   const fixture = await open(page);
+  await expect(page.locator('.mc-page-heading')).toContainText('protected FHIR resource access');
+  await inspect(page);
   await expect(page.locator('.timeline button')).toHaveCount(9);
-  await expect(page.locator('.channel-legend')).toContainText('Actor-local observation');
-  await expect(page.locator('.channel-legend')).not.toContainText('Provider internal');
-  await expect(page.locator('.site-footer')).toContainText('Private verification environment');
-  await expect(page.locator('.workspace-heading')).toContainText('private integration');
   expect(
     fixture.calls.every(
       (call) => call.method === 'GET' && !call.navigation && call.sameOrigin && !call.bearer,
@@ -67,58 +80,35 @@ test('private restoration is read-only and event/actor/Inspector provenance stay
   await page.keyboard.press('Enter');
   await expect(page.locator('.inspector')).toContainText('auth-client');
   await expect(page.locator('.inspector time')).toHaveText(redirect.observedAt);
-  await expect(page.locator('.interaction-target[aria-pressed="true"]')).toHaveAttribute(
-    'data-event-id',
-    redirect.eventId,
-  );
-  await expect(
-    page.locator('.interaction-path[data-selected="true"] .communication-edge'),
-  ).toHaveAttribute('data-source', 'bff');
-  await expect(
-    page.locator('.interaction-path[data-selected="true"] .communication-edge'),
-  ).toHaveAttribute('data-target', 'browser');
-  await expect(page.locator('.actor.highlighted')).toHaveCount(2);
+  await expect(page.locator('.timeline button').nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.inspector')).toContainText('BFF');
+  await expect(page.locator('.inspector')).toContainText('Browser');
   await page.locator('.timeline button').nth(6).click();
-  await expect(
-    page.locator('.interaction-path[data-selected="true"] .communication-edge'),
-  ).toHaveCount(0);
+  await expect(page.locator('.inspector')).toContainText('Actor-local');
   await expect(page.locator('.inspector .badge').first()).toHaveText('Observed');
-  await expect(
-    page.locator(
-      '.communication-edge[data-source="identity-provider"], .communication-edge[data-target="identity-provider"]',
-    ),
-  ).toHaveCount(0);
-  await page.locator('.actor[data-actor-id="identity-provider"]').click();
-  await expect(page.locator('.timeline [aria-pressed="true"]')).toHaveCount(0);
-  await expect(page.locator('.inspector .provenance')).toContainText('None — not observed');
   await safeSurface(page);
 });
 
-test('language, checkpoint, replay, reset and status reads preserve run identity without executing', async ({
+test('language, stages, mode changes and status reads preserve run identity without executing', async ({
   page,
 }) => {
   const fixture = await open(page);
   const run = fixture.document.runId;
   const ids = fixture.document.events.map((event) => event.eventId);
-  await page.locator('.checkpoint').nth(2).click();
+  await page.locator('.mc-stage').nth(1).click();
+  await inspect(page);
   await page.locator('.timeline button').nth(3).click();
-  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   const calls = fixture.calls.length;
-  await page.getByRole('combobox').selectOption('de');
-  await expect(page.locator('.checkpoint').nth(2)).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption('de');
   await expect(page.locator('.timeline button').nth(3)).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByLabel('Diagrammzoom')).toHaveText('125%');
+  await explore(page);
+  await expect(page.locator('.mc-stage').nth(1)).toHaveAttribute('aria-pressed', 'true');
   expect(fixture.calls.length).toBe(calls);
-  await page.getByRole('combobox').selectOption('en');
-  await page.getByRole('button', { name: 'Reset view' }).click();
-  await expect(page.getByLabel('Map zoom')).toHaveText('100%');
-  await expect(page.locator('.timeline button')).toHaveCount(9);
-  await page.getByRole('button', { name: 'Replay explanation' }).click();
-  await expect(page.locator('.timeline button').first()).toHaveAttribute('aria-pressed', 'true');
-  expect(fixture.calls.length).toBe(calls);
-  await page.getByRole('button', { name: 'Refresh status' }).click();
-  await expect(page.getByRole('button', { name: 'Refresh status' })).toBeEnabled();
-  await expect(page.locator('.timeline button').first()).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption('en');
+  await page.locator('[data-runtime-action="restore"]').click();
+  await expect(page.locator('[data-runtime-action="restore"]')).toBeEnabled();
+  await inspect(page);
+  await expect(page.locator('.timeline button').nth(3)).toHaveAttribute('aria-pressed', 'true');
   await page.reload();
   await expect(page.locator('.timeline button')).toHaveCount(9);
   expect(fixture.document.runId).toBe(run);
@@ -135,10 +125,12 @@ test('Start and Retry use top-level navigation and fresh run identities', async 
     'solid',
   );
   await page.keyboard.press('Enter');
-  await expect(page.locator('.timeline button')).toHaveCount(9);
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeEnabled();
   const firstRun = fixture.document.runId;
-  await page.getByRole('button', { name: 'Ablauf neu starten' }).click();
+  await page.locator('[data-runtime-action="start"]').click();
   await expect.poll(() => fixture.document.runId !== firstRun).toBe(true);
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeEnabled();
+  await inspect(page);
   await expect(page.locator('.timeline button')).toHaveCount(9);
   const starts = fixture.calls.filter((call) => call.path === '/api/oauth/login');
   expect(starts).toHaveLength(2);
@@ -151,14 +143,14 @@ for (const status of [200, 401, 403] as const) {
   }) => {
     const fixture = await open(page);
     fixture.setResourceStatus(status);
-    await page.getByRole('button', { name: 'Access resource' }).click();
-    await expect(page.locator('.timeline button')).toHaveCount(12);
-    await expect(page.locator('.runtime-status')).toContainText(
-      'Application authentication: authenticated.',
-    );
-    await expect(page.locator('.runtime-status')).toContainText(
+    await page.locator('[data-runtime-action="resource"]').click();
+    await expect(page.locator('.mc-resource-message')).toBeVisible();
+    await expect(page.locator('.runtime-status')).toContainText('Authentication successful');
+    await expect(page.locator('.mc-resource-message')).toContainText(
       status === 200 ? 'read allowed' : `HTTP ${status}`,
     );
+    await inspect(page);
+    await expect(page.locator('.timeline button')).toHaveCount(12);
     await page.locator('.timeline button').nth(10).click();
     await expect(page.locator('.inspector')).toContainText('Reported by');
     await expect(page.locator('.inspector')).toContainText('res-server');
@@ -179,7 +171,9 @@ test('an unavailable HAPI report is explicit and never inferred from successful 
 }) => {
   const fixture = await open(page);
   fixture.setReportAvailable(false);
-  await page.getByRole('button', { name: 'Access resource' }).click();
+  await page.locator('[data-runtime-action="resource"]').click();
+  await expect(page.locator('.mc-resource-message')).toBeVisible();
+  await inspect(page);
   await expect(page.locator('.timeline button')).toHaveCount(12);
   await page.locator('.timeline button').nth(10).click();
   await expect(page.locator('.inspector')).toContainText('Decision report unavailable');
@@ -191,11 +185,12 @@ test('logout uses CSRF, removes resource capability and keeps eligible owned his
 }) => {
   const fixture = await open(page);
   const run = fixture.document.runId;
-  await page.getByRole('button', { name: 'Sign out' }).focus();
+  await page.locator('[data-runtime-action="logout"]').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.runtime-status')).toContainText('Locally signed out');
-  await expect(page.getByRole('button', { name: 'Access resource' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Retry flow' })).toBeFocused();
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
+  await expect(page.locator('[data-runtime-action="start"]')).toBeFocused();
+  await inspect(page);
   await expect(page.locator('.timeline button')).toHaveCount(10);
   expect(fixture.calls.find((call) => call.path === '/api/oauth/logout')).toMatchObject({
     method: 'POST',
@@ -215,27 +210,28 @@ test('full/failing teaching storage cannot undo authoritative signed-out state o
   const fixture = await open(page);
   fixture.failLogoutObservation();
   const ids = fixture.document.events.map((event) => event.eventId);
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.locator('[data-runtime-action="logout"]').click();
   await expect(page.locator('.runtime-status')).toContainText('Locally signed out');
-  await expect(page.locator('.runtime-status')).toContainText('Trace incomplete or unavailable');
+  await expect(page.locator('.runtime-status')).toContainText('Some observations are unavailable');
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
+  await inspect(page);
   await expect(page.locator('.timeline button')).toHaveCount(9);
   expect(fixture.document.events.map((event) => event.eventId)).toEqual(ids);
-  await expect(page.getByRole('button', { name: 'Access resource' })).toBeDisabled();
 });
 
 test('capacity rejection preserves independent sign-out capability', async ({ page }) => {
   const fixture = await open(page);
-  await page.route(`${privateBaseUrl}/api/oauth/resource`, (route) =>
+  await page.route(`${privateBaseUrl}/api/oauth/resource**`, (route) =>
     route.fulfill({
       status: 503,
       contentType: 'application/json',
       body: JSON.stringify({ errorCode: 'internalError', errorDetail: unsafeSentinel }),
     }),
   );
-  await page.getByRole('button', { name: 'Access resource' }).click();
-  await expect(page.locator('.runtime-status')).toContainText('Run capacity is unavailable');
-  await expect(page.getByRole('button', { name: 'Sign out' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Sign out' }).click();
+  await page.locator('[data-runtime-action="resource"]').click();
+  await expect(page.getByRole('alert')).toContainText('Run capacity is unavailable');
+  await expect(page.locator('[data-runtime-action="logout"]')).toBeEnabled();
+  await page.locator('[data-runtime-action="logout"]').click();
   await expect(page.locator('.runtime-status')).toContainText('Locally signed out');
   expect(fixture.calls.some((call) => call.path === '/api/oauth/logout')).toBe(true);
   await safeSurface(page);
@@ -245,6 +241,9 @@ for (const invalid of ['version', 'secret', 'sequence', 'ownership']) {
   test(`unsupported ${invalid} event data has no raw fallback or fabricated progress`, async ({
     page,
   }) => {
+    const diagnostics: string[] = [];
+    page.on('console', (message) => diagnostics.push(message.text()));
+    page.on('pageerror', (error) => diagnostics.push(error.message));
     const fixture = runtimeFixture();
     const document = structuredClone(fixture.document);
     if (invalid === 'version') Object.assign(document, { schemaVersion: 2, raw: unsafeSentinel });
@@ -254,10 +253,15 @@ for (const invalid of ['version', 'secret', 'sequence', 'ownership']) {
     if (invalid === 'ownership') Object.assign(document, { runId: crypto.randomUUID() });
     fixture.setEvents(document);
     await open(page, fixture);
-    await expect(page.locator('.runtime-status')).toContainText('Trace incomplete or unavailable');
+    await expect(page.locator('.runtime-status')).toContainText(
+      'Some observations are unavailable',
+    );
+    await inspect(page);
     await expect(page.locator('.timeline button')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Sign out' })).toBeEnabled();
+    await expect(page.locator('[data-runtime-action="logout"]')).toBeEnabled();
     await safeSurface(page);
+    expect(diagnostics.join(' ')).not.toContain(unsafeSentinel);
+    expect(diagnostics.join(' ')).not.toContain(csrfSentinel);
   });
 }
 
@@ -271,12 +275,12 @@ test('unsafe session response offers safe recovery without displaying credential
     claims: { sub: unsafeSentinel },
   });
   await open(page, fixture);
-  await expect(page.locator('.runtime-status')).toContainText(
-    'Unsupported or unsafe response rejected',
-  );
+  await expect(page.getByRole('alert')).toContainText('Unsupported or unsafe response rejected');
+  await inspect(page);
   await expect(page.locator('.timeline button')).toHaveCount(0);
+  await explore(page);
   await expect(page.getByRole('button', { name: 'Start authentication' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Access resource' })).toBeDisabled();
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
   await safeSurface(page);
 });
 
@@ -301,8 +305,8 @@ for (const outcome of [
       },
     });
     await open(page, fixture);
-    await expect(page.getByRole('button', { name: 'Retry flow' })).toBeEnabled();
-    await expect(page.getByRole('button', { name: 'Access resource' })).toBeDisabled();
+    await expect(page.locator('[data-runtime-action="start"]')).toBeEnabled();
+    await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
     expect(fixture.calls.every((call) => call.method === 'GET' && !call.navigation)).toBe(true);
     if (outcome === 'pending') {
       await page.getByRole('button', { name: 'Cancel pending login' }).click();
@@ -324,9 +328,11 @@ test('expiry and browser return restore status only and do not reconstruct a los
     expiresAt: null,
     currentRun: null,
   });
+  await inspect(page);
   await page.clock.fastForward(3000);
   await expect(page.locator('.timeline button')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Access resource' })).toBeDisabled();
+  await explore(page);
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
   const calls = fixture.calls.length;
   await page.evaluate(() =>
     dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })),
@@ -344,14 +350,12 @@ test('late resource completion cannot restore the signed-out UI', async ({ page 
     }),
   );
   try {
-    await page.getByRole('button', { name: 'Access resource' }).click();
-    await expect(page.locator('.workspace-status [role="status"]')).toHaveText(
-      'Requesting the synthetic resource…',
-    );
-    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.locator('[data-runtime-action="resource"]').click();
+    await expect(page.locator('.runtime-status')).toContainText('Fetching the resource');
+    await page.locator('[data-runtime-action="logout"]').click();
     await expect(page.locator('.runtime-status')).toContainText('Locally signed out');
     release?.();
-    await expect(page.getByRole('button', { name: 'Access resource' })).toBeDisabled();
+    await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
     await expect(page.locator('.runtime-status')).not.toContainText('read allowed');
   } finally {
     release?.();
@@ -364,7 +368,7 @@ test('private fixture preview and conceptual ePA remain completely isolated from
   const fixture = runtimeFixture();
   await fixture.install(page);
   await page.goto('/missions');
-  await page.getByRole('combobox').selectOption('en');
+  await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption('en');
   await expect(page.getByText('Fixture preview', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open private integration test' })).toBeVisible();
   await page.getByRole('link', { name: 'Preview fixture' }).click();
@@ -375,4 +379,70 @@ test('private fixture preview and conceptual ePA remain completely isolated from
   await expect(page.locator('.timeline button')).toHaveCount(0);
   await expect(page.locator('[data-runtime-action]')).toHaveCount(0);
   expect(fixture.calls).toEqual([]);
+});
+
+test('logout commits immediately while observation history is held pending', async ({ page }) => {
+  const fixture = await open(page);
+  let release: (() => void) | undefined;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`${privateBaseUrl}/api/oauth/runs/*/events`, async (route) => {
+    await pending;
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(fixture.document),
+    });
+  });
+  try {
+    await page.locator('[data-runtime-action="logout"]').click();
+    await expect(page.locator('.runtime-status')).toContainText('Locally signed out');
+    await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
+    await expect(page.locator('[data-runtime-action="start"]')).toBeEnabled();
+    await expect(page.locator('[data-runtime-action="start"]')).toBeFocused();
+    expect(fixture.calls.filter((call) => call.path === '/api/oauth/logout')).toHaveLength(1);
+  } finally {
+    release?.();
+  }
+});
+
+test('a delayed earlier history response cannot replace the new signed-out context', async ({
+  page,
+}) => {
+  const fixture = runtimeFixture();
+  const earlier = structuredClone(fixture.document);
+  await fixture.install(page);
+  let release: (() => void) | undefined;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let reads = 0;
+  await page.route(`${privateBaseUrl}/api/oauth/runs/*/events`, async (route) => {
+    reads += 1;
+    if (reads === 1) {
+      await pending;
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify(earlier) });
+      return;
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify(fixture.document),
+    });
+  });
+  try {
+    await page.goto(workspacePath);
+    await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption('en');
+    await expect(page.locator('[data-runtime-action="resource"]')).toBeEnabled();
+    await page.locator('[data-runtime-action="logout"]').click();
+    await expect(page.locator('.runtime-status')).toContainText('Locally signed out');
+    await inspect(page);
+    await expect(page.locator('.timeline button')).toHaveCount(10);
+    release?.();
+    await expect(page.locator('.timeline button')).toHaveCount(10);
+    await explore(page);
+    await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
+    await safeSurface(page);
+  } finally {
+    release?.();
+  }
 });

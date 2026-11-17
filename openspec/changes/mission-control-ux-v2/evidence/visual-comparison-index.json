@@ -1,0 +1,122 @@
+[
+  {
+    "reference": "00-current-navy-baseline.png",
+    "capture": "06-00-navy.png",
+    "size": [
+      706,
+      1249
+    ],
+    "referenceSha256": "7d49ef83936aabd05608f127414120c740bbb669485c6a7a56e6d77ea098f386",
+    "captureSha256": "96b22072e87f1a6e22b815f44dc7559cf4f73c9bf26ba357a7ea05311f5025b0",
+    "sideBySide": "00-current-navy-baseline-comparison.png",
+    "overlay": "00-current-navy-baseline-overlay.png",
+    "maskedPixels": 0,
+    "resizedPixels": 0,
+    "referenceCorner": [
+      11,
+      13,
+      30
+    ],
+    "captureCorner": [
+      8,
+      14,
+      32
+    ]
+  },
+  {
+    "reference": "01-explore.png",
+    "capture": "06-01-explore.png",
+    "size": [
+      1672,
+      941
+    ],
+    "referenceSha256": "1f37d4d03ed0f876b3398e9bc79feb5b531a8b60ab2163e71c5f932bd4e18b86",
+    "captureSha256": "68ad0f1250f3314efd330590785d29ace2563ca718482fcb20eaac9f5d42ddc1",
+    "sideBySide": "01-explore-comparison.png",
+    "overlay": "01-explore-overlay.png",
+    "maskedPixels": 0,
+    "resizedPixels": 0,
+    "referenceCorner": [
+      5,
+      10,
+      29
+    ],
+    "captureCorner": [
+      8,
+      14,
+      32
+    ]
+  },
+  {
+    "reference": "02-inspect.png",
+    "capture": "06-02-inspect.png",
+    "size": [
+      1585,
+      992
+    ],
+    "referenceSha256": "a81691240e2e8b8c5cd732bbf1ee7cac20265457f2f0da669ceaad4d13045fe5",
+    "captureSha256": "d23c147b3ba433c6aa5c5855da0fa36075dc83aa7d4a15d61f10734188f7e0ca",
+    "sideBySide": "02-inspect-comparison.png",
+    "overlay": "02-inspect-overlay.png",
+    "maskedPixels": 0,
+    "resizedPixels": 0,
+    "referenceCorner": [
+      9,
+      16,
+      36
+    ],
+    "captureCorner": [
+      8,
+      14,
+      32
+    ]
+  },
+  {
+    "reference": "03-animated-flow.png",
+    "capture": "06-03-animated-flow.png",
+    "size": [
+      1672,
+      941
+    ],
+    "referenceSha256": "9bf51652a4a39c5d8da2ba4bf0f9711996abc80bbff1b4e10cf1410d2c9a337e",
+    "captureSha256": "aea4deb45e4c1f9c862233dd37247ee869edd8bea16fde298d87185ea6ead007",
+    "sideBySide": "03-animated-flow-comparison.png",
+    "overlay": "03-animated-flow-overlay.png",
+    "maskedPixels": 0,
+    "resizedPixels": 0,
+    "referenceCorner": [
+      7,
+      12,
+      30
+    ],
+    "captureCorner": [
+      8,
+      14,
+      32
+    ]
+  },
+  {
+    "reference": "04-resource-explorer.png",
+    "capture": "06-04-resource-explorer.png",
+    "size": [
+      1672,
+      941
+    ],
+    "referenceSha256": "ccac00a271f9882f10b51d1fa7e1de8e94625e55aaf35cd89b06143bf439410e",
+    "captureSha256": "978bba81362efff6d267eb973d68ebcd2a9308f662df4d987016069e1ad6e25c",
+    "sideBySide": "04-resource-explorer-comparison.png",
+    "overlay": "04-resource-explorer-overlay.png",
+    "maskedPixels": 0,
+    "resizedPixels": 0,
+    "referenceCorner": [
+      5,
+      11,
+      29
+    ],
+    "captureCorner": [
+      8,
+      14,
+      32
+    ]
+  }
+]

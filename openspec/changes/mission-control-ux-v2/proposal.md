@@ -4,7 +4,10 @@
 
 Authentication works, but the current long sequence canvas and scattered controls obscure what succeeded and what the learner should do next. The approved Mission Control v2 references define a clearer navy Explore experience, a separate developer Inspect view, recorded-event playback and a bounded Resource Explorer.
 
-**Status: DRAFT — planning only.** This proposal authorizes no implementation, image build, deployment or change to the running public Playground.
+**Status: APPROVED for isolated implementation, 2026-11-16.** The owner explicitly authorized all 26 tasks in order on `feat/mission-control-v2`, including rendered visual comparison and isolated functional/security/accessibility verification. No public deployment, production infrastructure change or archive is authorized.
+
+Isolated implementation and verification completed 2026-11-17; see the
+[acceptance matrix](acceptance-matrix.md). This does not authorize public release.
 
 ## What Changes
 
@@ -39,6 +42,11 @@ None in the published spec inventory: `openspec list --specs` currently returns 
 
 ## Impact
 
-Future implementation is limited to the existing React capability structure, localization/styles/tests and the NestJS standard-resource boundary. Reuse the existing resource route and proxy allowances; this single-entry version needs no resource-catalog endpoint. Reuse Keycloak, secured HAPI, versioned observations, session/logout handling, bounded storage and current rate limits; no new runtime dependency or framework is planned.
+Implementation is limited to the existing React capability structure, localization/styles/tests and the NestJS standard-resource boundary. Reuse the existing resource route and proxy allowances; this single-entry version needs no resource-catalog endpoint. Reuse Keycloak, secured HAPI, versioned observations, session/logout handling, bounded storage and current rate limits; no new runtime dependency or framework is planned.
 
 OAuth/OIDC/PKCE, provider configuration, token handling, ePA/PAR, HAPI policies/data and unrelated infrastructure stay outside the redesign. Additional resource types/IDs, arbitrary URLs, caller-selected tokens, raw HTTP inspection, patient data and new applications/services/databases are excluded. Deployment requires a later explicit release instruction.
+
+
+The isolated implementation and its evidence are recorded in the
+[nine-area acceptance matrix](acceptance-matrix.md) and
+[implementation verification](implementation-verification.md). Public deployment remains unchanged.

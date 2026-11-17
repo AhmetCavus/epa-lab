@@ -1,0 +1,211 @@
+{
+  "verified": true,
+  "image": "sha256:f15d09f928f2040e0c214b1aa719d4f60ec6b34c636afc90502849ce89ed3466",
+  "productionSecurityAndDataUnchanged": true,
+  "realJpaAndTrustedJwks": true,
+  "allowedFixtureMissingWithoutDeletion": true,
+  "bffActualProjectionAndProvenance": true,
+  "secretLogScan": true,
+  "checks": [
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 200,
+      "report": {
+        "decision": "allowed",
+        "reason": "demo-read-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "missing-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "insufficient-permission"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 401,
+      "report": {
+        "decision": "denied",
+        "reason": "invalid-token"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Patient",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Observation",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/another-id",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo/_history",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo?x=1",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "POST",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "PUT",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": true,
+      "method": "DELETE",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 403,
+      "report": {
+        "decision": "denied",
+        "reason": "operation-not-allowed"
+      }
+    },
+    {
+      "seed": false,
+      "method": "GET",
+      "path": "/fhir/Basic/playground-demo",
+      "status": 404,
+      "report": {
+        "decision": null,
+        "reason": null
+      }
+    }
+  ]
+}

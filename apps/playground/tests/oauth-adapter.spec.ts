@@ -372,3 +372,50 @@ test('only an explicit production public build enables the fixed-origin runtime'
     expect((await config(environment)).define?.__PLAYGROUND_PUBLIC_OAUTH__).toBe('false');
   }
 });
+
+test('callback transport, actor-local validation and independent HAPI reporting retain their actual provenance', () => {
+  const fixture = runtimeFixture();
+  const callback = fixture.document.events.find((event) => event.kind === 'callback-accepted');
+  const local = fixture.document.events.find(
+    (event) => event.kind === 'token-validation-succeeded',
+  );
+  if (!callback || !local) throw new Error('Missing observations');
+  expect(projectOAuthEvent(callback)).toMatchObject({
+    kind: 'message',
+    sourceActorId: 'browser',
+    targetActorId: 'bff',
+    channel: { kind: 'front' },
+    observation: { observedBy: 'auth-client' },
+  });
+  const validation = projectOAuthEvent(local);
+  expect(validation).toMatchObject({
+    kind: 'internal',
+    actorId: 'bff',
+    channel: { kind: 'internal' },
+  });
+  expect('sourceActorId' in validation || 'targetActorId' in validation).toBe(false);
+  const response = observedEvent(fixture.document.runId, 10, {
+    kind: 'resource-response-received',
+    channel: 'back-channel',
+    sourceActorId: 'resource-server',
+    targetActorId: 'bff',
+    outcome: 'received',
+    evidence: {
+      operation: 'read-demo-basic',
+      httpStatus: 403,
+      resourceServerReport: {
+        available: true,
+        reportedBy: 'res-server',
+        decision: 'denied',
+        reason: 'insufficient-permission',
+      },
+    },
+  });
+  expect(projectOAuthEvent(response)).toMatchObject({
+    observation: { observedBy: 'auth-client' },
+    report: { available: true, reportedBy: 'res-server' },
+  });
+  expect(
+    oauthEventSchema.safeParse({ ...callback, sourceActorId: 'authorization-server' }).success,
+  ).toBe(false);
+});

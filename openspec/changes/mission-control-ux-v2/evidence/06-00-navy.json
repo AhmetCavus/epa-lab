@@ -1,0 +1,112 @@
+{
+  "fixtureEvidence": true,
+  "browser": "141.0.7390.37",
+  "scenario": {
+    "name": "00-navy",
+    "width": 706,
+    "height": 1249,
+    "panel": "",
+    "read": false
+  },
+  "viewport": {
+    "width": 706,
+    "height": 1249
+  },
+  "document": {
+    "width": 706,
+    "height": 1743
+  },
+  "devicePixelRatio": 1,
+  "cssZoom": "",
+  "visualScale": 1,
+  "elements": [
+    {
+      "selector": ".mc-header",
+      "x": 0,
+      "y": 0,
+      "width": 706,
+      "height": 109,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-sidebar",
+      "x": 0,
+      "y": 109,
+      "width": 706,
+      "height": 162,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-main",
+      "x": 0,
+      "y": 271,
+      "width": 706,
+      "height": 1471.546875,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-page-heading h1",
+      "x": 16,
+      "y": 315.140625,
+      "width": 594.015625,
+      "height": 32.5,
+      "fontSize": "26px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-stages",
+      "x": 16,
+      "y": 433.4375,
+      "width": 674,
+      "height": 79,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-auth-hero",
+      "x": 16,
+      "y": 521.4375,
+      "width": 674,
+      "height": 635.15625,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-secondary-panel",
+      "x": 16,
+      "y": 1174.59375,
+      "width": 674,
+      "height": 547.953125,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    },
+    {
+      "selector": ".mc-resource-form",
+      "x": 37,
+      "y": 1410.953125,
+      "width": 632,
+      "height": 290.59375,
+      "fontSize": "14px",
+      "fontFamily": "\"Segoe UI\", Inter, system-ui, sans-serif",
+      "color": "rgb(243, 246, 255)",
+      "background": "rgba(0, 0, 0, 0)"
+    }
+  ]
+}

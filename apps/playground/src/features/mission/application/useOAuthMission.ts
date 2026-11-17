@@ -3,14 +3,20 @@ import {
   endOAuthSession,
   OAuthApiError,
   readOAuthEvents,
-  readOAuthResource,
+  readSelectedOAuthResource,
   readOAuthSession,
 } from '../data/oauth-api';
 import type { OAuthApiFailure } from '../data/oauth-api';
 import type { OAuthEventDocument, OAuthSession } from '../data/oauth-contract';
 import { lastResourceOutcome, projectOAuthEvent } from '../data/oauth-presentation';
-
-type ExecutionPhase = 'restoring' | 'ready' | 'navigating' | 'resource' | 'logout';
+import {
+  syntheticResource,
+  type ResourceReadResult,
+  type ResourceSelection,
+} from '../domain/synthetic-resource';
+import { presentSelectedResource } from '../data/synthetic-resource-presentation';
+import type { ExecutionPhase } from '../domain/mission-experience';
+import { describeOAuthExperience, ownsCurrentStandardSession } from './oauth-experience';
 
 export function useOAuthMission(enabled: boolean) {
   const [phase, setPhase] = useState<ExecutionPhase>('restoring');
@@ -19,6 +25,9 @@ export function useOAuthMission(enabled: boolean) {
   const [problem, setProblem] = useState<OAuthApiFailure | null>(null);
   const [traceProblem, setTraceProblem] = useState(false);
   const [resourceOutcome, setResourceOutcome] = useState<string | undefined>();
+  const [resourceResult, setResourceResult] = useState<ResourceReadResult | null>(null);
+  const [resourceRetryAt, setResourceRetryAt] = useState(0);
+  const retryAtRef = useRef(0);
   const sessionRef = useRef<OAuthSession | null>(null);
   const documentRef = useRef<OAuthEventDocument | null>(null);
   const operationRef = useRef<AbortController | null>(null);
@@ -59,6 +68,7 @@ export function useOAuthMission(enabled: boolean) {
       if (!isCurrent(operation)) {
         return;
       }
+      setResourceResult(null);
       sessionRef.current = null;
       setSession(null);
       replaceDocument(null);
@@ -73,6 +83,17 @@ export function useOAuthMission(enabled: boolean) {
       if (!isCurrent(operation)) {
         return;
       }
+      const previousSession = sessionRef.current;
+      if (
+        !ownsCurrentStandardSession(next) ||
+        previousSession?.currentRun?.runId !== next.currentRun?.runId ||
+        previousSession?.expiresAt !== next.expiresAt
+      ) {
+        setResourceResult(null);
+        setResourceOutcome(undefined);
+        retryAtRef.current = 0;
+        setResourceRetryAt(0);
+      }
       // Commit authoritative session state before trying to read teaching history.
       // A failed event read can never undo a successful local logout.
       sessionRef.current = next;
@@ -82,6 +103,14 @@ export function useOAuthMission(enabled: boolean) {
       if (!run || Date.parse(run.expiresAt) <= Date.now()) {
         replaceDocument(null);
         return;
+      }
+      const prior = documentRef.current;
+      if (prior && (prior.runId !== run.runId || prior.expiresAt !== run.expiresAt)) {
+        replaceDocument(null);
+      }
+      // Session availability does not wait for optional teaching-history retrieval.
+      if (phaseRef.current !== 'navigating') {
+        finish(operation);
       }
       try {
         const history = await readOAuthEvents(run.runId, operation.signal);
@@ -102,7 +131,7 @@ export function useOAuthMission(enabled: boolean) {
         replaceDocument(eligible ? { ...prior, complete: false } : null);
       }
     },
-    [isCurrent, replaceDocument],
+    [finish, isCurrent, replaceDocument],
   );
 
   const restore = useCallback(async () => {
@@ -110,6 +139,7 @@ export function useOAuthMission(enabled: boolean) {
       return;
     }
     const operation = begin('restoring');
+    setResourceResult(null);
     setResourceOutcome(undefined);
     try {
       await acceptSession(await readOAuthSession(operation.signal), operation);
@@ -172,6 +202,7 @@ export function useOAuthMission(enabled: boolean) {
       return;
     }
     const operation = begin('navigating');
+    setResourceResult(null);
     try {
       window.location.assign('/api/oauth/login');
     } catch (error) {
@@ -180,36 +211,69 @@ export function useOAuthMission(enabled: boolean) {
     }
   }
 
-  async function accessResource() {
-    if (phaseRef.current !== 'ready' || !sessionRef.current?.authenticated) {
+  useEffect(() => {
+    if (resourceRetryAt <= Date.now()) return;
+    const timer = setTimeout(() => {
+      retryAtRef.current = 0;
+      setResourceRetryAt(0);
+    }, resourceRetryAt - Date.now());
+    return () => clearTimeout(timer);
+  }, [resourceRetryAt]);
+
+  async function accessResource(selection: ResourceSelection = syntheticResource) {
+    if (
+      phaseRef.current !== 'ready' ||
+      !ownsCurrentStandardSession(sessionRef.current) ||
+      retryAtRef.current > Date.now()
+    )
       return;
-    }
+    const owningRun = sessionRef.current?.currentRun?.runId;
     const operation = begin('resource');
+    setResourceResult(null);
+    setResourceOutcome(undefined);
     try {
-      const { status, result } = await readOAuthResource(operation.signal);
-      if (!isCurrent(operation)) {
-        return;
+      const response = await readSelectedOAuthResource(selection, operation.signal);
+      if (!isCurrent(operation)) return;
+      if ('runId' in response.result && response.result.runId !== owningRun)
+        throw new OAuthApiError('unsupported-response');
+      const next = await readOAuthSession(operation.signal);
+      if (!isCurrent(operation)) return;
+      const history = acceptSession(next, operation);
+      const stillOwned = ownsCurrentStandardSession(next) && next.currentRun?.runId === owningRun;
+      if (stillOwned || response.result.outcome === 'rejected') {
+        const result = presentSelectedResource(response);
+        setResourceResult(result);
+        setResourceOutcome(
+          result.outcome === 'allowed' ? 'mission:runtime.resource.allowed' : result.messageKey,
+        );
+        if (result.outcome === 'throttled' && result.retryAfterSeconds) {
+          const deadline = Date.now() + result.retryAfterSeconds * 1000;
+          retryAtRef.current = deadline;
+          setResourceRetryAt(deadline);
+        }
       }
-      let outcome = 'mission:runtime.resource.local-rejection';
-      if (result.outcome === 'allowed') {
-        outcome = 'mission:runtime.resource.allowed';
-      } else if (result.outcome === 'denied') {
-        outcome =
-          status === 403
-            ? 'mission:runtime.resource.permission-denied'
-            : 'mission:runtime.resource.token-denied';
-      } else if (result.outcome === 'unavailable') {
-        outcome = `mission:runtime.resource.${result.reason}`;
-      }
-      setResourceOutcome(outcome);
-      await acceptSession(await readOAuthSession(operation.signal), operation);
+      await history;
     } catch (error) {
       if (isCurrent(operation)) {
-        setProblem(error instanceof OAuthApiError ? error.reason : 'unavailable');
+        const reason = error instanceof OAuthApiError ? error.reason : 'unavailable';
+        setProblem(reason);
         setResourceOutcome('mission:runtime.resource.unavailable');
-        // Resource/trace capacity is independent of authentication and local cleanup.
         try {
-          await acceptSession(await readOAuthSession(operation.signal), operation);
+          const next = await readOAuthSession(operation.signal);
+          const history = acceptSession(next, operation);
+          if (
+            isCurrent(operation) &&
+            ownsCurrentStandardSession(next) &&
+            next.currentRun?.runId === owningRun
+          ) {
+            setResourceResult({
+              outcome: 'unavailable',
+              status: null,
+              source: 'unavailable',
+              messageKey: `mission:runtime.errors.${reason}`,
+            });
+          }
+          await history;
         } catch (restoreError) {
           failed(restoreError, operation);
         }
@@ -226,6 +290,10 @@ export function useOAuthMission(enabled: boolean) {
     }
     // Starting logout cancels the UI's resource read; late results cannot commit to this view.
     const operation = begin('logout');
+    setResourceResult(null);
+    retryAtRef.current = 0;
+    setResourceRetryAt(0);
+    setResourceOutcome(undefined);
     try {
       const signedOut = await endOAuthSession(currentSession.csrfToken, operation.signal);
       await acceptSession(signedOut, operation, true);
@@ -245,8 +313,18 @@ export function useOAuthMission(enabled: boolean) {
     session.expiresAt !== null &&
     Date.parse(session.expiresAt) > Date.now();
   const pending = session?.currentRun?.outcome === 'pending';
-  const resourceReady = active && session?.currentRun?.outcome === 'authenticated';
-  const resourceKey = resourceOutcome ?? lastResourceOutcome(document?.events ?? []);
+  const resourceReady = ownsCurrentStandardSession(session);
+  const resourceKey = resourceReady
+    ? (resourceOutcome ?? lastResourceOutcome(document?.events ?? []))
+    : undefined;
+  const experience = describeOAuthExperience({
+    session,
+    document,
+    phase,
+    problem,
+    traceProblem,
+    resourceOutcome,
+  });
   let authenticationKey = 'mission:runtime.authentication.unavailable';
   if (session) {
     authenticationKey = active
@@ -272,14 +350,14 @@ export function useOAuthMission(enabled: boolean) {
         ? 'mission:runtime.actions.retry'
         : 'mission:runtime.actions.start',
       disabled: phase !== 'ready',
-      primary: true,
+      primary: experience.primaryAction === 'start',
       invoke: start,
     },
     {
       id: 'resource',
       labelKey: 'mission:runtime.actions.resource',
-      disabled: phase !== 'ready' || !resourceReady,
-      primary: false,
+      disabled: phase !== 'ready' || !resourceReady || resourceRetryAt > Date.now(),
+      primary: experience.primaryAction === 'resource',
       invoke: () => void accessResource(),
     },
     {
@@ -303,6 +381,11 @@ export function useOAuthMission(enabled: boolean) {
   ];
   return {
     events,
+    experience,
+    resourceMessageKey: resourceKey,
+    resourceResult,
+    fetchResource: (selection: ResourceSelection) => void accessResource(selection),
+    problemKey: problem ? `mission:runtime.errors.${problem}` : undefined,
     channels: [
       { kind: 'front', labelKey: 'protocol-flow:channels.front' },
       { kind: 'back', labelKey: 'protocol-flow:channels.back' },

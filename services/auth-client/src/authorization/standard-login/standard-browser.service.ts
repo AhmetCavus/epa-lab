@@ -8,6 +8,11 @@ import { AuthorizationService } from '../authorization.service';
 import { BrowserLoginStore } from '../browser-login/browser-login.store';
 import { TokenService } from '../../oidc/token.service';
 import { OidcUpstreamError } from '../../oidc/oidc-client.service';
+import {
+  isAllowedResourceSelection,
+  type ResourceSelection,
+} from '../standard-resource/resource-selection';
+import { selectedResourceResponse } from '../standard-resource/selected-resource-response';
 import { readStandardResource } from '../standard-resource/standard-resource';
 import { demoReadOperation } from '../run-observations/protocol-event';
 import type { ProtocolObservation } from '../run-observations/protocol-event';
@@ -324,15 +329,15 @@ export class StandardBrowserService {
     return this.store.standard.events(contextId, runId);
   }
 
-  async resource(contextId: string | undefined) {
+  async resource(contextId: string | undefined, selection?: ResourceSelection) {
     clientProfile(this.config, 'playground-standard');
     const state = this.store.standard;
     const context = state.context(contextId);
     const authentication = context?.authentication;
-    const reject = (reason: 'authentication-required' | 'session-no-longer-active') => ({
-      status: 401 as const,
-      body: { outcome: 'rejected' as const, reason },
-    });
+    const reject = (reason: 'authentication-required' | 'session-no-longer-active') =>
+      selection
+        ? selectedResourceResponse(401, { outcome: 'rejected', source: 'bff', reason })
+        : { status: 401 as const, body: { outcome: 'rejected' as const, reason } };
     if (!context || !authentication || authentication.profileId !== 'playground-standard') {
       if (context?.currentRunId) {
         state.observe(context.currentRunId, context.ownerId, {
@@ -348,6 +353,18 @@ export class StandardBrowserService {
         });
       }
       return reject('authentication-required');
+    }
+    const selectedContextCurrent = () =>
+      !selection ||
+      (context.currentRunId === authentication.runId &&
+        state.view(context).currentRun?.outcome === 'authenticated');
+    if (!selectedContextCurrent()) return reject('session-no-longer-active');
+    if (selection && !isAllowedResourceSelection(selection)) {
+      return selectedResourceResponse(403, {
+        outcome: 'rejected',
+        source: 'bff',
+        reason: 'selection-not-permitted',
+      });
     }
     // Resource work belongs to the login that supplied these credentials, including during a later pending retry.
     const runId = authentication.runId;
@@ -383,8 +400,9 @@ export class StandardBrowserService {
             evidence: { operation: demoReadOperation, httpStatus, resourceServerReport },
           });
         },
+        Boolean(selection),
       );
-      if (!state.authenticationCurrent(context, authentication)) {
+      if (!state.authenticationCurrent(context, authentication) || !selectedContextCurrent()) {
         observe({
           kind: 'resource-rejected',
           channel: 'actor-local',
@@ -406,6 +424,15 @@ export class StandardBrowserService {
           outcome: 'allowed',
           evidence: { operation: demoReadOperation, httpStatus: 200 },
         });
+        if (selection) {
+          return selectedResourceResponse(200, {
+            outcome: 'allowed',
+            source: 'hapi',
+            runId,
+            resource: result.fhir,
+            resourceServerReport: result.report,
+          });
+        }
         return {
           status: 200 as const,
           body: {
@@ -424,21 +451,40 @@ export class StandardBrowserService {
           outcome: 'denied',
           evidence: { operation: demoReadOperation, httpStatus: result.status },
         });
+        if (selection) {
+          return selectedResourceResponse(result.status, {
+            outcome: 'denied',
+            source: 'hapi',
+            runId,
+            resourceServerReport: result.report,
+          });
+        }
         return {
           status: result.status,
           body: { outcome: 'denied' as const, runId, resourceServerReport: result.report },
         };
       }
+      const reason = result.kind === 'not-found' ? 'unexpected-status' : result.reason;
       observe({
         kind: 'resource-failed',
         channel: 'actor-local',
         actorId: 'bff',
         outcome: 'failed',
-        evidence: { operation: demoReadOperation, reason: result.reason },
+        evidence: { operation: demoReadOperation, reason },
       });
+      if (selection) {
+        if (result.kind === 'not-found')
+          return selectedResourceResponse(404, { outcome: 'not-found', source: 'hapi', runId });
+        return selectedResourceResponse(reason === 'timeout' ? 504 : 502, {
+          outcome: 'unavailable',
+          source: 'bff',
+          runId,
+          reason,
+        });
+      }
       return {
-        status: result.reason === 'timeout' ? 504 : 502,
-        body: { outcome: 'unavailable' as const, runId, reason: result.reason },
+        status: reason === 'timeout' ? 504 : 502,
+        body: { outcome: 'unavailable' as const, runId, reason },
       };
     } finally {
       state.release(trace);

@@ -1,5 +1,17 @@
 # Agent Guidelines — Auth Protocol Playground
 
+**Mission Control implementation authorization (2026-11-16):** the owner approved
+`mission-control-ux-v2` tasks 1.1–6.6 (all 26) on `feat/mission-control-v2`, in task order.
+Match the four approved navy visual references and baseline, with actual browser captures,
+comparison/correction and functional/security/accessibility verification before completion.
+Use isolated verification only. Do not deploy, change production infrastructure, modify
+Keycloak/HAPI policies/data or archive. Existing OAuth/session/CSRF/ownership and ePA/PAR
+boundaries remain authoritative. Explorer is enabled by current standard authentication;
+no preliminary read, eligibility store or resource-catalog endpoint is authorized.
+The isolated implementation and all 26 verification tasks are complete (2026-11-17);
+see the [acceptance matrix](openspec/changes/mission-control-ux-v2/acceptance-matrix.md).
+This branch has not been publicly deployed and the change remains unarchived.
+
 **Current live public deployment (2026-11-16):** the owner approved
 `public-playground-oauth-deployment` tasks 6.1/6.2 and explicitly instructed replacing the
 old public fixture site in place. The live OAuth mission is deployed and actual private,

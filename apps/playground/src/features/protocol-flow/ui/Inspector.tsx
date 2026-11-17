@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Actor, FlowEvent } from '../domain/protocol-flow';
 
@@ -8,6 +9,8 @@ interface InspectorProps {
   contextExplanation: string | undefined;
   actors: readonly Actor[];
   presentation?: 'observed' | 'fixture';
+  detail?: boolean;
+  navigation?: ReactNode;
 }
 
 export function Inspector({
@@ -17,6 +20,8 @@ export function Inspector({
   contextExplanation,
   actors,
   presentation = 'fixture',
+  detail = false,
+  navigation,
 }: InspectorProps) {
   const { t } = useTranslation('protocol-flow');
   const observed = event?.visibility === 'observed' ? event : undefined;
@@ -38,68 +43,123 @@ export function Inspector({
       ? actors.find((entry) => entry.id === event.targetActorId)
       : undefined;
 
+  const provenance = (
+    <dl className="provenance">
+      <div>
+        <dt>{t('protocol-flow:inspector.source')}</dt>
+        <dd>{t(observed ? 'inspector.observedSource' : fixtureSource)}</dd>
+      </div>
+      <div>
+        <dt>{t('protocol-flow:inspector.observer')}</dt>
+        <dd>{observed?.observation.observedBy ?? t('protocol-flow:inspector.noObserver')}</dd>
+      </div>
+      <div>
+        <dt>{t('protocol-flow:inspector.timestamp')}</dt>
+        <dd>
+          {observed ? (
+            <time dateTime={observed.observation.observedAt}>
+              {observed.observation.observedAt}
+            </time>
+          ) : (
+            t('protocol-flow:inspector.unavailable')
+          )}
+        </dd>
+      </div>
+      {observed && (
+        <>
+          <div>
+            <dt>{t('inspector.outcome')}</dt>
+            <dd>
+              {t(observed.observation.outcomeKey)} (<code>{observed.observation.outcome}</code>)
+            </dd>
+          </div>
+          <div>
+            <dt>{t('inspector.sequence')}</dt>
+            <dd>{observed.observation.sequence}</dd>
+          </div>
+        </>
+      )}
+    </dl>
+  );
+
   return (
-    <aside className="panel inspector" aria-labelledby="inspector-title">
+    <aside
+      className={`panel inspector${detail ? ' inspector-detail' : ''}`}
+      aria-labelledby="inspector-title"
+    >
       <div className="panel-heading">
-        <h2 id="inspector-title">{t('protocol-flow:inspector.heading')}</h2>
+        {detail ? (
+          <div>
+            <h2 id="inspector-title">{t(event?.titleKey ?? 'inspection.eventDetail')}</h2>
+            <p className="mc-event-caption">
+              {event
+                ? t(
+                    event.kind === 'message'
+                      ? 'diagram.messageDirection'
+                      : 'diagram.internalExplanation',
+                    {
+                      source: source ? t(source.labelKey) : '',
+                      target: target ? t(target.labelKey) : '',
+                    },
+                  )
+                : t('inspector.noSelection')}
+            </p>
+          </div>
+        ) : (
+          <h2 id="inspector-title">{t('inspector.heading')}</h2>
+        )}
         <span className="metadata">
           {t(observed ? 'inspector.selectedObserved' : fixtureSelection)}
         </span>
+        {navigation}
       </div>
-      <div className="inspector-content" aria-live="polite" aria-atomic="true">
-        <span
-          className={`badge ${event?.visibility === 'not-observable' ? 'unobservable' : 'explained'}`}
-        >
-          {t(`visibility.${event?.visibility ?? 'explained'}`)}
-        </span>
+      <div
+        className="inspector-content"
+        aria-live="polite"
+        aria-atomic="true"
+        tabIndex={detail ? 0 : undefined}
+        role={detail ? 'region' : undefined}
+        aria-label={detail ? t('inspection.eventDetail') : undefined}
+      >
+        {!detail && (
+          <span
+            className={`badge ${event?.visibility === 'not-observable' ? 'unobservable' : 'explained'}`}
+          >
+            {t(`visibility.${event?.visibility ?? 'explained'}`)}
+          </span>
+        )}
         <section>
-          <h3>{t('protocol-flow:inspector.whatHappened')}</h3>
-          <h4>
-            {event || actor
-              ? t(event?.titleKey ?? actor?.labelKey ?? 'inspector.noSelection')
-              : (contextTitle ?? t('inspector.noSelection'))}
-          </h4>
+          {detail ? (
+            <div className="mc-event-summary-heading">
+              <h3>{t('protocol-flow:inspector.whatHappened')}</h3>
+              {detail && (
+                <span
+                  className={`badge ${event?.visibility === 'not-observable' ? 'unobservable' : 'explained'}`}
+                >
+                  {t(`visibility.${event?.visibility ?? 'explained'}`)}
+                </span>
+              )}
+            </div>
+          ) : (
+            <h3>{t('protocol-flow:inspector.whatHappened')}</h3>
+          )}
+          {!detail && (
+            <h4>
+              {event || actor
+                ? t(event?.titleKey ?? actor?.labelKey ?? 'inspector.noSelection')
+                : (contextTitle ?? t('inspector.noSelection'))}
+            </h4>
+          )}
           <p>{t(event?.summaryKey ?? contextKey)}</p>
-          <dl className="provenance">
-            <div>
-              <dt>{t('protocol-flow:inspector.source')}</dt>
-              <dd>{t(observed ? 'inspector.observedSource' : fixtureSource)}</dd>
-            </div>
-            <div>
-              <dt>{t('protocol-flow:inspector.observer')}</dt>
-              <dd>{observed?.observation.observedBy ?? t('protocol-flow:inspector.noObserver')}</dd>
-            </div>
-            <div>
-              <dt>{t('protocol-flow:inspector.timestamp')}</dt>
-              <dd>
-                {observed ? (
-                  <time dateTime={observed.observation.observedAt}>
-                    {observed.observation.observedAt}
-                  </time>
-                ) : (
-                  t('protocol-flow:inspector.unavailable')
-                )}
-              </dd>
-            </div>
-            {observed && (
-              <>
-                <div>
-                  <dt>{t('inspector.outcome')}</dt>
-                  <dd>
-                    {t(observed.observation.outcomeKey)} (
-                    <code>{observed.observation.outcome}</code>)
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('inspector.sequence')}</dt>
-                  <dd>{observed.observation.sequence}</dd>
-                </div>
-              </>
-            )}
-          </dl>
+          {!detail && provenance}
         </section>
-        <section className="evidence-section">
-          <h3>{t('protocol-flow:inspector.safeEvidence')}</h3>
+        {detail && (
+          <section className="mc-event-provenance">
+            <h3>{t('inspector.observedSource')}</h3>
+            {provenance}
+          </section>
+        )}
+        <EvidenceSection key={event?.id} collapsible={detail} title={t('inspector.safeEvidence')}>
           <p className="metadata">{t(observed ? 'inspector.observedDetails' : fixtureDetails)}</p>
           {event && event.evidence.length > 0 ? (
             <dl className="evidence-fields">
@@ -138,7 +198,7 @@ export function Inspector({
               )}
             </section>
           )}
-        </section>
+        </EvidenceSection>
         <section className="interpretation">
           <h3>{t('protocol-flow:inspector.why')}</h3>
           <p>
@@ -171,5 +231,30 @@ export function Inspector({
         </section>
       </div>
     </aside>
+  );
+}
+
+function EvidenceSection({
+  collapsible,
+  title,
+  children,
+}: {
+  collapsible: boolean;
+  title: string;
+  children: ReactNode;
+}) {
+  if (collapsible) {
+    return (
+      <details className="evidence-section">
+        <summary>{title}</summary>
+        <div>{children}</div>
+      </details>
+    );
+  }
+  return (
+    <section className="evidence-section">
+      <h3>{title}</h3>
+      {children}
+    </section>
   );
 }

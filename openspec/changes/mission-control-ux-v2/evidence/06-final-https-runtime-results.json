@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "images": {
+    "spa": "sha256:63a47c160089c20a7cf0927c51a38811618e187d1189475214972296d08a2aa7",
+    "bff": "sha256:2fa9fc60dba79a2f1e6846087da00c6cf87e1a0fd6e7bee045624e76d91f6e4c",
+    "hapi": "sha256:f15d09f928f2040e0c214b1aa719d4f60ec6b34c636afc90502849ce89ed3466"
+  },
+  "journey": "real HTTPS login/callback/refresh/read/Inspector/CSRF logout/old-auth/history",
+  "proxy": "actual Traefik/Nginx, path/method/trust/limit/cache/error-log negatives",
+  "publicAccessibility": "DE/EN, 1366/390px, reduced motion, WCAG 2A/AA/2.1AA/2.2AA, stable run on language change",
+  "withdrawal": "targeted Compose recreation to saved fixture image; catalog/ePA restored, OAuth/provider forwarding closed",
+  "missionControl": {
+    "explicitSelectedRead": true,
+    "preliminaryResourceRequests": 0,
+    "stableRun": true,
+    "presentationExecutionRequests": 0,
+    "safeHistoryAfterLogout": true,
+    "resourceClearedOnLogout": true
+  },
+  "limitations": "Loopback staging with temporary test CA and disposable provider/HAPI data. This is not public deployment or public-host acceptance."
+}

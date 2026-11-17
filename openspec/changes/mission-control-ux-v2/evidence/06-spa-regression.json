@@ -1,0 +1,33 @@
+{
+  "stats": {
+    "startTime": "2026-11-16T23:54:35.772Z",
+    "duration": 105060.932,
+    "expected": 177,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "typecheckBuild": "passed",
+  "format": "passed",
+  "nativeZoomSkipped": false,
+  "browser": "Chromium 141",
+  "suites": [
+    "architecture.spec.ts",
+    "design-foundation.spec.ts",
+    "localization-resources.spec.ts",
+    "localization.spec.ts",
+    "mission-accessibility.spec.ts",
+    "mission-control.spec.ts",
+    "mission-experience.spec.ts",
+    "mission-inspection.spec.ts",
+    "mission-playback.spec.ts",
+    "mission-resource.spec.ts",
+    "mission-visual.spec.ts",
+    "oauth-adapter.spec.ts",
+    "oauth-experience.spec.ts",
+    "oauth-runtime.spec.ts",
+    "oauth-visual.spec.ts",
+    "sequence-layout.spec.ts",
+    "synthetic-resource.spec.ts"
+  ]
+}

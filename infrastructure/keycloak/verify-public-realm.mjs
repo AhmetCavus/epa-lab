@@ -328,7 +328,7 @@ export async function verifyIsolatedPublicRealm(verifyRuntime) {
       envFile,
       '--mount',
       `type=bind,source=${importFile},target=/opt/keycloak/data/import/epa-demo-realm.json,readonly`,
-      postgres ? postgresImage : image,
+      postgres ? postgresImage : (process.env.KEYCLOAK_ISOLATED_IMAGE ?? image),
       postgres ? 'start' : 'start-dev',
       '--import-realm',
     );

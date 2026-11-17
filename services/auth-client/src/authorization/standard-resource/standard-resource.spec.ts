@@ -54,7 +54,7 @@ describe('the single bounded FHIR read', () => {
         timers.push(setTimeout(() => response.end('{}'), 1000));
         return;
       }
-      if (mode === '401' || mode === '403' || mode === '500') {
+      if (['401', '403', '404', '500'].includes(mode)) {
         response.writeHead(Number(mode), {
           'x-playground-decision': 'denied',
           'x-playground-reason': mode === '403' ? 'insufficient-permission' : 'invalid-token',
@@ -88,13 +88,20 @@ describe('the single bounded FHIR read', () => {
         response.end('fictional-sensitive-invalid-json');
         return;
       }
-      response.end(
-        JSON.stringify(
-          mode === 'unsafe-resource'
-            ? { ...fixture, subject: { reference: 'fictional-sensitive-identity' } }
-            : fixture,
-        ),
-      );
+      const payload = structuredClone(fixture);
+      let body: unknown = payload;
+      if (mode === 'unsafe-resource')
+        body = { ...payload, subject: { reference: 'fictional-sensitive-identity' } };
+      if (mode === 'wrong-id') body = { ...payload, id: 'another-id' };
+      if (mode === 'wrong-type') body = { ...payload, resourceType: 'Patient' };
+      if (mode === 'unsafe-code') body = { ...payload, code: { text: 'fictional-sensitive-code' } };
+      if (mode === 'unsafe-version')
+        body = { ...payload, meta: { versionId: '<script>fictional-sensitive</script>' } };
+      if (mode === 'narrative')
+        body = { ...payload, text: { status: 'generated', div: 'fictional-sensitive-narrative' } };
+      if (mode === 'extension')
+        body = { ...payload, extension: [{ url: 'fictional-sensitive-url' }] };
+      response.end(JSON.stringify(body));
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     resourceUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}/fhir/Basic/playground-demo`;
@@ -123,7 +130,7 @@ describe('the single bounded FHIR read', () => {
     );
   });
 
-  function read() {
+  function read(selected = false) {
     const profile = profileTestConfiguration.standardProfile;
     if (!profile) {
       throw new Error('Expected standard test configuration');
@@ -136,6 +143,7 @@ describe('the single bounded FHIR read', () => {
       },
       'fictional-server-access-token',
       received,
+      selected,
     );
   }
 
@@ -187,5 +195,43 @@ describe('the single bounded FHIR read', () => {
     expect(await read()).toEqual({ kind: 'failed', reason: 'invalid-response' });
     expect(requests).toBe(0);
     resourceUrl = resourceUrl.replace('/Patient', '/Basic/playground-demo');
+  });
+  it('selected output derives actual FHIR code and safe metadata while omitting source', async () => {
+    const result = await read(true);
+    expect(result).toMatchObject({
+      kind: 'allowed',
+      fhir: {
+        resourceType: 'Basic',
+        id: 'playground-demo',
+        code: fixture.code,
+        meta: { versionId: '1' },
+      },
+    });
+    expect(result.kind === 'allowed' && result.fhir?.code).toEqual(fixture.code);
+    expect(JSON.stringify(result)).not.toContain('fictional-server-metadata');
+  });
+  it.each([
+    'content-type',
+    'json',
+    'unsafe-resource',
+    'wrong-id',
+    'wrong-type',
+    'unsafe-code',
+    'unsafe-version',
+    'narrative',
+    'extension',
+    'oversized',
+    'compressed-oversized',
+  ])('selected output rejects %s without disclosure', async (failure) => {
+    mode = failure;
+    const result = await read(true);
+    expect(result.kind).toBe('failed');
+    expect(JSON.stringify(result)).not.toContain('fictional-sensitive');
+    expect(JSON.stringify(result)).not.toContain('fhir');
+  });
+  it('only a selected actual 404 becomes not-found; the legacy status contract is unchanged', async () => {
+    mode = '404';
+    expect(await read(true)).toEqual({ kind: 'not-found' });
+    expect(await read()).toEqual({ kind: 'failed', reason: 'unexpected-status' });
   });
 });

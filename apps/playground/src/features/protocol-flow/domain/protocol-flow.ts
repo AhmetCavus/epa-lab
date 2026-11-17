@@ -11,6 +11,14 @@ export interface ActorGroup {
   readonly actors: readonly Actor[];
 }
 
+export interface FlowParticipant {
+  readonly id: string;
+  readonly actorIds: readonly string[];
+  readonly titleKey: string;
+  readonly descriptionKey: string;
+  readonly icon: 'browser' | 'server' | 'key' | 'database';
+}
+
 export interface EvidenceField {
   readonly labelKey: string;
   readonly value:
