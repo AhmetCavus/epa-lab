@@ -1,5 +1,11 @@
 # Mission Control implementation verification
 
+**Subsequent public release, 2026-11-17:** after the isolated implementation was complete,
+the owner explicitly authorized the targeted SPA/BFF deployment. See
+[public release verification](public-release-verification.md) for current running state and
+actual public checks. Earlier implementation-only scope statements below retain their dated
+verification context; this release does not authorize database/provider/policy changes or archiving.
+
 Branch: `feat/mission-control-v2`. Owner implementation approval: 2026-11-16.
 Production deployment, infrastructure changes and archiving remain excluded.
 

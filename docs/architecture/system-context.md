@@ -1,5 +1,11 @@
 # Architecture — Context & Trust Boundaries
 
+**Current release, 2026-11-17:** the existing public OAuth deployment now uses the
+separately owner-approved Mission Control V2 SPA/BFF images and compatible selected-resource
+contract. See [current live evidence](../../openspec/changes/mission-control-ux-v2/public-release-verification.md).
+The earlier fixture/preparation-only rollout statements below describe historical approvals;
+Keycloak/HAPI/PostgreSQL boundaries and data remain unchanged by this two-service update.
+
 **Status:** APPROVED FOR LOCAL/PRIVATE IMPLEMENTATION · **Version:** 0.2
 
 **Readiness reconciliation:** 2026-11-11, change `001-oidc-pkce`, tasks 1.1–1.3 only
@@ -88,7 +94,7 @@ documents the minimal DTO; `observationsAvailable` reflects safe history complet
 | `GET /api/oauth/resource`           | Require standard application authentication; call only the configured synthetic HAPI read using its server-held Access Token; return a bounded safe result                             |
 | `GET /api/oauth/runs/:runId/events` | Require browser viewing ownership and unexpired run; return versioned allowlisted event projections                                                                                    |
 
-Mission Control v2 adds a compatible **isolated, not-yet-deployed** selected variant on the
+Mission Control v2 adds a compatible **verified and deployed** selected variant on the
 same resource route: exactly `resourceType=Basic&resourceId=playground-demo` requests a
 separately validated/version-2 safe FHIR projection. No-query consumers keep the existing
 summary; session and version-1 events are unchanged. Current owning standard authentication

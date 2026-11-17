@@ -1,5 +1,11 @@
 # Proposal
 
+**Subsequent public release, 2026-11-17:** after the isolated implementation was complete,
+the owner explicitly authorized the targeted SPA/BFF deployment. See
+[public release verification](public-release-verification.md) for current running state and
+actual public checks. Earlier implementation-only scope statements below retain their dated
+verification context; this release does not authorize database/provider/policy changes or archiving.
+
 ## Why
 
 Authentication works, but the current long sequence canvas and scattered controls obscure what succeeded and what the learner should do next. The approved Mission Control v2 references define a clearer navy Explore experience, a separate developer Inspect view, recorded-event playback and a bounded Resource Explorer.

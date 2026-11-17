@@ -1,5 +1,10 @@
 # Auth Protocol Playground
 
+**Mission Control V2 is live (2026-11-17).** The owner-approved targeted SPA/BFF update
+adds Explore, Inspect, recorded Flow and the session-enabled Resource Explorer to the
+existing public OAuth workspace. The landing catalog is preserved. See the
+[current release evidence](openspec/changes/mission-control-ux-v2/public-release-verification.md).
+
 The public deployment at <https://auth-playground.yappai.de/missions> uses the existing
 OAuth/OIDC mission, server-side OAuth client, Keycloak and protected synthetic FHIR
 resource. Choose **OAuth-Mission starten** (English: **Start OAuth mission**) and then

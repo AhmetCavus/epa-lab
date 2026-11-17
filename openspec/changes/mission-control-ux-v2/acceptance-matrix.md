@@ -1,5 +1,11 @@
 # Mission Control V2 acceptance matrix
 
+**Subsequent public release, 2026-11-17:** after the isolated implementation was complete,
+the owner explicitly authorized the targeted SPA/BFF deployment. See
+[public release verification](public-release-verification.md) for current running state and
+actual public checks. Earlier implementation-only scope statements below retain their dated
+verification context; this release does not authorize database/provider/policy changes or archiving.
+
 Verified 2026-11-17 on `feat/mission-control-v2`, for isolated implementation only.
 All nine areas below have actual evidence. The change remains unarchived and the public
 Playground remains on its existing release. There is no production-readiness claim.

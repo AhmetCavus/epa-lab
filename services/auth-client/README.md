@@ -226,7 +226,7 @@ event is observed and timed by auth-client. It contains no inferred internal che
 
 ### Selected-resource extension (Mission Control v2)
 
-Implemented and verified on `feat/mission-control-v2`; **not deployed by this change**.
+Implemented and verified on `feat/mission-control-v2`; deployed through the separately owner-approved targeted SPA/BFF release on 2026-11-17. See [live release evidence](../../openspec/changes/mission-control-ux-v2/public-release-verification.md).
 The existing route accepts exactly two scalar query selectors for an explicit read:
 
 ```http

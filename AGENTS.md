@@ -1,5 +1,16 @@
 # Agent Guidelines — Auth Protocol Playground
 
+**Mission Control V2 public release (2026-11-17):** the owner explicitly approved
+“Yes, deploy SPA and BFF now.” The verified immutable `mission-control-ux-v2` SPA/BFF
+images now run in the existing `epa-lab-playground` and `epa-lab-auth-client` services.
+Only their two image pins in private `.env.live` and those two containers changed.
+Actual public UI, provider navigation, owned cancellation/CSRF and DE/EN accessibility pass;
+see [live release evidence](openspec/changes/mission-control-ux-v2/public-release-verification.md).
+Existing accounts/credentials and Keycloak/HAPI/PostgreSQL configuration/data are unchanged;
+original H2 remains offline. No database reset, volume deletion or archive is authorized.
+Earlier implementation-only restrictions below describe the prior approval and are superseded
+only for this explicitly authorized two-service release. Future releases need their own instruction.
+
 **Mission Control implementation authorization (2026-11-16):** the owner approved
 `mission-control-ux-v2` tasks 1.1–6.6 (all 26) on `feat/mission-control-v2`, in task order.
 Match the four approved navy visual references and baseline, with actual browser captures,
@@ -10,7 +21,7 @@ boundaries remain authoritative. Explorer is enabled by current standard authent
 no preliminary read, eligibility store or resource-catalog endpoint is authorized.
 The isolated implementation and all 26 verification tasks are complete (2026-11-17);
 see the [acceptance matrix](openspec/changes/mission-control-ux-v2/acceptance-matrix.md).
-This branch has not been publicly deployed and the change remains unarchived.
+The subsequent owner-approved public release is recorded above; the change remains unarchived.
 
 **Current live public deployment (2026-11-16):** the owner approved
 `public-playground-oauth-deployment` tasks 6.1/6.2 and explicitly instructed replacing the

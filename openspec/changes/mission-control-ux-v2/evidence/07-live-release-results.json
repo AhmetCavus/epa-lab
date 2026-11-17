@@ -1,0 +1,129 @@
+{
+  "status": "passed",
+  "time": "2026-11-17T00:45:55.721073+00:00",
+  "ownerAuthorization": "Yes, deploy SPA and BFF now",
+  "targets": [
+    {
+      "service": "auth-client",
+      "image": "sha256:2fa9fc60dba79a2f1e6846087da00c6cf87e1a0fd6e7bee045624e76d91f6e4c",
+      "id": "59140e9a799f9b1be09803db2575010e13fcf02b9d57b61c3944a8406b9044eb",
+      "health": "healthy"
+    },
+    {
+      "service": "playground",
+      "image": "sha256:63a47c160089c20a7cf0927c51a38811618e187d1189475214972296d08a2aa7",
+      "id": "06ad10b4a43fbf62064715eb32dfca38a3944db87eb4ea8649fdecbdd689aba2",
+      "health": "healthy"
+    }
+  ],
+  "onlyTwoLiveImagePinsChanged": true,
+  "protectedFilesUnchanged": 12,
+  "untargetedContainersUnchanged": 48,
+  "untargetedDifferences": [],
+  "keycloakHapiPostgresUnchanged": true,
+  "originalH2RetainedOffline": true,
+  "liveDemoCredentialsUnchanged": true,
+  "hapiSubmoduleClean": true,
+  "databaseOrVolumeReset": false,
+  "liveFileMode": "0600",
+  "composeUsesNewImages": true,
+  "publicAcceptance": {
+    "status": "passed",
+    "time": "2026-11-17T00:44:55.014Z",
+    "origin": "https://auth-playground.yappai.de",
+    "normalTls": true,
+    "browser": "Firefox",
+    "publicAssets": [
+      "/assets/index-g9PoBYQW.js",
+      "/assets/index-BMP3XB5O.css"
+    ],
+    "newMissionControlRendered": true,
+    "catalogLaunch": true,
+    "presentationRequestsDoNotExecute": true,
+    "anonymousResourceDisabled": true,
+    "preliminaryResourceRequests": 0,
+    "actualCodeS256ProviderNavigation": true,
+    "actualPendingRunCancellation": true,
+    "csrfRejection": true,
+    "cookieAttributes": true,
+    "actualOwnedEvents": 4,
+    "actualRecordedInspectAndFlow": true,
+    "accessibility": [
+      {
+        "locale": "de",
+        "width": 1366,
+        "violations": 0
+      },
+      {
+        "locale": "de",
+        "width": 390,
+        "violations": 0
+      },
+      {
+        "locale": "en",
+        "width": 1366,
+        "violations": 0
+      },
+      {
+        "locale": "en",
+        "width": 390,
+        "violations": 0
+      }
+    ],
+    "negatives": [
+      {
+        "path": "/admin/",
+        "status": 404
+      },
+      {
+        "path": "/realms/master/",
+        "status": 404
+      },
+      {
+        "path": "/realms/epa-demo/",
+        "status": 404
+      },
+      {
+        "path": "/fhir/Basic/playground-demo",
+        "status": 404
+      },
+      {
+        "path": "/api/oauth/resource-catalog",
+        "status": 404
+      }
+    ],
+    "methodDenial": 405,
+    "credentialDisclosure": false,
+    "screenshots": [
+      "public-explore.png",
+      "public-inspect-empty.png",
+      "public-resource-login-required.png",
+      "public-inspect-recorded.png",
+      "public-flow-recorded.png"
+    ],
+    "scope": "Actual public interface, anonymous/owned pending lifecycle and provider navigation. Existing user passwords/accounts were not changed; authenticated 200/read journey was verified with these exact images in isolation.",
+    "productionReadinessClaim": false
+  },
+  "bffAcceptance": {
+    "status": "passed",
+    "statuses": {
+      "privateReady": {
+        "status": 200,
+        "contentType": "application/json; charset=utf-8"
+      },
+      "publicSession": {
+        "status": 200,
+        "contentType": "application/json; charset=utf-8"
+      },
+      "selectedAnonymous": {
+        "status": 401,
+        "contentType": "application/json; charset=utf-8"
+      },
+      "publicDiscovery": {
+        "status": 200,
+        "contentType": "application/json"
+      }
+    }
+  },
+  "firstProbeFailure": "Python HTTPS client received 403 while Node/browser requests passed. Previous images were recovered before SPA cutover; corrected client checks passed without changing security policies."
+}

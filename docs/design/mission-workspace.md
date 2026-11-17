@@ -268,7 +268,7 @@ replacement clear resource data, and superseded completions cannot restore it. L
 result tabs, mode changes and playback never trigger a read. Native tab keyboard behavior,
 status announcements, narrow form/summary stacking and local JSON scrolling preserve access.
 Extending the single entry requires separate fixture, allowlist, HAPI policy and security-test
-approval. These branch changes are verified privately and are not publicly deployed.
+approval. These branch changes passed isolated verification and the separately owner-approved targeted SPA/BFF release on 2026-11-17. See the [live release evidence](../../openspec/changes/mission-control-ux-v2/public-release-verification.md).
 
 
 The bare mission URL keeps Explore's protocol overview and compact inline read result.

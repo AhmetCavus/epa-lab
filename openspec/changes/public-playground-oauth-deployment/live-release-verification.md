@@ -1,5 +1,10 @@
 # Live release verification
 
+**Subsequent SPA/BFF update, 2026-11-17:** Mission Control V2 was separately approved and
+deployed to the same two application services. Its [current image pins and evidence](../mission-control-ux-v2/public-release-verification.md)
+supersede the SPA/BFF identities below. The provider/storage release and preservation report
+below remain historical evidence; no Keycloak/HAPI/PostgreSQL changes occurred in this update.
+
 2026-11-16, `/srv/yappai/hosting/epa-lab`.
 
 The public site at <https://auth-playground.yappai.de/missions> now runs the live OAuth/OIDC
