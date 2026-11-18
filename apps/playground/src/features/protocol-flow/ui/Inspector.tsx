@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Actor, FlowEvent } from '../domain/protocol-flow';
+import { matchesEventPresentation, type Actor, type FlowEvent } from '../domain/protocol-flow';
 
 interface InspectorProps {
   event: FlowEvent | undefined;
@@ -8,13 +8,13 @@ interface InspectorProps {
   contextTitle: string | undefined;
   contextExplanation: string | undefined;
   actors: readonly Actor[];
-  presentation?: 'observed' | 'fixture';
+  presentation?: 'observed' | 'fixture' | 'simulated';
   detail?: boolean;
   navigation?: ReactNode;
 }
 
 export function Inspector({
-  event,
+  event: providedEvent,
   actor,
   contextTitle,
   contextExplanation,
@@ -24,10 +24,36 @@ export function Inspector({
   navigation,
 }: InspectorProps) {
   const { t } = useTranslation('protocol-flow');
+  const event =
+    providedEvent && matchesEventPresentation(providedEvent, presentation)
+      ? providedEvent
+      : undefined;
   const observed = event?.visibility === 'observed' ? event : undefined;
+  const simulated = event?.visibility === 'simulated' ? event : undefined;
+  const outcome = observed?.observation ?? simulated?.simulation;
+  let sourceKey = event ? 'inspector.fixtureSource' : 'inspector.conceptSource';
+  if (observed) {
+    sourceKey = 'inspector.observedSource';
+  } else if (simulated || presentation === 'simulated') {
+    sourceKey = simulated?.simulation.conceptual
+      ? 'simulation.conceptualSource'
+      : 'simulation.source';
+  }
   const fixtureSelection = event ? 'inspector.selected' : 'inspector.context';
-  const fixtureSource = event ? 'inspector.fixtureSource' : 'inspector.conceptSource';
   const fixtureDetails = event ? 'inspector.exampleDetails' : 'inspector.noObservedEvidence';
+  let selectedKey = fixtureSelection;
+  let detailsKey = fixtureDetails;
+  if (observed) {
+    selectedKey = 'inspector.selectedObserved';
+    detailsKey = 'inspector.observedDetails';
+  } else if (simulated) {
+    selectedKey = 'visibility.simulated';
+    detailsKey = 'simulation.details';
+  }
+  let unobservedTime = t('protocol-flow:inspector.unavailable');
+  if (simulated) {
+    unobservedTime = t('simulation.elapsed', { milliseconds: simulated.simulation.elapsedMs });
+  }
   const explanationKey =
     presentation === 'observed'
       ? 'inspector.chooseObservedExplanation'
@@ -47,35 +73,46 @@ export function Inspector({
     <dl className="provenance">
       <div>
         <dt>{t('protocol-flow:inspector.source')}</dt>
-        <dd>{t(observed ? 'inspector.observedSource' : fixtureSource)}</dd>
+        <dd>{t(sourceKey)}</dd>
       </div>
       <div>
         <dt>{t('protocol-flow:inspector.observer')}</dt>
-        <dd>{observed?.observation.observedBy ?? t('protocol-flow:inspector.noObserver')}</dd>
+        <dd>
+          {observed?.observation.observedBy ??
+            t(
+              presentation === 'simulated'
+                ? 'simulation.noObserver'
+                : 'protocol-flow:inspector.noObserver',
+            )}
+        </dd>
       </div>
       <div>
-        <dt>{t('protocol-flow:inspector.timestamp')}</dt>
+        <dt>
+          {t(
+            presentation === 'simulated' ? 'simulation.time' : 'protocol-flow:inspector.timestamp',
+          )}
+        </dt>
         <dd>
           {observed ? (
             <time dateTime={observed.observation.observedAt}>
               {observed.observation.observedAt}
             </time>
           ) : (
-            t('protocol-flow:inspector.unavailable')
+            unobservedTime
           )}
         </dd>
       </div>
-      {observed && (
+      {outcome && (
         <>
           <div>
             <dt>{t('inspector.outcome')}</dt>
             <dd>
-              {t(observed.observation.outcomeKey)} (<code>{observed.observation.outcome}</code>)
+              {t(outcome.outcomeKey)} (<code>{outcome.outcome}</code>)
             </dd>
           </div>
           <div>
             <dt>{t('inspector.sequence')}</dt>
-            <dd>{observed.observation.sequence}</dd>
+            <dd>{outcome.sequence}</dd>
           </div>
         </>
       )}
@@ -108,9 +145,7 @@ export function Inspector({
         ) : (
           <h2 id="inspector-title">{t('inspector.heading')}</h2>
         )}
-        <span className="metadata">
-          {t(observed ? 'inspector.selectedObserved' : fixtureSelection)}
-        </span>
+        <span className="metadata">{t(selectedKey)}</span>
         {navigation}
       </div>
       <div
@@ -155,12 +190,14 @@ export function Inspector({
         </section>
         {detail && (
           <section className="mc-event-provenance">
-            <h3>{t('inspector.observedSource')}</h3>
+            <h3>
+              {t(presentation === 'simulated' ? 'simulation.evidence' : 'inspector.observedSource')}
+            </h3>
             {provenance}
           </section>
         )}
         <EvidenceSection key={event?.id} collapsible={detail} title={t('inspector.safeEvidence')}>
-          <p className="metadata">{t(observed ? 'inspector.observedDetails' : fixtureDetails)}</p>
+          <p className="metadata">{t(detailsKey)}</p>
           {event && event.evidence.length > 0 ? (
             <dl className="evidence-fields">
               {event.evidence.map((field) => (

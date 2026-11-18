@@ -25,15 +25,28 @@ export function ExploreView({
 }) {
   const { t } = useTranslation('mission');
   const experience = execution.experience;
+  const simulated = execution.kind === 'simulation';
+  let progressReady = false;
+  let retainedAuthentication = false;
+  let incomplete = false;
+  if (execution.kind === 'simulation') {
+    progressReady = execution.experience.simulatedSessionEstablished;
+  } else {
+    progressReady = execution.experience.currentRunAuthenticated;
+    retainedAuthentication = execution.experience.hasRetainedAuthentication;
+    incomplete = execution.experience.evidenceIncomplete;
+  }
   const currentStage = experience.stages.find((stage) => stage.outcome === 'current');
   const selectedStage =
     experience.stages.find((stage) => stage.id === selectedStageId) ??
     currentStage ??
-    (experience.currentRunAuthenticated ? experience.stages.at(-1) : experience.stages[0]);
-  const start = execution.actions.find((action) => action.id === 'start');
+    (progressReady ? experience.stages.at(-1) : experience.stages[0]);
+  const primary = execution.actions.find((action) => action.id === experience.primaryAction);
   const secondary = execution.actions.filter(
     (action) =>
-      action.id !== 'resource' && !(action.id === 'start' && experience.primaryAction === 'start'),
+      action.id !== 'resource' &&
+      action.id !== experience.primaryAction &&
+      (!simulated || !['start', 'advance'].includes(action.id)),
   );
   const completed = experience.stages.filter((stage) => stage.outcome === 'complete').length;
 
@@ -65,7 +78,7 @@ export function ExploreView({
             <div className="mc-auth-status runtime-status" role="status" aria-atomic="true">
               <div className="mc-status-symbol" aria-hidden="true">
                 <WorkspaceIcon name="shield" />
-                {experience.currentRunAuthenticated && (
+                {progressReady && (
                   <span>
                     <WorkspaceIcon name="check" />
                   </span>
@@ -74,26 +87,22 @@ export function ExploreView({
               <div>
                 <h2 id="mc-auth-title">
                   {t(
-                    compactOverview && experience.currentRunAuthenticated
+                    compactOverview && progressReady && !simulated
                       ? 'control.states.authenticated.title'
                       : experience.titleKey,
                   )}
                 </h2>
                 <p>
                   {t(
-                    compactOverview && experience.currentRunAuthenticated
+                    compactOverview && progressReady && !simulated
                       ? 'control.states.authenticated.description'
                       : experience.descriptionKey,
                   )}
                 </p>
-                {experience.hasRetainedAuthentication && (
-                  <p>{t('control.retainedAuthentication')}</p>
-                )}
-                {experience.evidenceIncomplete && (
-                  <p className="mc-trace-note">{t('control.incompleteEvidence')}</p>
-                )}
-                {experience.primaryAction === 'start' && start && (
-                  <RuntimeActionButton action={start} onInvoke={onInvoke} />
+                {retainedAuthentication && <p>{t('control.retainedAuthentication')}</p>}
+                {incomplete && <p className="mc-trace-note">{t('control.incompleteEvidence')}</p>}
+                {primary && primary.id !== 'resource' && (
+                  <RuntimeActionButton action={primary} onInvoke={onInvoke} />
                 )}
               </div>
             </div>
@@ -118,7 +127,7 @@ export function ExploreView({
                   <RuntimeActionButton
                     key={action.id}
                     action={action}
-                    labelKey={`control.actions.${action.id}`}
+                    labelKey={simulated ? action.labelKey : `control.actions.${action.id}`}
                     onInvoke={onInvoke}
                   />
                 ))}
@@ -137,7 +146,7 @@ export function ExploreView({
                 <div
                   className="mc-stage-progress"
                   role="progressbar"
-                  aria-label={t('control.recordedProgress')}
+                  aria-label={t(simulated ? 'simulation.progress' : 'control.recordedProgress')}
                   aria-valuenow={completed}
                   aria-valuemin={0}
                   aria-valuemax={experience.stages.length}
@@ -155,7 +164,7 @@ export function ExploreView({
                     key={action.id}
                     action={action}
                     labelKey={
-                      action.labelKey === 'mission:runtime.actions.cancel'
+                      simulated || action.labelKey === 'mission:runtime.actions.cancel'
                         ? action.labelKey
                         : `control.actions.${action.id}`
                     }

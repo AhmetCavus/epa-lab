@@ -10,12 +10,14 @@ export function ResourceForm({
   selection,
   onChange,
   onFetch,
+  simulated = false,
 }: {
   action: RuntimeAction;
   onInvoke: (id: string) => void;
   selection: ResourceSelection;
   onChange: (selection: ResourceSelection) => void;
   onFetch: (selection: ResourceSelection) => void;
+  simulated?: boolean;
 }) {
   const { t } = useTranslation('mission');
   const valid =
@@ -63,11 +65,11 @@ export function ResourceForm({
           className={action.primary ? 'mc-button mc-primary' : 'mc-button'}
           disabled={action.disabled || !valid}
         >
-          {t('control.fetchResource')}
+          {t(simulated ? 'simulation.actions.resource' : 'control.fetchResource')}
         </button>
       </fieldset>
       <p id="mc-resource-selection-note" className="mc-resource-selection-note">
-        {t('control.form.allowlist')}
+        {t(simulated ? 'simulation.resourceDescription' : 'control.form.allowlist')}
       </p>
     </form>
   );

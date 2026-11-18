@@ -9,15 +9,19 @@ type RuntimeWorkspace = MissionWorkspace & {
 export function InspectionView({ workspace }: { workspace: RuntimeWorkspace }) {
   const { t } = useTranslation('protocol-flow');
   const { events, actors, execution } = workspace;
+  const simulated = execution.kind === 'simulation';
+  const incomplete = execution.kind === 'live' && execution.experience.evidenceIncomplete;
   const filter = workspace.inspectionFilters;
   const outcomes = new Map(
-    events.flatMap((event) =>
-      event.visibility === 'observed'
-        ? [[event.observation.outcome, event.observation.outcomeKey] as const]
-        : [],
-    ),
+    events.flatMap((event) => {
+      if (event.visibility === 'observed')
+        return [[event.observation.outcome, event.observation.outcomeKey] as const];
+      if (event.visibility === 'simulated')
+        return [[event.simulation.outcome, event.simulation.outcomeKey] as const];
+      return [];
+    }),
   );
-  const first = events.find((event) => event.visibility === 'observed');
+  const first = simulated ? events[0] : events.find((event) => event.visibility === 'observed');
   const selected = filter.selected;
 
   return (
@@ -26,7 +30,7 @@ export function InspectionView({ workspace }: { workspace: RuntimeWorkspace }) {
         events={filter.filtered}
         selectedEventId={selected?.id ?? null}
         onSelectEvent={workspace.selectEvent}
-        presentation="observed"
+        presentation={simulated ? 'simulated' : 'observed'}
         compact
         filters={
           <details
@@ -94,7 +98,7 @@ export function InspectionView({ workspace }: { workspace: RuntimeWorkspace }) {
         contextTitle={undefined}
         contextExplanation={undefined}
         actors={actors}
-        presentation="observed"
+        presentation={simulated ? 'simulated' : 'observed'}
         detail
         navigation={
           <nav className="mc-event-navigation" aria-label={t('inspection.eventNavigation')}>
@@ -132,7 +136,7 @@ export function InspectionView({ workspace }: { workspace: RuntimeWorkspace }) {
           <h3>{t('inspection.currentRun')}</h3>
           <dl>
             <div>
-              <dt>{t('inspection.runId')}</dt>
+              <dt>{t(simulated ? 'simulation.traceId' : 'inspection.runId')}</dt>
               <dd>
                 <code>{execution.runId ?? t('inspector.unavailable')}</code>
               </dd>
@@ -142,21 +146,25 @@ export function InspectionView({ workspace }: { workspace: RuntimeWorkspace }) {
               <dd>{t(execution.experience.titleKey)}</dd>
             </div>
             <div>
-              <dt>{t('inspection.recordedStart')}</dt>
+              <dt>{t(simulated ? 'simulation.time' : 'inspection.recordedStart')}</dt>
               <dd>
                 {first?.visibility === 'observed' ? (
                   <time dateTime={first.observation.observedAt}>
                     {first.observation.observedAt}
                   </time>
+                ) : first?.visibility === 'simulated' ? (
+                  t('simulation.elapsed', { milliseconds: first.simulation.elapsedMs })
                 ) : (
                   t('inspector.unavailable')
                 )}
               </dd>
             </div>
-            <div>
-              <dt>{t('inspection.historyExpiry')}</dt>
-              <dd>{execution.runExpiresAt ?? t('inspector.unavailable')}</dd>
-            </div>
+            {!simulated && (
+              <div>
+                <dt>{t('inspection.historyExpiry')}</dt>
+                <dd>{execution.runExpiresAt ?? t('inspector.unavailable')}</dd>
+              </div>
+            )}
             <div>
               <dt>{t('inspection.eventCount')}</dt>
               <dd>{events.length}</dd>
@@ -167,12 +175,14 @@ export function InspectionView({ workspace }: { workspace: RuntimeWorkspace }) {
           <h3>{t('inspection.evidence')}</h3>
           <p>
             {t(
-              execution.experience.evidenceIncomplete
-                ? 'inspection.incomplete'
-                : 'inspection.recorded',
+              simulated
+                ? 'simulation.details'
+                : incomplete
+                  ? 'inspection.incomplete'
+                  : 'inspection.recorded',
             )}
           </p>
-          <p>{t('inspection.provenance')}</p>
+          <p>{t(simulated ? 'simulation.flowNote' : 'inspection.provenance')}</p>
         </section>
         <section>
           <h3>{t('inspection.credentials')}</h3>

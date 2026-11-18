@@ -14,7 +14,9 @@ export function useEventFilter(
     (event) =>
       (!actor || interactionActorIds(event).includes(actor)) &&
       (!channel || event.channel.kind === channel) &&
-      (!outcome || (event.visibility === 'observed' && event.observation.outcome === outcome)),
+      (!outcome ||
+        (event.visibility === 'observed' && event.observation.outcome === outcome) ||
+        (event.visibility === 'simulated' && event.simulation.outcome === outcome)),
   );
   const selected = filtered.find((event) => event.id === selectedId) ?? filtered[0];
   const index = selected ? filtered.indexOf(selected) : -1;

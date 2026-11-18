@@ -1,27 +1,31 @@
 import { useParams } from 'react-router-dom';
-import { findMission, Workspace } from '../features/mission';
+import { findMission, resolveMissionExecution, Workspace } from '../features/mission';
 import { NotFound } from './NotFound';
 import { executionRuntime, publicOAuthRuntime } from './runtime';
 import { useSearchParams } from 'react-router-dom';
-import type { ReactNode } from 'react';
 
-export function WorkspaceRoute({ languageControl }: { languageControl?: ReactNode }) {
+export function WorkspaceRoute() {
   const { missionId } = useParams();
   const [parameters] = useSearchParams();
-  const runtimeEnabled = executionRuntime && parameters.get('view') !== 'fixture';
   const mission = findMission(missionId);
 
   if (!mission) {
     return <NotFound />;
   }
 
+  const execution = resolveMissionExecution(
+    mission,
+    executionRuntime,
+    parameters.getAll('execution'),
+    parameters.getAll('view').includes('fixture'),
+  );
   return (
     <Workspace
-      key={`${mission.id}:${runtimeEnabled}`}
+      key={`${mission.id}:${execution}`}
       mission={mission}
-      runtimeEnabled={runtimeEnabled}
+      execution={execution}
+      liveAvailable={executionRuntime && mission.execution === 'oauth-standard'}
       publicRuntime={publicOAuthRuntime}
-      languageControl={languageControl}
     />
   );
 }

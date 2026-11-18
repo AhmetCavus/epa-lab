@@ -1,5 +1,14 @@
 # Visual References — Mission Control
 
+**Unified shell implementation, 2026-11-17:** `unified-shell-and-simulations` reuses the
+actual live v2 header as the authoritative header for catalog and all workspaces. One
+`features/mission/ui/ApplicationHeader` is composed by `App`; workspace frames own only
+sidebar/content. The official Yappai website icon is served from the Playground's local
+assets. Its source/hash and the simulation/live distinction are recorded in the
+[approved design](../../openspec/changes/unified-shell-and-simulations/design.md).
+The existing artwork and navy v2 geometry remain the baseline. This isolated implementation
+does not change the current deployed release.
+
 **OAuth runtime precedence, 2026-11-16:** the four
 [Mission Control v2 target compositions and navy baseline](mission-control-v2/README.md)
 govern the approved runtime redesign. Explore replaces the giant default sequence surface;

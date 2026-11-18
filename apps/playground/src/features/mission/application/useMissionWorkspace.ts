@@ -5,17 +5,19 @@ import {
   useProtocolSelection,
 } from '../../protocol-flow/selection';
 import type { Mission } from '../domain/mission';
-import { useOAuthMission } from './useOAuthMission';
+import type { useOAuthMission } from './useOAuthMission';
+import type { EpaSimulation } from './useEpaSimulation';
+import type { OAuthSimulation } from './useOAuthSimulation';
+import { useSimulationPlayback } from './useSimulationPlayback';
 
 type WorkspaceAnnouncement = 'loaded' | 'replayed' | 'reset' | 'fitted';
 
 export function useMissionWorkspace(
   mission: Mission,
-  runtimeEnabled = false,
+  execution: ReturnType<typeof useOAuthMission> | OAuthSimulation | EpaSimulation,
   playbackEnabled = false,
   inspectionEnabled = false,
 ) {
-  const execution = useOAuthMission(runtimeEnabled && mission.execution === 'oauth-standard');
   const [checkpointId, setCheckpointId] = useState(mission.checkpoints[0]?.id ?? null);
   const [hasLoadedSamples, setHasLoadedSamples] = useState(false);
   const [announcement, setAnnouncement] = useState<WorkspaceAnnouncement | null>(null);
@@ -33,15 +35,23 @@ export function useMissionWorkspace(
     events,
     inspection.event?.id ?? null,
     inspection.selectEvent,
-    runtimeEnabled && inspectionEnabled,
+    Boolean(execution) && inspectionEnabled,
   );
-  const playback = useProtocolPlayback({
+  const recordedPlayback = useProtocolPlayback({
     events,
     selectedId: inspection.event?.id ?? null,
     select: inspection.selectEvent,
     traceId: execution?.runId,
-    enabled: runtimeEnabled && playbackEnabled,
+    enabled: execution?.kind === 'live' && playbackEnabled,
   });
+  const simulationPlayback = useSimulationPlayback({
+    execution: execution?.kind === 'simulation' ? execution : undefined,
+    events,
+    selectedId: inspection.event?.id ?? null,
+    select: inspection.selectEvent,
+    enabled: execution?.kind === 'simulation' && playbackEnabled,
+  });
+  const playback = execution?.kind === 'simulation' ? simulationPlayback : recordedPlayback;
   const selectedIndex = mission.checkpoints.findIndex((entry) => entry.id === checkpointId);
 
   function selectCheckpoint(id: string) {

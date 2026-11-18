@@ -380,6 +380,7 @@ export function useOAuthMission(enabled: boolean) {
       : []),
   ];
   return {
+    kind: 'live' as const,
     events,
     experience,
     resourceMessageKey: resourceKey,

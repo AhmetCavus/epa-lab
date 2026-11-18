@@ -25,7 +25,7 @@ async function open(page: Page, fixture = runtimeFixture(), locale: 'de' | 'en' 
   await page.goto(workspacePath);
   await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
   await expect(page.locator('.mc-runtime-badge')).toHaveText(
-    locale === 'en' ? 'Private integration test' : 'Privater Integrationstest',
+    locale === 'en' ? 'Real protocol execution' : 'Echte Protokollausführung',
   );
   await expect(page.locator('[data-runtime-action="restore"]')).toBeEnabled();
   return fixture;
@@ -369,15 +369,13 @@ test('private fixture preview and conceptual ePA remain completely isolated from
   await fixture.install(page);
   await page.goto('/missions');
   await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption('en');
-  await expect(page.getByText('Fixture preview', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open private integration test' })).toBeVisible();
-  await page.getByRole('link', { name: 'Preview fixture' }).click();
-  await page.getByRole('button', { name: 'Load fixture samples' }).click();
-  await expect(page.locator('.timeline button')).toHaveCount(4);
-  await expect(page.locator('[data-runtime-action]')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Start simulation', exact: true }).first().click();
+  await expect(page.locator('[data-execution="simulation"]')).toBeVisible();
+  await page.locator('[data-runtime-action="start"]').first().click();
+  await expect(page.locator('[data-runtime-action="logout"]')).toHaveCount(0);
   await page.goto('/missions/epa-concept/workspace');
-  await expect(page.locator('.timeline button')).toHaveCount(0);
-  await expect(page.locator('[data-runtime-action]')).toHaveCount(0);
+  await expect(page.locator('[data-execution="simulation"]')).toBeVisible();
+  await expect(page.locator('[data-runtime-action="resource"]')).toBeDisabled();
   expect(fixture.calls).toEqual([]);
 });
 

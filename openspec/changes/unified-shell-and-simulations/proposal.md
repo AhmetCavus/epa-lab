@@ -1,7 +1,8 @@
 # Proposal
 
-**DRAFT — planning only, 2026-11-17.** Implementation and public release require subsequent
-owner instructions. Preserve the deployed Mission Control v2 SPA/BFF and provider/data configuration.
+**APPROVED for isolated implementation, 2026-11-17.** The owner's subsequent explicit apply
+request authorizes the 22 implementation/verification tasks. Public release requires its own
+instruction. Preserve the deployed Mission Control v2 SPA/BFF and provider/data configuration.
 
 ## Why
 

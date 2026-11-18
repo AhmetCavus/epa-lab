@@ -1,5 +1,15 @@
 # Mission Control Workspace — UX Design
 
+**Unified shell extension (2026-11-17):** explicit `execution=simulation|live` selects
+execution independently of Explore/Inspect and resource/flow presentation. OAuth and conceptual
+ePA simulations now reuse the v2 shell, timeline, Inspector and playback. Start/Step/Play are
+local educational actions; a simulated resource result never authorizes live access. Fixed
+`view=fixture` links remain simulation aliases. Switching modes does not log out an existing
+live BFF session and performs no implicit login/read/logout. See the
+[simulation design](../../openspec/changes/unified-shell-and-simulations/design.md) and
+[OAuth](fixtures/oauth-oidc.md) / [ePA](fixtures/epa-concept.md) learning notes. Dated fixture
+and release sections below retain their historical context.
+
 **Current OAuth presentation: Mission Control v2, approved for isolated implementation
 2026-11-16.** The runtime workspace uses default Explore and separate `mode=inspect`,
 with `panel=resources|flow` for Explore's secondary area. Navigation preserves one mounted

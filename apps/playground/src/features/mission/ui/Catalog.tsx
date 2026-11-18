@@ -21,7 +21,6 @@ export function Catalog({
   publicRuntime?: boolean;
 }) {
   const { t } = useTranslation('mission');
-  const context = publicRuntime ? 'public' : undefined;
   useEffect(() => {
     document.title = t('common:titles.catalog');
   }, [t]);
@@ -39,7 +38,7 @@ export function Catalog({
             <span>{t('mission:catalog.headingAccent')}</span>
           </h1>
           <p className="intro-copy">
-            {t(runtimeEnabled ? 'runtime.catalogIntro' : 'catalog.intro', { context })}
+            {t('catalog.intro', { context: runtimeEnabled ? 'live' : undefined })}
           </p>
         </div>
         <div className="catalog-hero" aria-hidden="true">
@@ -82,10 +81,8 @@ export function Catalog({
           i
         </span>
         <div>
-          <strong>
-            {t(runtimeEnabled ? 'runtime.catalogNoticeTitle' : 'catalog.noticeTitle', { context })}
-          </strong>
-          <p>{t(runtimeEnabled ? 'runtime.catalogNotice' : 'catalog.notice', { context })}</p>
+          <strong>{t('catalog.noticeTitle')}</strong>
+          <p>{t('catalog.notice', { context: runtimeEnabled ? 'live' : undefined })}</p>
         </div>
       </aside>
       <section className="learning-principles" aria-label={t('mission:catalog.principles.label')}>
@@ -113,7 +110,6 @@ function MissionCard({
   mission,
   index,
   runtimeEnabled,
-  publicRuntime,
 }: {
   mission: Mission;
   index: number;
@@ -122,6 +118,12 @@ function MissionCard({
 }) {
   const { t } = useTranslation('mission');
   const paths = workspacePaths(mission, runtimeEnabled);
+  let availabilityKey = 'catalog.availableSimulation';
+  if (mission.preview.kind === 'concept') {
+    availabilityKey = 'catalog.availableConcept';
+  } else if (paths.live) {
+    availabilityKey = 'catalog.availableLive';
+  }
   return (
     <article className={`mission-card ${mission.illustration}`}>
       <div className="mission-art" aria-hidden="true">
@@ -134,9 +136,7 @@ function MissionCard({
           loading="lazy"
           decoding="async"
         />
-        <span className={`badge ${mission.preview.kind}`}>
-          {t(`availability.${mission.availability}`)}
-        </span>
+        <span className={`badge ${mission.preview.kind}`}>{t(availabilityKey)}</span>
       </div>
       <div className="card-body">
         <div className="card-kicker">
@@ -152,18 +152,26 @@ function MissionCard({
             <li key={topic}>{t(topic)}</li>
           ))}
         </ul>
-        <Link
-          className={`button ${mission.preview.kind === 'fixture' ? 'primary' : 'secondary'}`}
-          to={paths.preview}
-        >
-          {t(mission.previewLabelKey)}
-          <span aria-hidden="true">↗</span>
-        </Link>
-        {paths.execution && (
-          <Link className="button secondary" to={paths.execution}>
-            {t('runtime.catalogAction', { context: publicRuntime ? 'public' : undefined })}
+        <div className="mission-actions">
+          <Link className="button primary" to={paths.simulation}>
+            {t('catalog.simulationAction')}
+            <span aria-hidden="true">↗</span>
           </Link>
-        )}
+          {mission.execution &&
+            (paths.live ? (
+              <Link className="button secondary" to={paths.live}>
+                {t('catalog.liveAction')}
+                <span aria-hidden="true">↗</span>
+              </Link>
+            ) : (
+              <div className="mission-live-unavailable">
+                <button className="button secondary" disabled>
+                  {t('catalog.liveAction')}
+                </button>
+                <small>{t('catalog.liveUnavailable')}</small>
+              </div>
+            ))}
+        </div>
       </div>
     </article>
   );

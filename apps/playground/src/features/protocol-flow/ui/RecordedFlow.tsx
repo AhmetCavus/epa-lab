@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { interactionActorIds, type FlowEvent, type FlowParticipant } from '../domain/protocol-flow';
+import {
+  interactionActorIds,
+  matchesEventPresentation,
+  type FlowEvent,
+  type FlowParticipant,
+} from '../domain/protocol-flow';
 import type { ProtocolPlayback } from '../application/useProtocolPlayback';
 import { PlaybackControls } from './PlaybackControls';
 
@@ -12,18 +17,25 @@ interface RecordedFlowProps {
   playback: ProtocolPlayback;
   incomplete: boolean;
   renderIcon: (participant: FlowParticipant) => ReactNode;
+  presentation?: 'observed' | 'simulated';
 }
 
 export function RecordedFlow({
-  events,
+  events: providedEvents,
   participants,
-  event,
+  event: providedEvent,
   select,
   playback,
   incomplete,
   renderIcon,
+  presentation = 'observed',
 }: RecordedFlowProps) {
   const { t } = useTranslation('protocol-flow');
+  const events = providedEvents.filter((event) => matchesEventPresentation(event, presentation));
+  const event =
+    providedEvent && matchesEventPresentation(providedEvent, presentation)
+      ? providedEvent
+      : undefined;
   const highlighted = event ? interactionActorIds(event) : [];
   const source =
     event?.kind === 'message'
@@ -38,12 +50,25 @@ export function RecordedFlow({
   const sourceX = ((source + 0.5) / participants.length) * 1000;
   const targetX = ((target + 0.5) / participants.length) * 1000;
   const observed = event?.visibility === 'observed' ? event.observation : undefined;
+  let observerText = t('inspector.noObserver');
+  if (event?.visibility === 'simulated') {
+    observerText = `${t('simulation.source')} · ${t('simulation.elapsed', { milliseconds: event.simulation.elapsedMs })}`;
+  } else if (observed) {
+    observerText = `${t('inspector.observer')}: ${observed.observedBy}`;
+  }
+
+  let localNoteKey = event ? 'playback.local' : 'playback.empty';
+  if (presentation === 'simulated') {
+    localNoteKey = event ? 'simulation.local' : 'simulation.empty';
+  }
+  const emptyDescriptionKey =
+    presentation === 'simulated' ? 'simulation.empty' : 'playback.emptyDescription';
 
   return (
     <div className="recorded-flow" data-playing={playback.playing}>
       <header className="flow-heading">
         <h2>{t('playback.title')}</h2>
-        <p>{t('playback.reconstruction')}</p>
+        <p>{t(presentation === 'simulated' ? 'simulation.flowNote' : 'playback.reconstruction')}</p>
       </header>
       {incomplete && (
         <p className="flow-gap" role="status">
@@ -58,8 +83,14 @@ export function RecordedFlow({
             aria-label={t('playback.participants')}
             tabIndex={0}
           >
-            <div className="flow-diagram">
-              <div className="flow-participants">
+            <div
+              className="flow-diagram"
+              style={participants.length > 4 ? { minWidth: participants.length * 170 } : undefined}
+            >
+              <div
+                className="flow-participants"
+                style={{ gridTemplateColumns: `repeat(${participants.length}, minmax(0, 1fr))` }}
+              >
                 {participants.map((participant) => (
                   <div
                     className="flow-participant"
@@ -121,13 +152,17 @@ export function RecordedFlow({
                     </p>
                   </>
                 ) : (
-                  <p className="flow-local">{t(event ? 'playback.local' : 'playback.empty')}</p>
+                  <p className="flow-local">{t(localNoteKey)}</p>
                 )}
               </div>
             </div>
           </div>
           <label className="flow-progress">
-            <span>{t('playback.recordedPosition')}</span>
+            <span>
+              {t(
+                presentation === 'simulated' ? 'simulation.position' : 'playback.recordedPosition',
+              )}
+            </span>
             <input
               type="range"
               min="1"
@@ -150,12 +185,8 @@ export function RecordedFlow({
                 {t('playback.position', { current: playback.index + 1, total: events.length })}
               </span>
             </div>
-            <p>{t(event?.explanationKey ?? 'playback.emptyDescription')}</p>
-            <p className="flow-observer">
-              {observed
-                ? `${t('inspector.observer')}: ${observed.observedBy}`
-                : t('inspector.noObserver')}
-            </p>
+            <p>{t(event?.explanationKey ?? emptyDescriptionKey)}</p>
+            <p className="flow-observer">{observerText}</p>
           </section>
         </div>
         <aside className="flow-overview" aria-labelledby="flow-overview-title">
@@ -181,7 +212,7 @@ export function RecordedFlow({
           </ol>
         </aside>
       </div>
-      <PlaybackControls playback={playback} />
+      <PlaybackControls playback={playback} simulated={presentation === 'simulated'} />
     </div>
   );
 }

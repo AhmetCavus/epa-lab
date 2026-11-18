@@ -1,8 +1,9 @@
 # Design
 
-**DRAFT — planning only, 2026-11-17.** See [proposal.md](proposal.md) for scope and the two
+**APPROVED for isolated implementation, 2026-11-17.** See [proposal.md](proposal.md) for scope and the two
 [shell](specs/unified-application-shell/spec.md) / [simulation](specs/protocol-simulations/spec.md)
-behavior contracts. No implementation, deployment or provider/data modification is authorized.
+behavior contracts. The explicit apply request authorizes implementation/verification only;
+deployment and provider/data modification remain outside this authorization.
 
 ## Context
 
@@ -13,7 +14,7 @@ Inspected source on `feat/mission-control-v2`, commit `97935eff2ce2a877e0a85addc
 | `src/app/App.tsx`                                                                   | Owns routing, skip link and language control, but renders the older catalog header. Compose one shared header here.                                                                   |
 | `mission/ui/workspace/WorkspaceFrame.tsx`                                           | Owns the live v2 header and mission sidebar. Extract its header; retain the frame/sidebar.                                                                                            |
 | `mission/ui/Catalog.tsx`, `application/mission-catalog.ts`                          | Existing hero/card artwork and links. Replace action/availability presentation and extend path selection.                                                                             |
-| `WorkspaceRoute.tsx`, `useWorkspaceView.ts`                                         | `view=fixture` disables runtime; `mode=explore                                                                                                                                        | inspect`and`panel=resources | flow` already select presentation. Preserve these contracts. |
+| `WorkspaceRoute.tsx`, `useWorkspaceView.ts`                                         | Resolve execution before mounting; keep Explore/Inspect and resource/flow selection separate, including fixture-alias precedence.                                                     |
 | `MissionControl`, `ExploreView`, `InspectionView`, `ResourceForm`, `ResourceResult` | Working v2 composition; currently typed to live execution, observed events and real resource-result sources. Add narrowly typed simulation presentation.                              |
 | `useOAuthMission`, `oauth-api`, `oauth-contract`, `oauth-presentation`              | Existing real lifecycle and strict DTO validation. Reuse unchanged; do not forge their DTOs for simulation.                                                                           |
 | `protocol-flow` Timeline/Inspector/RecordedFlow, playback/selection/filter hooks    | Neutral presentation to reuse. Current event union is fixture/observed; outcome filters and several labels currently assume observations. Extend explicitly for simulated provenance. |

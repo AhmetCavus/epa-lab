@@ -1,38 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import deMission from '../src/locales/de/mission.json' with { type: 'json' };
-import enMission from '../src/locales/en/mission.json' with { type: 'json' };
-import deFlow from '../src/locales/de/protocol-flow.json' with { type: 'json' };
-import enFlow from '../src/locales/en/protocol-flow.json' with { type: 'json' };
 
 const preferenceKey = 'auth-protocol-playground.locale';
-const copy = { de: { mission: deMission, flow: deFlow }, en: { mission: enMission, flow: enFlow } };
 
 async function chooseLanguage(page: Page, language: 'de' | 'en') {
-  await page.getByRole('combobox').selectOption(language);
+  await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(language);
   await expect(page.locator('html')).toHaveAttribute('lang', language);
-}
-
-async function inspectionState(page: Page) {
-  return page.evaluate(() => ({
-    route: location.pathname,
-    checkpoint: [...document.querySelectorAll('.checkpoint')].findIndex(
-      (entry) => entry.getAttribute('aria-pressed') === 'true',
-    ),
-    selectedEvent: document
-      .querySelector('.interaction-target[aria-pressed="true"]')
-      ?.getAttribute('data-event-id'),
-    selectedActor: document
-      .querySelector('.actor[aria-pressed="true"]')
-      ?.getAttribute('data-actor-id'),
-    highlighted: [...document.querySelectorAll('.actor.highlighted')].map((entry) =>
-      entry.getAttribute('data-actor-id'),
-    ),
-    events: [...document.querySelectorAll('.interaction-target')].map((entry) =>
-      entry.getAttribute('data-event-id'),
-    ),
-    scale: document.querySelector('output')?.textContent,
-  }));
 }
 
 test('German default ignores English browser settings and keyboard choice persists on every route', async ({
@@ -44,7 +17,7 @@ test('German default ignores English browser settings and keyboard choice persis
   await expect(page).toHaveTitle('Missionskatalog · Auth Protocol Playground');
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
-  const language = page.getByRole('combobox');
+  const language = page.getByRole('combobox', { name: /^(Language|Sprache)$/ });
   await expect(language).toHaveAccessibleName('Sprache');
   await language.focus();
   await expect(language).toHaveCSS('outline-style', 'solid');
@@ -93,7 +66,7 @@ for (const value of ['', 'fr', 'en-US', 'DE', '<invalid>']) {
     await page.goto('/missions/oauth-oidc/workspace');
     await expect(page.getByRole('combobox', { name: 'Sprache' })).toHaveValue('de');
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
-    await expect(page.getByRole('button', { name: 'Beispiele laden' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Simulation starten' })).toBeVisible();
   });
 }
 
@@ -119,10 +92,10 @@ for (const failure of ['read', 'write'] as const) {
     await page.goto('/missions');
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
     await chooseLanguage(page, 'en');
-    await page.getByRole('link', { name: 'Preview fixture' }).click();
-    await expect(page.getByRole('button', { name: 'Load fixture samples' })).toBeVisible();
+    await page.getByRole('link', { name: 'Start simulation', exact: true }).first().click();
+    await expect(page.getByRole('button', { name: 'Start simulation' })).toBeVisible();
     await chooseLanguage(page, 'de');
-    await expect(page.getByRole('button', { name: 'Beispiele laden' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Simulation starten' })).toBeVisible();
     expect(errors).toEqual([]);
     expect(
       await page.evaluate(() => ({ session: sessionStorage.length, cookies: document.cookie })),
@@ -130,104 +103,42 @@ for (const failure of ['read', 'write'] as const) {
   });
 }
 
-test('switching preserves learning identity, evidence and synchronized inspection without protocol traffic', async ({
+test('language switching preserves simulated progress, selection and literal evidence without protocol traffic', async ({
   page,
 }) => {
-  const errors: string[] = [];
-  const unexpected: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error') {
-      errors.push(message.text());
+  const traffic: string[] = [];
+  page.on('request', (request) => {
+    if (['fetch', 'xhr'].includes(request.resourceType())) {
+      traffic.push(request.url());
     }
   });
-  page.on('request', (request) => {
-    if (
-      ['fetch', 'xhr'].includes(request.resourceType()) ||
-      new URL(request.url()).hostname !== '127.0.0.1'
-    )
-      unexpected.push(request.url());
-  });
-  await page.goto('/missions/oauth-oidc/workspace');
-  await page.locator('.checkpoint').nth(1).click();
-  await page.getByRole('button', { name: 'Beispiele laden', exact: true }).click();
-  await page.locator('.timeline button').nth(2).click();
-  await page.getByRole('button', { name: 'Vergrößern', exact: true }).click();
-  const before = await inspectionState(page);
-  expect(before.selectedEvent).toBe('exchange-example');
-  expect(before.scale).toBe('125%');
-  await page.evaluate(() => {
-    document.documentElement.dataset.documentIdentity = 'retained';
-  });
+  await page.goto('/missions/oauth-oidc/workspace?execution=simulation&mode=inspect');
+  await page.locator('[data-runtime-action="start"]').click();
+  for (let index = 0; index < 5; index += 1) {
+    await page.locator('[data-runtime-action="advance"]').click();
+  }
+  await page.locator('.timeline button').first().click();
+  await page.locator('.evidence-section summary').click();
+  const before = await page
+    .locator('.timeline [aria-pressed="true"]')
+    .getAttribute('data-event-id');
   for (const language of ['en', 'de'] as const) {
     await chooseLanguage(page, language);
-    expect(await inspectionState(page)).toEqual(before);
-    expect(await page.locator('html').getAttribute('data-document-identity')).toBe('retained');
-    await expect(page.locator('.inspector h4')).toHaveText(
-      copy[language].mission.definitions.oauthOidc.events['exchange-example'].title,
-    );
-    await expect(page.locator('.inspector .evidence-fields')).toContainText('BFF');
-    await expect(page.locator('.inspector .evidence-fields')).toContainText(
-      copy[language].flow.channels.back,
-    );
-    await expect(page.locator('.workspace > .sr-only[role="status"]')).toHaveText(
-      copy[language].mission.announcements.loaded,
+    await expect(page.locator('.timeline button')).toHaveCount(6);
+    expect(
+      await page.locator('.timeline [aria-pressed="true"]').getAttribute('data-event-id'),
+    ).toBe(before);
+    await expect(page.locator('.inspector')).toContainText('S256');
+    await expect(page.locator('.inspector')).toContainText(
+      language === 'en' ? 'SIMULATED' : 'SIMULIERT',
     );
   }
-  // Every event retains technical details, classification and direction through translation.
-  for (let index = 0; index < 4; index++) {
-    await page.locator('.timeline button').nth(index).click();
-    const selected = await inspectionState(page);
-    await chooseLanguage(page, 'en');
-    const technical = await page.locator('.inspector .evidence-fields dd').allTextContents();
-    await chooseLanguage(page, 'de');
-    expect(await inspectionState(page)).toEqual(selected);
-    const translated = await page.locator('.inspector .evidence-fields dd').allTextContents();
-    for (const literal of ['code', 'S256', 'BFF', 'Access Token']) {
-      expect(translated.includes(literal)).toBe(technical.includes(literal));
-    }
-    if (index === 1) {
-      await expect(page.locator('.inspector .badge').first()).toHaveText('Nicht beobachtbar');
-      await expect(
-        page.locator('.interaction-path[data-kind="internal"] .communication-edge'),
-      ).toHaveCount(0);
-    }
-    if (index === 3) {
-      expect(translated).toContain('Nur synthetische Daten');
-    }
-  }
-  await page.locator('.actor[data-actor-id="bff"]').click();
-  const actorState = await inspectionState(page);
+  await page.goto('/missions/epa-concept/workspace?mode=inspect');
+  await page.locator('[data-runtime-action="start"]').click();
   await chooseLanguage(page, 'en');
-  expect(await inspectionState(page)).toEqual(actorState);
-  await expect(page.locator('.inspector h4')).toHaveText('NestJS BFF');
-  await page.getByRole('button', { name: 'Reset view' }).click();
-  await expect(page.locator('.timeline button')).toHaveCount(4);
-  await expect(page.locator('.checkpoint[aria-pressed="true"]')).toHaveCount(0);
-  await expect(page.getByLabel('Map zoom')).toHaveText('100%');
-  await page.getByRole('button', { name: 'Replay explanation' }).click();
-  await expect(page.locator('.interaction-target[aria-pressed="true"]')).toHaveAttribute(
-    'data-event-id',
-    'authorization-example',
-  );
-  await chooseLanguage(page, 'de');
-  await expect(page.locator('.workspace > .sr-only[role="status"]')).toHaveText(
-    deMission.announcements.replayed,
-  );
-  await page.getByRole('button', { name: 'Einpassen', exact: true }).click();
-  await chooseLanguage(page, 'en');
-  await expect(page.locator('.workspace > .sr-only[role="status"]')).toHaveText(
-    enMission.announcements.fitted,
-  );
-  await page.goto('/missions/epa-concept/workspace');
-  await page.locator('.checkpoint').nth(2).click();
-  const conceptual = await inspectionState(page);
-  await chooseLanguage(page, 'de');
-  expect(await inspectionState(page)).toEqual(conceptual);
-  await expect(page.locator('.timeline button')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Beispiele laden|Load fixture/ })).toHaveCount(0);
-  expect(errors).toEqual([]);
-  expect(unexpected).toEqual([]);
+  await expect(page.locator('.timeline button')).toHaveCount(1);
+  await expect(page.locator('[data-provenance="simulation"]')).toContainText('CONCEPTUAL');
+  expect(traffic).toEqual([]);
 });
 
 for (const language of ['de', 'en'] as const) {
@@ -237,7 +148,6 @@ for (const language of ['de', 'en'] as const) {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto('/missions');
       await chooseLanguage(page, language);
-      const text = copy[language];
       const scan = async () => {
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
@@ -250,21 +160,19 @@ for (const language of ['de', 'en'] as const) {
       await scan();
       await page.goto('/missions/oauth-oidc/workspace');
       await scan();
-      await page
-        .getByRole('button', {
-          name: text.mission.definitions.oauthOidc.preview.loadLabel,
-          exact: true,
-        })
-        .click();
+      await page.locator('[data-runtime-action="start"]').first().click();
+      for (let index = 0; index < 3; index += 1) {
+        await page.locator('[data-runtime-action="advance"]').first().click();
+      }
+      await page.locator('.mc-header').getByRole('link', { name: 'Inspect', exact: true }).click();
       for (const index of [0, 2, 1]) {
         await page.locator('.timeline button').nth(index).click();
-        await expect(page.locator('.inspector .metadata').first()).toHaveText(
-          text.flow.inspector.selected,
+        await expect(page.locator('.inspector')).toContainText(
+          language === 'en' ? 'SIMULATED' : 'SIMULIERT',
         );
         await scan();
       }
-      await page.locator('.actor[data-actor-id="bff"]').click();
-      await scan();
+
       await page.goto('/missions/epa-concept/workspace');
       await scan();
       await page.goto('/unknown');

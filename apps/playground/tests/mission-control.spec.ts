@@ -123,7 +123,8 @@ test('mission navigation keeps the language preference and conceptual ePA non-ex
     .click();
   await expect(page).toHaveURL(/missions\/epa-concept\/workspace/);
   await expect(page.getByRole('combobox', { name: 'Language', exact: true })).toHaveValue('en');
-  await expect(page.locator('[data-runtime-action]')).toHaveCount(0);
+  await expect(page.locator('[data-runtime-action="logout"]')).toHaveCount(0);
+  await expect(page.locator('[data-execution="simulation"]')).toBeVisible();
   expect(
     fixture.calls.filter((call) =>
       ['/api/oauth/login', '/api/oauth/resource', '/api/oauth/logout'].includes(call.path),

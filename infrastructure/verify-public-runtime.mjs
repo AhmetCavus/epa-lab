@@ -419,7 +419,7 @@ async function verifyRuntime(context) {
       stage = 'mission-catalog-navigation';
       await page.goto(`${publicOrigin}/missions`);
       stage = 'mission-launch-link';
-      await page.getByRole('link', { name: 'OAuth-Mission starten' }).click();
+      await page.getByRole('link', { name: /^(OAuth-Mission starten|Live-Demo starten)$/ }).click();
       stage = 'workspace-ready';
       await page.locator('[data-runtime-action="start"]:enabled').waitFor();
       await page.locator('[data-runtime-action="start"]').click();
@@ -556,6 +556,11 @@ async function verifyRuntime(context) {
           path: join(directory, 'mission-control-real-resource.png'),
           fullPage: true,
         });
+      }
+      if (process.env.PUBLIC_RUNTIME_SIMULATIONS === 'true') {
+        stage = 'real-cookie-simulation-isolation';
+        const { verifySimulationRuntime } = await import('./verify-simulation-runtime.mjs');
+        await verifySimulationRuntime(page, publicOrigin, runId);
       }
       const oldCookies = await browser.cookies();
       const session = await page.evaluate(async () => (await fetch('/api/oauth/session')).json());

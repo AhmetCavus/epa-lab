@@ -1,13 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import type { ProtocolPlayback } from '../application/useProtocolPlayback';
 
-export function PlaybackControls({ playback }: { playback: ProtocolPlayback }) {
+export function PlaybackControls({
+  playback,
+  simulated = false,
+}: {
+  playback: ProtocolPlayback;
+  simulated?: boolean;
+}) {
   const { t } = useTranslation('protocol-flow');
   return (
     <div
       className="flow-transport"
       role="group"
-      aria-label={t('playback.controls')}
+      aria-label={t(simulated ? 'simulation.controls' : 'playback.controls')}
       data-playing={playback.playing}
       data-playback-index={playback.index}
     >

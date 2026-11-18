@@ -29,3 +29,28 @@ The same Catalog card template, actor canvas, timeline, inspector and learning c
 ## Execution status
 
 `Planned — no live integration, no telemetry and no simulated operational results.`
+
+## Interactive conceptual simulation (2026-11-17)
+
+The approved `unified-shell-and-simulations` extension replaces the earlier layout-only
+preview with a local, deterministic educational simulation in the existing v2 shell.
+Enter `/missions/epa-concept/workspace?execution=simulation`; older bare/fixture links
+resolve to the same conceptual mode. No ePA Live Demo action is offered.
+
+Source boundaries are the illustrative actor definitions above, the lab PAR operation in
+[EPA.md](../../../EPA.md), and the role/channel distinctions in
+[system context](../../architecture/system-context.md). The ePA authorization service acts
+as OAuth client toward the IdP in this lab model. Direct service PAR/reference exchanges
+are distinct from user-agent navigation. Actor-local identity, authorization and protected
+system explanations are concepts, never observed provider transactions. This is neither a
+normative gematik transaction sequence nor a certification/conformance statement.
+
+Start reveals one paused step. Explicit Step/Play advances the fixed success or PAR-rejection
+example. Replay/Previous inspect already revealed steps; Reset discards the attempt. A separate
+protected-access learning action opens an explanation only: no invented endpoint, HTTP success,
+FHIR/clinical payload or VAU handshake. Locale/view changes preserve local progress; leaving the
+mission or reloading starts idle. Reduced motion requires manual stepping. There are no calls
+to Keycloak, BFF, HAPI or legacy ePA endpoints and no authenticated session or usable credentials.
+
+The earlier execution-status section records the original fixture's historical scope; the
+interactive simulation changes presentation/education only and adds no real ePA integration.

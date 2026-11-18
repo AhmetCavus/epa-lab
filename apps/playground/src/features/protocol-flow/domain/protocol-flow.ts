@@ -98,7 +98,42 @@ export type ObservedEvent = Omit<FixtureContent, 'visibility'> & {
       }
   );
 
-export type FlowEvent = FixtureEvent | ObservedEvent;
+export interface SimulationRecord {
+  readonly traceId: string;
+  readonly sequence: number;
+  readonly elapsedMs: number;
+  readonly outcome: 'pending' | 'succeeded' | 'rejected' | 'denied' | 'established' | 'allowed';
+  readonly outcomeKey: string;
+  readonly conceptual: boolean;
+}
+
+export type SimulatedEvent = Omit<FixtureContent, 'visibility'> & {
+  readonly visibility: 'simulated';
+  readonly simulation: SimulationRecord;
+} & (
+    | {
+        readonly kind: 'message';
+        readonly sourceActorId: string;
+        readonly targetActorId: string;
+        readonly channel: MessageChannel;
+      }
+    | {
+        readonly kind: 'internal';
+        readonly actorId: string;
+        readonly channel: InternalChannel;
+      }
+  );
+
+export type FlowEvent = FixtureEvent | ObservedEvent | SimulatedEvent;
+
+export type EventPresentation = 'fixture' | 'observed' | 'simulated';
+
+export function matchesEventPresentation(event: FlowEvent, presentation: EventPresentation) {
+  if (presentation === 'fixture') {
+    return event.visibility !== 'observed' && event.visibility !== 'simulated';
+  }
+  return event.visibility === presentation;
+}
 
 export function interactionActorIds(interaction: FlowEvent): readonly string[] {
   if (interaction.kind === 'internal') {

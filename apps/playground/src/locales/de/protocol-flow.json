@@ -8,7 +8,8 @@
   "visibility": {
     "explained": "Erklärt",
     "not-observable": "Nicht beobachtbar",
-    "observed": "Beobachtet"
+    "observed": "Beobachtet",
+    "simulated": "SIMULIERT"
   },
   "canvas": {
     "scrollLabel": "Scrollbare Akteursübersicht",
@@ -131,12 +132,38 @@
     "title": "Animierte Ablaufskizze",
     "reconstruction": "Rekonstruktion aufgezeichneter Ereignisse. Die Oberfläche war während der externen Anmeldung nicht anwesend.",
     "incomplete": "Die Aufzeichnung ist unvollständig. Fehlende Schritte werden nicht ergänzt.",
-    "participants": "Vier beteiligte Systeme",
+    "participants": "Beteiligte Systeme",
     "local": "Akteurlokale Beobachtung · kein Netzwerkpfeil",
     "empty": "Keine aufgezeichneten Ereignisse",
     "recordedPosition": "Position in der Aufzeichnung",
     "emptyDescription": "Nach einer Anmeldung kann die eigene sichere Aufzeichnung hier wiedergegeben werden.",
     "overview": "Ablauf im Überblick",
     "reducedMotion": "Reduzierte Bewegung: Nutze Zurück, Weiter oder die Ereignisauswahl ohne Animation."
+  },
+  "simulation": {
+    "count_one": "{{count}} simuliertes Ereignis",
+    "count_other": "{{count}} simulierte Ereignisse",
+    "order": "Deterministische Simulationsfolge – keine beobachteten Protokollereignisse.",
+    "empty": "Starte die Simulation ausdrücklich. Ohne Start entstehen keine Ereignisse.",
+    "source": "SIMULIERT – lokale Lernsimulation",
+    "conceptualSource": "SIMULIERT / KONZEPTIONELL – kein echter ePA-Ablauf",
+    "noObserver": "Kein realer Beobachter – Simulation",
+    "time": "Virtuelle Simulationszeit",
+    "elapsed": "+{{milliseconds}} ms (virtuell, simuliert)",
+    "evidence": "Simulierte Erläuterung",
+    "details": "Nur vorgegebene sichere Simulationsfelder; kein beobachteter HTTP-Inhalt.",
+    "flowNote": "Interaktive Lernsimulation. Alle Schritte und Zeiten sind simuliert; kein Server wird kontaktiert.",
+    "outcomes": {
+      "pending": "Simulierter Schritt",
+      "succeeded": "Simuliert erfolgreich",
+      "rejected": "Simuliert abgelehnt",
+      "denied": "Simulierter Zugriff verweigert",
+      "established": "Simulierte Sitzung hergestellt",
+      "allowed": "Simulierter Zugriff erlaubt"
+    },
+    "traceId": "Lokale Simulations-ID",
+    "local": "Akteurlokale Erklärung (simuliert)",
+    "controls": "Simulationswiedergabe",
+    "position": "Position in der Simulation"
   }
 }

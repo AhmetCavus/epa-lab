@@ -8,7 +8,8 @@
   "visibility": {
     "explained": "Explained",
     "not-observable": "Not observable",
-    "observed": "Observed"
+    "observed": "Observed",
+    "simulated": "SIMULATED"
   },
   "canvas": {
     "scrollLabel": "Scrollable actor map",
@@ -131,12 +132,38 @@
     "title": "Animated flow",
     "reconstruction": "Reconstruction of recorded events. The interface was absent during external authentication.",
     "incomplete": "The trace is incomplete. Missing steps are not filled in.",
-    "participants": "Four participating systems",
+    "participants": "Participating systems",
     "local": "Actor-local observation · no network arrow",
     "empty": "No recorded events",
     "recordedPosition": "Recorded position",
     "emptyDescription": "After authentication, your own safe recorded evidence can be replayed here.",
     "overview": "Flow overview",
     "reducedMotion": "Reduced motion: use Previous, Next or event selection without animation."
+  },
+  "simulation": {
+    "count_one": "{{count}} simulated event",
+    "count_other": "{{count}} simulated events",
+    "order": "Deterministic simulation sequence – no observed protocol events.",
+    "empty": "Explicitly start the simulation. No events exist until it starts.",
+    "source": "SIMULATED – local learning simulation",
+    "conceptualSource": "SIMULATED / CONCEPTUAL – no real ePA flow",
+    "noObserver": "No real observer – simulation",
+    "time": "Virtual simulation time",
+    "elapsed": "+{{milliseconds}} ms (virtual, simulated)",
+    "evidence": "Simulated explanation",
+    "details": "Only predefined safe simulation fields; no observed HTTP content.",
+    "flowNote": "Interactive learning simulation. Every step and time is simulated; no server is contacted.",
+    "outcomes": {
+      "pending": "Simulated step",
+      "succeeded": "Simulated success",
+      "rejected": "Simulated rejection",
+      "denied": "Simulated access denied",
+      "established": "Simulated session established",
+      "allowed": "Simulated access allowed"
+    },
+    "traceId": "Local simulation ID",
+    "local": "Actor-local explanation (simulated)",
+    "controls": "Simulation playback",
+    "position": "Simulation position"
   }
 }

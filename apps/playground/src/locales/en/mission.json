@@ -43,7 +43,7 @@
         "bff": {
           "label": "NestJS BFF",
           "role": "OAuth / OIDC Client",
-          "description": "The proposed confidential client owns transactions, server-held tokens and the application session. No backend is connected to this preview."
+          "description": "The confidential client manages transactions, server-held tokens and sessions in live mode. Simulation explains this role without calling a backend."
         },
         "authorization-server": {
           "label": "Authorization Server",
@@ -58,7 +58,7 @@
         "resource-server": {
           "label": "Resource Server",
           "role": "API authorization",
-          "description": "Independently validates the Access Token and permissions before returning synthetic data in a future runnable mission."
+          "description": "Independently checks Access Tokens and permissions in live mode. A simulated result is not real resource authorization."
         }
       },
       "checkpoints": {
@@ -215,13 +215,13 @@
     "lab": "/ LEARNING LAB",
     "heading": "Understand the flow.",
     "headingAccent": "See the boundaries.",
-    "intro": "Explore authentication and authorization through actors, explanations and safe evidence. Choose a preview to enter Mission Control.",
+    "intro": "Explore OAuth/OIDC and ePA/gematik through interactive simulations – no login required.",
     "artCaption": "PROTOCOLS / PERSPECTIVE / PRACTICE",
     "choose": "Choose your mission",
-    "previewCount_one": "{{count, number}} PREVIEW · NO LIVE INTEGRATIONS",
-    "previewCount_other": "{{count, number}} PREVIEWS · NO LIVE INTEGRATIONS",
-    "noticeTitle": "A place to explore, with honest evidence.",
-    "notice": "These previews use fixture content. No sign-in, protected API call or live protocol integration runs here. Planned missions stay planned until their real execution is verified.",
+    "previewCount_one": "{{count, number}} MISSION",
+    "previewCount_other": "{{count, number}} MISSIONS",
+    "noticeTitle": "Simulation and real execution – clearly separated.",
+    "notice": "Simulations run only in your browser, with no real login or API requests. The live demo is not enabled in this environment; ePA remains conceptual.",
     "principles": {
       "label": "How Mission Control works",
       "actorsTitle": "Map the actors",
@@ -232,8 +232,16 @@
       "evidence": "Separate what can be observed from what is being explained."
     },
     "cardNumber": "MISSION {{number}}",
-    "learningPreview": "LEARNING PREVIEW",
-    "topics": "Topics"
+    "learningPreview": "INTERACTIVE MISSION",
+    "topics": "Topics",
+    "intro_live": "Start a simulation without logging in, or the real OAuth/OIDC live demo with your demo account.",
+    "notice_live": "Simulations need no login and stay in the browser. The OAuth live demo uses Keycloak, server-managed sessions and synthetic FHIR data. ePA is exclusively a conceptual simulation.",
+    "simulationAction": "Start simulation",
+    "liveAction": "Start live demo",
+    "liveUnavailable": "Live demo is not enabled in this environment.",
+    "availableSimulation": "Simulation",
+    "availableLive": "Simulation + live demo",
+    "availableConcept": "Conceptual simulation"
   },
   "availability": {
     "fixture": "Fixture preview",
@@ -656,5 +664,262 @@
     },
     "exploreHeading": "Understand authentication",
     "objective": "Understand authentication with PKCE and protected FHIR resource access."
+  },
+  "execution": {
+    "unavailableTitle": "Execution mode unavailable",
+    "unavailableDescription": "This selection is not supported in this environment. Choose a simulation or an available live demo from the mission catalog.",
+    "simulation": "SIMULATION",
+    "live": "LIVE DEMO",
+    "simulationNotice": "Simulated flow – no real authentication",
+    "liveNotice": "Real protocol execution",
+    "switchingNote": "Switching modes does not sign you out. Sign out or cancel explicitly in live mode.",
+    "selection": "Execution mode",
+    "conceptualNotice": "CONCEPTUAL SIMULATION – no real ePA authentication"
+  },
+  "simulation": {
+    "scenario": "Simulation example",
+    "progress": "Simulated learning progress",
+    "objective": "Understand the flow in a local simulation. No real authentication takes place.",
+    "disclaimer": "Every step, outcome and time is simulated. No provider, BFF or Resource Server is contacted.",
+    "resourceTitle": "Simulate synthetic resource access",
+    "resourceDescription": "Only Basic/playground-demo from local fictional data. No request to HAPI.",
+    "resourceReady": "The simulated session is ready. Explicitly request the local example resource.",
+    "resourceWaiting": "Complete the simulated authorization steps first.",
+    "resourceAllowed": "SIMULATED: a local fictional Basic resource, not a response from HAPI.",
+    "resourceDenied": "SIMULATED: this example lacks read permission. No real JWT or permission check took place.",
+    "actions": {
+      "start": "Start simulation",
+      "advance": "Next simulation step",
+      "resource": "Fetch simulated resource",
+      "reset": "Reset simulation"
+    },
+    "scenarios": {
+      "success": "Successful example flow",
+      "pkceRejected": "PKCE rejected (simulation)",
+      "missingPermission": "Missing read permission (simulation)"
+    },
+    "fields": {
+      "pkce": "Explained PKCE method",
+      "operation": "Conceptual operation"
+    },
+    "states": {
+      "idle": {
+        "title": "Ready for simulation",
+        "description": "Start the local learning flow. No login or server request is performed."
+      },
+      "authorizing": {
+        "title": "Simulated flow",
+        "description": "Advance one step or use the pausable animation. Every interaction stays in the browser."
+      },
+      "session": {
+        "title": "Simulated session established",
+        "description": "This is a learning state, not real authentication. Resource permission has not yet been demonstrated."
+      },
+      "complete": {
+        "title": "Simulated resource read succeeded",
+        "description": "The local example shows an allowed read. It does not establish real HAPI authorization."
+      },
+      "failed": {
+        "title": "Simulated flow rejected",
+        "description": "The selected failure example ends here. Reset the simulation for a fresh attempt."
+      },
+      "denied": {
+        "title": "Simulated access denied",
+        "description": "This example separates a simulated session from permission to read a resource."
+      }
+    },
+    "oauth": {
+      "stages": {
+        "authenticate": {
+          "title": "Simulate sign-in",
+          "description": "The browser redirect and provider role are explained only; this view is never left."
+        },
+        "session": {
+          "title": "Explain validation",
+          "description": "The simulated BFF explains code exchange, ID-token validation and a session. No real tokens are created."
+        },
+        "resource": {
+          "title": "Simulate access",
+          "description": "Explicitly request the local fictional resource. A simulated session is not real HAPI permission."
+        }
+      },
+      "events": {
+        "authorization": {
+          "title": "Simulate authorization initiation",
+          "summary": "SIMULATED: The BFF is the confidential client. S256 is explained without generating a transaction or verifier.",
+          "explanation": "The BFF is the confidential client. S256 is explained without generating a transaction or verifier."
+        },
+        "redirect": {
+          "title": "Simulated browser redirect",
+          "summary": "SIMULATED: The BFF would redirect the browser to the Authorization Server. This illustration stays local.",
+          "explanation": "The BFF would redirect the browser to the Authorization Server. This illustration stays local."
+        },
+        "authorization-request": {
+          "title": "Simulated authorization request",
+          "summary": "SIMULATED: The browser carries the Code/S256 request on the front channel. The standard mission uses no PAR.",
+          "explanation": "The browser carries the Code/S256 request on the front channel. The standard mission uses no PAR."
+        },
+        "identity": {
+          "title": "Explain the simulated provider role",
+          "summary": "SIMULATED: Identity verification is a conceptual provider-internal action. There is no login form or real observation here.",
+          "explanation": "Identity verification is a conceptual provider-internal action. There is no login form or real observation here."
+        },
+        "callback": {
+          "title": "Simulated return to the BFF",
+          "summary": "SIMULATED: The callback is explained as a Browser-to-BFF interaction. No code or callback URL is generated.",
+          "explanation": "The callback is explained as a Browser-to-BFF interaction. No code or callback URL is generated."
+        },
+        "exchange": {
+          "title": "Simulated code exchange",
+          "summary": "SIMULATED: The confidential client would exchange the code with PKCE on the back channel. No token request occurs.",
+          "explanation": "The confidential client would exchange the code with PKCE on the back channel. No token request occurs."
+        },
+        "token-response": {
+          "title": "Simulated token response",
+          "summary": "SIMULATED: A token response is described only. The simulation contains no usable Access Tokens or ID Tokens.",
+          "explanation": "A token response is described only. The simulation contains no usable Access Tokens or ID Tokens."
+        },
+        "validation": {
+          "title": "Simulated local validation",
+          "summary": "SIMULATED: The BFF would validate the OIDC response. This actor-local explanation is neither a real check nor a network event.",
+          "explanation": "The BFF would validate the OIDC response. This actor-local explanation is neither a real check nor a network event."
+        },
+        "session": {
+          "title": "Establish a simulated session",
+          "summary": "SIMULATED: The local learning state is shown as a simulated session. No BFF session or cookies are created.",
+          "explanation": "The local learning state is shown as a simulated session. No BFF session or cookies are created."
+        },
+        "pkce-rejected": {
+          "title": "Simulated PKCE rejection",
+          "summary": "SIMULATED: This fixed failure example ends at code exchange. No real provider validates a verifier and no session is established.",
+          "explanation": "This fixed failure example ends at code exchange. No real provider validates a verifier and no session is established."
+        },
+        "resource-request": {
+          "title": "Show a simulated resource request",
+          "summary": "SIMULATED: The learning flow illustrates a BFF-to-Resource-Server call. Only local fictional data is used.",
+          "explanation": "The learning flow illustrates a BFF-to-Resource-Server call. Only local fictional data is used."
+        },
+        "resource-allowed": {
+          "title": "Allow simulated access",
+          "summary": "SIMULATED: The example illustrates independent resource authorization. The JSON view contains only a local fictional Basic resource.",
+          "explanation": "The example illustrates independent resource authorization. The JSON view contains only a local fictional Basic resource."
+        },
+        "resource-denied": {
+          "title": "Deny simulated access",
+          "summary": "SIMULATED: Despite the simulated session, this example lacks demo.fhir.read. This is not an observed HAPI decision.",
+          "explanation": "Despite the simulated session, this example lacks demo.fhir.read. This is not an observed HAPI decision."
+        }
+      }
+    },
+    "resourceFinished": "The fixed simulation example is complete. Inspect the result or reset the simulation.",
+    "epa": {
+      "objective": "Interactively explore ePA roles, PAR and protocol boundaries as concepts.",
+      "disclaimer": "All steps and virtual timings are SIMULATED and CONCEPTUAL. No gematik integration, certification or conformance claim.",
+      "clientRole": "OAuth client toward the IdP (conceptual)",
+      "providerRole": "AS/IdP responsibility in the learning model",
+      "protectedRole": "Protected system boundary, no VAU protocol",
+      "protectedAction": "Explain conceptual protected access",
+      "protectedTitle": "Conceptual protected access",
+      "protectedDescription": "Security-boundary explanation only. No endpoint, HTTP result or clinical/FHIR payload is invented.",
+      "protectedResult": "SIMULATED / CONCEPTUAL: the protected boundary is explained. No real authorization, VAU communication or data response.",
+      "conceptualOutcome": "Concept explained",
+      "scenarios": {
+        "success": "Conceptual journey",
+        "parRejected": "Conceptual PAR rejection"
+      },
+      "stages": {
+        "par": {
+          "title": "PAR and roles",
+          "description": "Direct service communication from OAuth client to IdP; browser navigation remains separate."
+        },
+        "identity": {
+          "title": "Identity and authorization boundaries",
+          "description": "Conceptual responsibilities without real login or tokens."
+        },
+        "protected": {
+          "title": "Protected boundary",
+          "description": "Explicitly open an explanation without patient data or VAU transactions."
+        }
+      },
+      "states": {
+        "idle": {
+          "title": "Conceptual simulation ready",
+          "description": "Start opens the first step paused. No services are contacted."
+        },
+        "authorizing": {
+          "title": "Conceptual journey paused",
+          "description": "Use Step or Play to explore roles and channels."
+        },
+        "session": {
+          "title": "Conceptual authorization boundary reached",
+          "description": "No real session. The protected-access explanation requires its own action."
+        },
+        "complete": {
+          "title": "Conceptual journey explained",
+          "description": "Local learning history only; no ePA or FHIR response."
+        },
+        "failed": {
+          "title": "Conceptual PAR rejected",
+          "description": "The example stops before redirection. Reset starts a new learning attempt."
+        }
+      },
+      "events": {
+        "intent": {
+          "title": "Explain access intent",
+          "summary": "SIMULATED / CONCEPTUAL: A fictional insured person starts the learning model.",
+          "explanation": "A fictional insured person starts the learning model."
+        },
+        "fdv-request": {
+          "title": "FdV to authorization service",
+          "summary": "SIMULATED / CONCEPTUAL: The FdV conveys conceptual access intent; no real request is sent here.",
+          "explanation": "The FdV conveys conceptual access intent; no real request is sent here."
+        },
+        "par": {
+          "title": "Direct PAR",
+          "summary": "SIMULATED / CONCEPTUAL: The ePA authorization service acts as OAuth client toward the IdP. PAR is direct service communication, distinct from a browser redirect.",
+          "explanation": "The ePA authorization service acts as OAuth client toward the IdP. PAR is direct service communication, distinct from a browser redirect."
+        },
+        "par-reference": {
+          "title": "Explain PAR reference",
+          "summary": "SIMULATED / CONCEPTUAL: The model explains request_uri as a reference; it generates no usable reference and names no normative endpoint.",
+          "explanation": "The model explains request_uri as a reference; it generates no usable reference and names no normative endpoint."
+        },
+        "redirect": {
+          "title": "Explain browser redirect",
+          "summary": "SIMULATED / CONCEPTUAL: The authorization service returns a conceptual redirect to the FdV. This is not another PAR.",
+          "explanation": "The authorization service returns a conceptual redirect to the FdV. This is not another PAR."
+        },
+        "identity-navigation": {
+          "title": "Navigation to IdP",
+          "summary": "SIMULATED / CONCEPTUAL: The user agent conceptually follows to identity verification. No real page is opened.",
+          "explanation": "The user agent conceptually follows to identity verification. No real page is opened."
+        },
+        "identity-boundary": {
+          "title": "Identity boundary",
+          "summary": "SIMULATED / CONCEPTUAL: Actor-local conceptual explanation: no observed IdP transaction, real authenticator or device binding.",
+          "explanation": "Actor-local conceptual explanation: no observed IdP transaction, real authenticator or device binding."
+        },
+        "authorization-boundary": {
+          "title": "Authorization boundary",
+          "summary": "SIMULATED / CONCEPTUAL: The learning model reaches a conceptual authorization boundary. It establishes no real session or TI permission.",
+          "explanation": "The learning model reaches a conceptual authorization boundary. It establishes no real session or TI permission."
+        },
+        "par-rejected": {
+          "title": "PAR conceptually rejected",
+          "summary": "SIMULATED / CONCEPTUAL: This fixed failure example stops before browser redirection. It is not a real gematik error response.",
+          "explanation": "This fixed failure example stops before browser redirection. It is not a real gematik error response."
+        },
+        "protected-intent": {
+          "title": "Explain protected access",
+          "summary": "SIMULATED / CONCEPTUAL: An explicit learning action explains access intent. No FHIR or ePA data is read.",
+          "explanation": "An explicit learning action explains access intent. No FHIR or ePA data is read."
+        },
+        "protected-boundary": {
+          "title": "VAU as a concept only",
+          "summary": "SIMULATED / CONCEPTUAL: The protected system boundary remains an actor-local explanation. No VAU handshake, clinical data or conformance evidence.",
+          "explanation": "The protected system boundary remains an actor-local explanation. No VAU handshake, clinical data or conformance evidence."
+        }
+      }
+    }
   }
 }

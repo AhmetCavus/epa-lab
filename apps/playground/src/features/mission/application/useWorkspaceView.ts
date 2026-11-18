@@ -11,8 +11,11 @@ export function useWorkspaceView() {
 
   function destination(nextMode: WorkspaceMode, nextPanel: WorkspacePanel = panel) {
     const next = new URLSearchParams({ mode: nextMode, panel: nextPanel });
-    if (parameters.get('view') === 'fixture') {
+    if (parameters.getAll('view').includes('fixture')) {
       next.set('view', 'fixture');
+    }
+    for (const execution of parameters.getAll('execution')) {
+      next.append('execution', execution);
     }
     return `?${next.toString()}`;
   }

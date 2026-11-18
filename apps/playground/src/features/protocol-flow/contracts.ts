@@ -9,5 +9,7 @@ export type {
   FixtureEvent,
   ObservedEvent,
   FlowEvent,
+  SimulatedEvent,
+  SimulationRecord,
   ReportedEvidence,
 } from './domain/protocol-flow';

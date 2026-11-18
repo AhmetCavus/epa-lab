@@ -34,3 +34,12 @@ export interface MissionExperience {
   readonly stages: readonly MissionStage[];
   readonly participants: readonly FlowParticipant[];
 }
+
+export interface SimulationExperience
+  extends Pick<
+    MissionExperience,
+    'titleKey' | 'descriptionKey' | 'tone' | 'stages' | 'participants'
+  > {
+  readonly primaryAction: 'start' | 'advance' | 'resource' | null;
+  readonly simulatedSessionEstablished: boolean;
+}

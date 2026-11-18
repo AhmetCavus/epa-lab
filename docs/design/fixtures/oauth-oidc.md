@@ -1,5 +1,19 @@
 # UX Fixture — OAuth / OIDC
 
+**Interactive simulation, 2026-11-17:** the approved `unified-shell-and-simulations`
+implementation replaces the default Samples interaction with the existing v2
+Explore/Inspect/Flow/Resource Explorer presentation. Old `view=fixture` links now select
+idle simulation; the static declarations below remain explanatory source/history, not
+observed events or an additional execution mode.
+
+Choose a fixed example, explicitly start, then Step or Play/Pause through the synthetic
+Code/S256 flow. Start is paused; resource access requires its own explicit action after
+the simulated session. The only resource is a local fictional `Basic/playground-demo`.
+PKCE rejection and missing permission are fixed teaching examples, not real security
+checks. Replay selects existing frames; Reset simulation discards the local attempt.
+Neither command logs out of the real demo. All outcomes/time/source labels remain
+simulated, and no provider, BFF/session/history or HAPI request occurs.
+
 **Status:** DESIGN-ONLY SAMPLE · **Not** an executable mission declaration.
 
 ## Goal

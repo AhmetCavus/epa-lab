@@ -4,6 +4,16 @@
 
 ## Purpose
 
+**Unified shell and simulations, 2026-11-17:** the approved isolated implementation
+reuses the live v2 header and existing artwork/card composition. OAuth offers primary
+Simulation starten and secondary Live-Demo starten; ePA offers only a conceptual
+Simulation starten. Actions open the selected workspace without starting execution.
+Simulation is available without login; live availability follows the existing runtime
+binding. The action stack uses equal sizing and a 10px gap, with aligned primary actions.
+See the [current contract](../../openspec/changes/unified-shell-and-simulations/specs/unified-application-shell/spec.md).
+Earlier fixture-only availability below is dated history superseded for this new UI;
+the deployed v2 release remains unchanged until separate release authorization.
+
 **Public-release preparation:** the narrowed approved tasks 1.1–5.2 reuse this visual,
 localization and accessibility baseline for an explicit production OAuth build. Public
 activation remains excluded; fixtures and conceptual ePA stay intact. See the

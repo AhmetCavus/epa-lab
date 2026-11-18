@@ -420,6 +420,25 @@ button {
   width: 100%;
   margin-top: auto;
 }
+.mission-actions {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 106px;
+  margin-top: auto;
+}
+.mission-actions .button {
+  min-height: 48px;
+  margin-top: 0;
+}
+.mission-live-unavailable {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+.mission-live-unavailable .button {
+  opacity: 0.65;
+}
 .preview-notice {
   display: flex;
   gap: 16px;
@@ -1288,7 +1307,7 @@ dd {
 }
 
 /* Mission Control uses the approved navy workspace compositions. Preview layouts stay scoped above. */
-.mission-control {
+:root {
   --mc-canvas: #080e20;
   --mc-panel: #0e192d;
   --mc-panel-raised: #15253e;
@@ -1298,16 +1317,19 @@ dd {
   --mc-accent: #36c8ff;
   --mc-success: #8ae9a2;
   --mc-radius: 14px;
-  min-height: 100vh;
+}
+.mission-control {
+  min-height: calc(100vh - 58px);
   color: var(--mc-text);
   background: radial-gradient(ellipse at 65% 0, #111e3826, transparent 60%), var(--mc-canvas);
   font-size: 14px;
 }
-#root:has(.mission-control) > .site-header,
 #root:has(.mission-control) > .site-footer {
   display: none;
 }
 .mc-header {
+  color: var(--mc-text);
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1332,6 +1354,7 @@ dd {
 .mc-brand-mark {
   width: 31px;
   height: 34px;
+  object-fit: contain;
 }
 .mc-brand-divider {
   height: 26px;
@@ -1380,6 +1403,58 @@ dd {
   align-items: center;
   justify-content: flex-end;
   min-width: 140px;
+}
+.mc-execution-selector {
+  display: grid;
+  gap: 6px;
+  max-width: 380px;
+}
+.mc-execution-selector .mc-runtime-badge {
+  margin: 0;
+  white-space: normal;
+}
+.mc-execution-selector nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mc-execution-selector nav a {
+  padding: 5px 10px;
+  border: 1px solid var(--mc-border);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.mc-execution-selector nav a[aria-current] {
+  color: var(--mc-accent);
+  border-color: var(--mc-accent);
+}
+.mc-simulation-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 0 0 16px;
+  color: var(--mc-muted);
+}
+.mc-simulation-options label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.mc-simulation-options select {
+  max-width: 100%;
+  padding: 7px 10px;
+  color: var(--mc-text);
+  background: var(--mc-panel-raised);
+  border: 1px solid var(--mc-border);
+  border-radius: 6px;
+}
+.mc-simulation-options p {
+  flex: 1 1 240px;
+  margin: 0;
+  font-size: 12px;
 }
 .mc-header .language-control {
   color: var(--mc-muted);
@@ -1558,7 +1633,8 @@ dd {
 .mc-button:disabled {
   opacity: 0.65;
 }
-.mission-control :is(button, a, input, select, summary, [tabindex]):focus-visible {
+.mission-control :is(button, a, input, select, summary, [tabindex]):focus-visible,
+.mc-header :is(button, a, input, select, summary, [tabindex]):focus-visible {
   outline: 3px solid #81e6ff;
   outline-offset: 4px;
 }
@@ -2503,6 +2579,9 @@ dd {
 .flow-diagram-scroll {
   min-width: 0;
 }
+.flow-diagram-scroll {
+  overflow-x: auto;
+}
 .flow-participants {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2529,6 +2608,7 @@ dd {
   color: #32b7ff;
 }
 .flow-participant strong {
+  overflow-wrap: anywhere;
   font-size: 16px;
 }
 .flow-participant > span {
@@ -2704,7 +2784,7 @@ dd {
   }
   .flow-participant strong {
     font-size: 16px;
-    overflow-wrap: normal;
+    overflow-wrap: anywhere;
   }
   .flow-step {
     padding: 16px;

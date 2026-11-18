@@ -33,3 +33,14 @@ export type ResourceReadResult = ReadResult &
     | { readonly outcome: 'denied' | 'not-found' | 'rejected' | 'unavailable' }
     | { readonly outcome: 'throttled'; readonly retryAfterSeconds: number | null }
   );
+
+export type SimulatedResourceResult = {
+  readonly source: 'simulated';
+  readonly messageKey: string;
+} & (
+  | { readonly status: 200; readonly outcome: 'allowed'; readonly resource: SyntheticBasic }
+  | { readonly status: 403; readonly outcome: 'denied' }
+  | { readonly status: null; readonly outcome: 'conceptual' }
+);
+
+export type PresentedResourceResult = ResourceReadResult | SimulatedResourceResult;

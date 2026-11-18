@@ -1,7 +1,22 @@
-# Auth Protocol Playground — UI Slice 001
+# Auth Protocol Playground — Mission Control
+
+## Simulation and live presentation
+
+The isolated `unified-shell-and-simulations` implementation uses one application header,
+with the official locally served Yappai icon, for catalog and workspaces. Simulation and
+Live Demo are execution kinds (`execution=simulation|live`), separate from the existing
+`mode=explore|inspect` and `panel=resources|flow` presentation parameters. Legacy
+`view=fixture` always selects network-free simulation, even with a conflicting live value.
+The clean OAuth callback path and enabled-runtime bare live URL remain compatible.
+
+Mode selection does not sign out or initiate login/resource work. Simulation makes no
+session/history/provider/FHIR calls and cannot use a real cookie as simulated authority.
+Live authentication ends only through its existing explicit secure logout/cancellation
+or expiry. Virtual simulated timing/outcomes are labeled and never become observed server
+events or measured HAPI responses. The deployed release is unchanged by isolated work.
 
 An isolated React/TypeScript browser app for the Catalog and Mission Control Workspace.
-Default local development and ordinary builds use fixtures. The public deployment uses
+Default local development and ordinary builds enable the two local simulations. The public deployment uses
 the explicit `public-runtime` image target and executes the existing OAuth/OIDC mission.
 Tasks 8.1–8.6 add an explicitly configured private Vite execution binding to the existing
 `epa-auth-lab` BFF; it uses no separate authentication service. This package keeps its
@@ -16,10 +31,16 @@ npm --prefix apps/playground run dev
 
 Open <http://127.0.0.1:5173/missions>. Both workspace routes also support direct navigation:
 
-- `/missions/oauth-oidc/workspace`: initially empty; explicitly load fixture samples to explore the timeline and Safe Evidence inspector.
-- `/missions/epa-concept/workspace`: planned, conceptual actor/checkpoint layout, with no telemetry or simulated operational results.
+- `/missions/oauth-oidc/workspace?execution=simulation`: paused deterministic Code/S256 simulation, with success, PKCE rejection and permission-denial examples.
+- `/missions/epa-concept/workspace?execution=simulation`: conceptual PAR/role simulation, including a fixed PAR-rejection example and a data-free protected-boundary explanation.
 
-Selecting a learning checkpoint never loads events or executes anything. Replay explanation selects the first loaded sample. Reset view clears selections and restores the map scale while retaining loaded samples. Fit returns to the readable 100% map scale; narrow diagrams scroll horizontally instead of shrinking essential text. Map controls never change browser page zoom. Refreshing or changing mission discards transient UI state; only an explicit language preference persists, with no session, backend connection or credential handling.
+Start reveals one paused step. Step advances one transition; Play/Pause controls automatic
+progression and stops before the explicit resource action. Previous, Replay and selecting
+events inspect already revealed frames without repeating work. Reset simulation discards the
+local attempt and result. Reduced motion disables autoplay. Reload or mission/execution
+switch starts idle; locale and Explore/Inspect changes retain progress and selection.
+Only an explicit language preference persists. Diagrams scroll locally at narrow widths;
+readable text is not scaled down. Live Replay/Reset view remain presentation-only.
 
 ## Explicit private execution
 
@@ -51,12 +72,12 @@ this example. The focused test below maps the unchanged canonical browser origin
 task-owned loopback listeners, preserving normal navigation, cookie scopes and callback
 registration. Directly opening a different Vite origin keeps execution disabled.
 
-The private catalog retains Fixture preview/Planned availability. Its additional **Open
-private integration test** link is explicitly for verification, without claiming released
-runnable availability. The fixture link uses `?view=fixture`; that parameter only selects
-presentation. The ePA concept has no execution binding. Public cards and routes retain
-their existing fixture behavior. Task 9.5 verifies persistent availability of this private
-entry; its existing labels remain unchanged under the reviewed deployment scope.
+The catalog offers two OAuth actions only when the existing runtime guard permits live
+execution: primary Simulation / secondary Live Demo. ePA offers conceptual Simulation only.
+Static builds omit the unavailable Live action. `view=fixture` remains a compatibility alias
+for simulation, including when it conflicts with `execution=live`.
+
+The following lifecycle applies only to **Live Demo**.
 
 The existing Workspace restores through `/api/oauth/session` and the owned event API on
 return/refresh, with a one-shot expiry read and browser-return recovery. These reads never
@@ -81,12 +102,14 @@ an earlier retained BFF authentication is still reported accurately. Local clean
 available independently of trace/resource capacity. Logout commits its authoritative result
 before reading events, retains eligible bounded history under its original expiry and
 rejects late UI results. It does not claim provider-wide SSO logout or token revocation.
-Replay, Reset view, checkpoints and actor/event selection make no protocol calls. Locale
-changes retain run/event identities, selection, loaded fixtures and map scale.
+Live Replay, Reset view, stages and event selection make no protocol calls. Locale changes
+retain run/event identities and selection.
 
 ### Observation presentation
 
-Protocol-flow now accepts `FlowEvent = FixtureEvent | ObservedEvent`. The observed variant
+Protocol-flow accepts `FlowEvent = FixtureEvent | ObservedEvent | SimulatedEvent`. Simulation
+records have a separate local ID, sequence, virtual elapsed time and explicit synthetic outcome;
+they contain no real observer, server report or wall-clock timestamp. The observed variant
 adds actual observer/time, per-run sequence, outcome and an optional explicitly reported
 evidence block. It introduces no OAuth imports or wire decoding into the renderer. The
 mission-owned adapter projects only allowlisted values into this neutral shape. Local BFF
@@ -189,8 +212,10 @@ For browser verification, install Playwright Chromium once:
 
 ```sh
 cd apps/playground
-npx playwright install chromium --only-shell
+npx playwright install chromium
 npm test
+# Full native-zoom acceptance (in addition to the ordinary suite):
+PLAYGROUND_NATIVE_CHROMIUM="$(node --input-type=module -e 'import {chromium} from "playwright"; process.stdout.write(chromium.executablePath())')" npm test
 ```
 
 Tests build the app and launch a local production preview server automatically. Screenshots and traces are generated under the ignored `test-results/` directory. If the machine requires system certificate trust for Node, set `NODE_USE_SYSTEM_CA=1` for dependency/browser downloads; do not disable TLS verification.
@@ -202,9 +227,9 @@ src/
   app/                        # composition, routing and unknown-route recovery
   features/mission/
     ui/                       # catalog and workspace composition
-    application/              # mission lookup, checkpoints and fixture coordination
-    domain/                   # canonical Mission, MissionPreview and Checkpoint
-    data/                     # explicit registry and existing mission fixtures
+    application/              # mission lookup, live and local simulation coordination
+    domain/                   # canonical mission contracts and finite simulation reducers
+    data/                     # registry, safe simulation content and live DTO adapters
   features/protocol-flow/
     ui/                       # diagram, layout geometry, timeline and Inspector
     application/              # single actor/event inspection selection
@@ -215,8 +240,9 @@ src/
 
 Mission's public `index.ts` connects to app composition. Protocol-flow exposes `contracts.ts` (types), `selection.ts` (coordination hook) and `index.ts` (UI); internal modules import their own implementations directly. Domain/application code does not import UI barrels. No protocol-flow data layer or shared UI folder is needed by the current application.
 
-`useMissionWorkspace` coordinates checkpoints, fixture loading, replay and reset, and composes
-the explicitly enabled mission-owned `useOAuthMission`. It reuses `useProtocolSelection`,
+`Workspace` mounts separate live/OAuth-simulation/ePA-simulation controllers before
+`useMissionWorkspace` composes neutral inspection, filtering and playback. The explicitly
+enabled `useOAuthMission` alone owns live API lifecycle. It reuses `useProtocolSelection`,
 which owns one active actor/event inspection and derived highlights. Map scale, scrolling
 and focus stay in UI. `tests/architecture.spec.ts` checks dependency direction, cycles,
 canonical models and framework-independent domain compilation. Only the existing two
@@ -227,3 +253,34 @@ the approved public deployment profile; see the current hosted deployment above.
 See [verification.md](verification.md) for scope, adaptations and verification evidence.
 
 The subsequent [design foundation verification](../../openspec/changes/mission-control-design-foundation/verification.md) records the directed-interaction refinement and its visual comparison.
+
+## Isolated verification and release boundary
+
+See [implementation evidence](../../openspec/changes/unified-shell-and-simulations/implementation-verification.md)
+and the [acceptance matrix](../../openspec/changes/unified-shell-and-simulations/acceptance-matrix.md)
+for the exact commands, native zoom captures and real-component rehearsal. This change does
+not release an image. Public deployment needs a separate owner instruction. A future targeted
+SPA release must retain the previous immutable SPA pin and all existing private environment
+settings. Rollback restores only that saved SPA pin/container; the BFF/provider/HAPI/data need
+no migration or rollback. The disposable real-runtime harness also rehearses its existing
+fixture withdrawal without touching the running deployment.
+
+For a future owner-authorized SPA release, first record the running immutable SPA image:
+
+```sh
+# Read-only baseline, repository root:
+docker inspect --format '{{.Image}}' epa-lab-playground
+```
+
+Targeted rollback, only after separate release authorization: restore that saved image to
+`PUBLIC_PLAYGROUND_IMAGE` in the existing private `.env.live`, preserving every other value,
+then use the existing host profile for only the SPA:
+
+```sh
+docker compose --env-file .env.live -f infrastructure/docker-compose.host.yml config --quiet
+docker compose --env-file .env.live -f infrastructure/docker-compose.host.yml up -d --no-deps --no-build --pull never --wait --wait-timeout 120 playground
+```
+
+These are rollback instructions, not commands executed by this implementation. Keep the BFF,
+Keycloak, HAPI, PostgreSQL, volumes and routing unchanged. Recheck `/health`, catalog and the
+expected execution mode after any authorized rollback.

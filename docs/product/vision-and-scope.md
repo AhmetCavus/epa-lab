@@ -12,6 +12,14 @@ Primary: software developers and architects who need to understand protocols and
 
 ## Product model
 
+The owner-approved `unified-shell-and-simulations` implementation adds two explicitly
+separate learning modes in the existing Mission Control v2: browser-local interactive
+simulation for OAuth and conceptual ePA, and the already implemented real OAuth demo.
+Simulation creates no real authentication, provider request or resource authority.
+Catalog labels/actions reflect that distinction; live ePA remains unavailable.
+This isolated frontend work does not authorize a new public release or provider/data change.
+Historical fixture-only/no-simulated-result scope below predates this extension.
+
 - **Mission Catalog:** choose a learning journey; see genuinely available vs planned missions.
 - **Mission Control Workspace:** common interaction design for the selected mission.
 - **Mission Definition:** protocol-specific objectives, actors, educational steps, user actions and explanatory text.

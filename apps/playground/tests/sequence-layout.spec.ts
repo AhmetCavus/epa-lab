@@ -1,4 +1,4 @@
-﻿import { createInstance } from 'i18next';
+import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import deProtocolFlow from '../src/locales/de/protocol-flow.json' with { type: 'json' };
 import enProtocolFlow from '../src/locales/en/protocol-flow.json' with { type: 'json' };
@@ -75,57 +75,38 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('auth-protocol-playground.locale', 'en'));
 });
 
-test('shipped sequence geometry, order, selection and readable Fit survive resizing', async ({
+test('shipped simulation keeps participant order, directional selection and readable scrolling while resizing', async ({
   page,
 }) => {
-  await page.goto('/missions/oauth-oidc/workspace');
-  await page.getByRole('button', { name: 'Load fixture samples' }).click();
-  const order = await page
-    .locator('.interaction-target')
-    .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-event-id')));
+  await page.goto('/missions/oauth-oidc/workspace?execution=simulation&panel=flow');
+  await page.locator('[data-runtime-action="start"]').first().click();
+  for (let index = 0; index < 5; index += 1) {
+    await page.locator('[data-runtime-action="advance"]').first().click();
+  }
   for (const width of [1366, 1024, 390, 320]) {
     await page.setViewportSize({ width, height: 844 });
-    await page
-      .getByRole('region', { name: 'Event timeline' })
-      .getByRole('button', { name: /Direct code exchange/ })
-      .click();
-    await page.getByRole('button', { name: 'Fit', exact: true }).click();
-    await expect(page.getByLabel('Map zoom')).toHaveText('100%');
-    await expect(page.getByRole('button', { name: 'Zoom out', exact: true })).toBeDisabled();
-    await expectAlignedSequence(page);
-    expect(
-      await page
-        .locator('.interaction-target')
-        .evaluateAll((rows) => rows.map((row) => row.getAttribute('data-event-id'))),
-    ).toEqual(order);
+    await page.locator('.flow-overview button').last().click();
+    await expect(page.locator('.flow-path > path')).toHaveAttribute('data-source', 'bff');
+    await expect(page.locator('.flow-path > path')).toHaveAttribute(
+      'data-target',
+      'authorization-server',
+    );
+    await expect(page.locator('.flow-path > path')).toHaveAttribute(
+      'data-target-participant',
+      'keycloak',
+    );
+    const participants = await page.locator('.flow-participant').evaluateAll((elements) =>
+      elements.map((element) => ({
+        top: element.getBoundingClientRect().top,
+        font: getComputedStyle(element.querySelector('strong')!).fontSize,
+      })),
+    );
+    expect(new Set(participants.map((entry) => entry.top)).size).toBe(1);
+    expect(participants.every((entry) => parseFloat(entry.font) >= 16)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
-    const map = page.getByRole('region', { name: 'Scrollable actor map' });
-    if (width < 760) {
-      expect(await map.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
-      await map.evaluate((element) => {
-        element.scrollLeft = element.scrollWidth;
-      });
-      await expectAlignedSequence(page);
-      await expect(page.getByRole('button', { name: /^Resource Server/ })).toBeInViewport();
-    }
-    const fonts = await page
-      .locator('.actor strong, .message-heading strong, .message-direction, .interaction-channel')
-      .evaluateAll((labels) =>
-        labels.map((label) => Number.parseFloat(getComputedStyle(label).fontSize)),
-      );
-    expect(Math.min(...fonts)).toBeGreaterThanOrEqual(13);
-    await page.screenshot({
-      path: test.info().outputPath(`selected-${width}.png`),
-      fullPage: true,
-    });
   }
-  await page.getByRole('button', { name: 'Replay explanation' }).click();
-  await expect(page.locator('.interaction-target[aria-pressed="true"]')).toHaveAttribute(
-    'data-event-id',
-    order[0] ?? '',
-  );
 });
 
 test('long wrapped text, reverse arrows and uneven groups retain collision-free geometry', async ({

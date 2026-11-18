@@ -17,7 +17,7 @@ interface ExperienceInput {
   readonly now?: number;
 }
 
-const participants: MissionExperience['participants'] = [
+export const oauthParticipants: MissionExperience['participants'] = [
   {
     id: 'browser',
     actorIds: ['browser'],
@@ -162,7 +162,7 @@ export function describeOAuthExperience({
     evidenceIncomplete: Boolean(
       run && (traceProblem || !currentDocument?.complete || !run.observationsAvailable),
     ),
-    participants,
+    participants: oauthParticipants,
     stages: [
       {
         id: 'authenticate',

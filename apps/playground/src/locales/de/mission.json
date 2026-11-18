@@ -43,7 +43,7 @@
         "bff": {
           "label": "NestJS BFF",
           "role": "OAuth / OIDC Client",
-          "description": "Der geplante vertrauliche Client verwaltet Transaktionen, serverseitige Tokens und die Anwendungssitzung. An diese Vorschau ist kein Backend angebunden."
+          "description": "Der vertrauliche Client verwaltet im Live-Modus Transaktionen, serverseitige Tokens und Sitzungen. Die Simulation erklärt diese Rolle ohne Backend-Aufruf."
         },
         "authorization-server": {
           "label": "Authorization Server",
@@ -58,7 +58,7 @@
         "resource-server": {
           "label": "Resource Server",
           "role": "API-Autorisierung",
-          "description": "Prüft Access Token und Berechtigungen eigenständig, bevor er in einer künftigen ausführbaren Mission synthetische Daten zurückgibt."
+          "description": "Prüft im Live-Modus Access Token und Berechtigungen unabhängig. Ein simuliertes Ergebnis stellt keine echte Ressourcenautorisierung dar."
         }
       },
       "checkpoints": {
@@ -215,13 +215,13 @@
     "lab": "/ LERNLABOR",
     "heading": "Verstehe den Ablauf.",
     "headingAccent": "Erkenne die Grenzen.",
-    "intro": "Erkunde Authentifizierung und Autorisierung anhand von Akteuren, Erklärungen und sicheren Nachweisen. Wähle eine Vorschau für Mission Control.",
+    "intro": "Erkunde OAuth/OIDC und ePA/gematik in interaktiven Simulationen – ohne Anmeldung.",
     "artCaption": "PROTOKOLLE / PERSPEKTIVE / PRAXIS",
     "choose": "Wähle deine Mission",
-    "previewCount_one": "{{count, number}} VORSCHAU · KEINE LIVE-INTEGRATIONEN",
-    "previewCount_other": "{{count, number}} VORSCHAUEN · KEINE LIVE-INTEGRATIONEN",
-    "noticeTitle": "Raum zum Erkunden, mit ehrlichen Nachweisen.",
-    "notice": "Diese Vorschauen verwenden Beispieldaten. Hier laufen weder Anmeldung noch geschützte API-Aufrufe oder Live-Protokollintegrationen. Geplante Missionen bleiben geplant, bis ihre echte Ausführung verifiziert ist.",
+    "previewCount_one": "{{count, number}} MISSION",
+    "previewCount_other": "{{count, number}} MISSIONEN",
+    "noticeTitle": "Simulation und echte Ausführung – klar getrennt.",
+    "notice": "Simulationen laufen nur in deinem Browser. Es werden weder echte Anmeldungen noch API-Anfragen ausgeführt. Die Live-Demo ist in dieser Umgebung nicht aktiviert; ePA bleibt konzeptionell.",
     "principles": {
       "label": "So funktioniert Mission Control",
       "actorsTitle": "Ordne die Akteure ein",
@@ -232,8 +232,16 @@
       "evidence": "Unterscheide Beobachtungen von Erklärungen."
     },
     "cardNumber": "MISSION {{number}}",
-    "learningPreview": "LERNVORSCHAU",
-    "topics": "Themen"
+    "learningPreview": "INTERAKTIVE MISSION",
+    "topics": "Themen",
+    "intro_live": "Starte eine Simulation ohne Anmeldung oder die echte OAuth/OIDC-Live-Demo mit deinem Demokonto.",
+    "notice_live": "Simulationen benötigen keine Anmeldung und bleiben im Browser. Die OAuth-Live-Demo nutzt Keycloak, serverseitige Sitzungen und synthetische FHIR-Daten. ePA ist ausschließlich eine konzeptionelle Simulation.",
+    "simulationAction": "Simulation starten",
+    "liveAction": "Live-Demo starten",
+    "liveUnavailable": "Live-Demo in dieser Umgebung nicht aktiviert.",
+    "availableSimulation": "Simulation",
+    "availableLive": "Simulation + Live-Demo",
+    "availableConcept": "Konzeptionelle Simulation"
   },
   "availability": {
     "fixture": "Beispielvorschau",
@@ -656,5 +664,262 @@
     },
     "exploreHeading": "Authentifizierung verstehen",
     "objective": "Authentifizierung verstehen – mit PKCE und sicherem Ressourcenzugriff (FHIR)."
+  },
+  "execution": {
+    "unavailableTitle": "Ausführungsart nicht verfügbar",
+    "unavailableDescription": "Diese Auswahl wird in dieser Umgebung nicht unterstützt. Wähle im Missionskatalog eine Simulation oder eine verfügbare Live-Demo.",
+    "simulation": "SIMULATION",
+    "live": "LIVE-DEMO",
+    "simulationNotice": "Simulierter Ablauf – keine echte Authentifizierung",
+    "liveNotice": "Echte Protokollausführung",
+    "switchingNote": "Ein Moduswechsel meldet dich nicht ab. Abmelden oder Abbrechen erfolgt ausdrücklich im Live-Modus.",
+    "selection": "Ausführungsart",
+    "conceptualNotice": "KONZEPTUELLE SIMULATION – keine echte ePA-Authentifizierung"
+  },
+  "simulation": {
+    "scenario": "Simulationsbeispiel",
+    "progress": "Simulierter Lernfortschritt",
+    "objective": "Verstehe den Ablauf in einer lokalen Simulation. Es erfolgt keine echte Authentifizierung.",
+    "disclaimer": "Alle Schritte, Ergebnisse und Zeiten sind simuliert. Kein Provider, BFF oder Resource Server wird kontaktiert.",
+    "resourceTitle": "Synthetischen Ressourcenabruf simulieren",
+    "resourceDescription": "Nur Basic/playground-demo aus lokalen Beispieldaten. Keine Anfrage an HAPI.",
+    "resourceReady": "Die simulierte Sitzung ist bereit. Fordere die lokale Beispielressource ausdrücklich an.",
+    "resourceWaiting": "Schließe zuerst die simulierten Autorisierungsschritte ab.",
+    "resourceAllowed": "SIMULIERT: lokale fiktive Basic-Ressource, keine Antwort von HAPI.",
+    "resourceDenied": "SIMULIERT: das Beispiel enthält keine Leseberechtigung. Es fand keine echte JWT- oder Berechtigungsprüfung statt.",
+    "actions": {
+      "start": "Simulation starten",
+      "advance": "Nächster Simulationsschritt",
+      "resource": "Ressource simuliert abrufen",
+      "reset": "Simulation zurücksetzen"
+    },
+    "scenarios": {
+      "success": "Erfolgreicher Beispielablauf",
+      "pkceRejected": "PKCE abgelehnt (Simulation)",
+      "missingPermission": "Fehlende Leseberechtigung (Simulation)"
+    },
+    "fields": {
+      "pkce": "Erklärtes PKCE-Verfahren",
+      "operation": "Konzeptionelle Operation"
+    },
+    "states": {
+      "idle": {
+        "title": "Bereit für die Simulation",
+        "description": "Starte den lokalen Lernablauf. Es werden keine Anmeldung oder Serveranfrage ausgeführt."
+      },
+      "authorizing": {
+        "title": "Simulierter Ablauf",
+        "description": "Gehe schrittweise weiter oder nutze die pausierbare Animation. Jede Interaktion bleibt im Browser."
+      },
+      "session": {
+        "title": "Simulierte Sitzung hergestellt",
+        "description": "Dies ist nur ein Lernzustand, keine echte Anmeldung. Die Ressourcenberechtigung ist noch nicht dargestellt."
+      },
+      "complete": {
+        "title": "Simulierter Ressourcenabruf erfolgreich",
+        "description": "Das lokale Beispiel zeigt einen erlaubten Zugriff. Es bestätigt keine echte HAPI-Autorisierung."
+      },
+      "failed": {
+        "title": "Simulierter Ablauf abgelehnt",
+        "description": "Das gewählte Fehlerbeispiel endet hier. Setze die Simulation für einen neuen Versuch zurück."
+      },
+      "denied": {
+        "title": "Simulierter Zugriff verweigert",
+        "description": "Das Beispiel trennt eine simulierte Sitzung von der Berechtigung zum Ressourcenabruf."
+      }
+    },
+    "oauth": {
+      "stages": {
+        "authenticate": {
+          "title": "Anmeldung simulieren",
+          "description": "Die Browserweiterleitung und die Providerrolle werden nur erklärt; diese Ansicht wird nicht verlassen."
+        },
+        "session": {
+          "title": "Validierung erklären",
+          "description": "Der simulierte BFF erklärt Codeaustausch, ID-Token-Prüfung und Sitzung. Es entstehen keine echten Tokens."
+        },
+        "resource": {
+          "title": "Zugriff simulieren",
+          "description": "Fordere die lokale fiktive Ressource ausdrücklich an. Eine simulierte Sitzung ist keine echte HAPI-Berechtigung."
+        }
+      },
+      "events": {
+        "authorization": {
+          "title": "Autorisierung simuliert einleiten",
+          "summary": "SIMULIERT: Der BFF ist der vertrauliche Client. S256 wird erklärt, ohne eine Transaktion oder einen Verifier zu erzeugen.",
+          "explanation": "Der BFF ist der vertrauliche Client. S256 wird erklärt, ohne eine Transaktion oder einen Verifier zu erzeugen."
+        },
+        "redirect": {
+          "title": "Simulierte Browserweiterleitung",
+          "summary": "SIMULIERT: Der BFF würde den Browser zum Authorization Server weiterleiten. Diese Darstellung bleibt lokal.",
+          "explanation": "Der BFF würde den Browser zum Authorization Server weiterleiten. Diese Darstellung bleibt lokal."
+        },
+        "authorization-request": {
+          "title": "Simulierte Authorization-Anfrage",
+          "summary": "SIMULIERT: Der Browser transportiert die Code/S256-Anfrage im Frontchannel. Die Standardmission verwendet kein PAR.",
+          "explanation": "Der Browser transportiert die Code/S256-Anfrage im Frontchannel. Die Standardmission verwendet kein PAR."
+        },
+        "identity": {
+          "title": "Providerrolle simuliert erklären",
+          "summary": "SIMULIERT: Die Identitätsprüfung ist eine konzeptionelle interne Provideraktion. Hier gibt es weder Loginformular noch echte Beobachtung.",
+          "explanation": "Die Identitätsprüfung ist eine konzeptionelle interne Provideraktion. Hier gibt es weder Loginformular noch echte Beobachtung."
+        },
+        "callback": {
+          "title": "Simulierte Rückkehr zum BFF",
+          "summary": "SIMULIERT: Der Callback wird als Browser-zu-BFF-Interaktion erklärt. Es werden weder Code noch Callback-URL erzeugt.",
+          "explanation": "Der Callback wird als Browser-zu-BFF-Interaktion erklärt. Es werden weder Code noch Callback-URL erzeugt."
+        },
+        "exchange": {
+          "title": "Simulierter Codeaustausch",
+          "summary": "SIMULIERT: Der vertrauliche Client würde den Code mit PKCE im Rückkanal austauschen. Es erfolgt keine Token-Anfrage.",
+          "explanation": "Der vertrauliche Client würde den Code mit PKCE im Rückkanal austauschen. Es erfolgt keine Token-Anfrage."
+        },
+        "token-response": {
+          "title": "Simulierte Tokenantwort",
+          "summary": "SIMULIERT: Eine Tokenantwort wird nur beschrieben. Die Simulation enthält keine nutzbaren Access Tokens oder ID Tokens.",
+          "explanation": "Eine Tokenantwort wird nur beschrieben. Die Simulation enthält keine nutzbaren Access Tokens oder ID Tokens."
+        },
+        "validation": {
+          "title": "Simulierte lokale Validierung",
+          "summary": "SIMULIERT: Der BFF würde die OIDC-Antwort prüfen. Diese actor-lokale Erklärung ist weder eine echte Prüfung noch ein Netzwerkereignis.",
+          "explanation": "Der BFF würde die OIDC-Antwort prüfen. Diese actor-lokale Erklärung ist weder eine echte Prüfung noch ein Netzwerkereignis."
+        },
+        "session": {
+          "title": "Simulierte Sitzung herstellen",
+          "summary": "SIMULIERT: Der lokale Lernzustand wird als simulierte Sitzung dargestellt. Es werden keine BFF-Sitzung oder Cookies erstellt.",
+          "explanation": "Der lokale Lernzustand wird als simulierte Sitzung dargestellt. Es werden keine BFF-Sitzung oder Cookies erstellt."
+        },
+        "pkce-rejected": {
+          "title": "Simulierte PKCE-Ablehnung",
+          "summary": "SIMULIERT: Dieses feste Fehlerbeispiel endet beim Codeaustausch. Kein realer Provider prüft einen Verifier; es entsteht keine Sitzung.",
+          "explanation": "Dieses feste Fehlerbeispiel endet beim Codeaustausch. Kein realer Provider prüft einen Verifier; es entsteht keine Sitzung."
+        },
+        "resource-request": {
+          "title": "Simulierten Ressourcenabruf zeigen",
+          "summary": "SIMULIERT: Der Lernablauf illustriert einen BFF-zu-Resource-Server-Aufruf. Es werden nur lokale Beispieldaten verwendet.",
+          "explanation": "Der Lernablauf illustriert einen BFF-zu-Resource-Server-Aufruf. Es werden nur lokale Beispieldaten verwendet."
+        },
+        "resource-allowed": {
+          "title": "Simulierten Zugriff erlauben",
+          "summary": "SIMULIERT: Das Beispiel stellt die eigenständige Ressourcenautorisierung dar. Die JSON-Ansicht enthält nur eine lokale fiktive Basic-Ressource.",
+          "explanation": "Das Beispiel stellt die eigenständige Ressourcenautorisierung dar. Die JSON-Ansicht enthält nur eine lokale fiktive Basic-Ressource."
+        },
+        "resource-denied": {
+          "title": "Simulierten Zugriff verweigern",
+          "summary": "SIMULIERT: Trotz simulierter Sitzung fehlt im Beispiel demo.fhir.read. Dies ist keine beobachtete HAPI-Entscheidung.",
+          "explanation": "Trotz simulierter Sitzung fehlt im Beispiel demo.fhir.read. Dies ist keine beobachtete HAPI-Entscheidung."
+        }
+      }
+    },
+    "resourceFinished": "Das feste Simulationsbeispiel ist abgeschlossen. Prüfe das Ergebnis oder setze die Simulation zurück.",
+    "epa": {
+      "objective": "ePA-Rollen, PAR und Protokollgrenzen interaktiv als Konzept erkunden.",
+      "disclaimer": "Alle Schritte und virtuellen Zeiten sind SIMULIERT und KONZEPTUELL. Keine gematik-Anbindung, Zertifizierung oder Konformitätsaussage.",
+      "clientRole": "OAuth-Client gegenüber dem IdP (konzeptionell)",
+      "providerRole": "AS-/IdP-Verantwortung im Lernmodell",
+      "protectedRole": "Geschützte Systemgrenze, kein VAU-Protokoll",
+      "protectedAction": "Geschützten Zugriff konzeptionell erklären",
+      "protectedTitle": "Konzeptioneller geschützter Zugriff",
+      "protectedDescription": "Nur eine Erklärung der Sicherheitsgrenze. Kein Endpunkt, HTTP-Ergebnis oder klinischer/FHIR-Datenkörper wird erfunden.",
+      "protectedResult": "SIMULIERT / KONZEPTUELL: Die geschützte Grenze ist erläutert. Keine reale Autorisierung, keine VAU-Kommunikation und keine Datenantwort.",
+      "conceptualOutcome": "Konzept erläutert",
+      "scenarios": {
+        "success": "Konzeptioneller Ablauf",
+        "parRejected": "Konzeptionelle PAR-Ablehnung"
+      },
+      "stages": {
+        "par": {
+          "title": "PAR und Rollen",
+          "description": "Direkte Dienstkommunikation vom OAuth-Client zum IdP; Browsernavigation bleibt getrennt."
+        },
+        "identity": {
+          "title": "Identitäts- und Berechtigungsgrenzen",
+          "description": "Konzeptionelle Zuständigkeiten ohne reale Anmeldung oder Tokens."
+        },
+        "protected": {
+          "title": "Geschützte Grenze",
+          "description": "Explizit eine Erklärung öffnen, ohne Patientendaten oder VAU-Transaktionen."
+        }
+      },
+      "states": {
+        "idle": {
+          "title": "Konzeptionelle Simulation bereit",
+          "description": "Start öffnet den ersten Schritt pausiert. Keine Dienste werden kontaktiert."
+        },
+        "authorizing": {
+          "title": "Konzeptioneller Ablauf pausiert",
+          "description": "Mit Schritt oder Wiedergabe die Rollen und Kanäle erkunden."
+        },
+        "session": {
+          "title": "Konzeptionelle Berechtigungsgrenze erreicht",
+          "description": "Keine echte Sitzung. Die Erklärung zum geschützten Zugriff erfordert eine eigene Aktion."
+        },
+        "complete": {
+          "title": "Konzeptioneller Ablauf erklärt",
+          "description": "Nur lokaler Lernverlauf; keine ePA- oder FHIR-Antwort."
+        },
+        "failed": {
+          "title": "Konzeptioneller PAR abgelehnt",
+          "description": "Das Beispiel stoppt vor der Weiterleitung. Zurücksetzen startet einen neuen Lernversuch."
+        }
+      },
+      "events": {
+        "intent": {
+          "title": "Zugriffswunsch erläutern",
+          "summary": "SIMULIERT / KONZEPTUELL: Eine fiktive versicherte Person startet das Lernmodell.",
+          "explanation": "Eine fiktive versicherte Person startet das Lernmodell."
+        },
+        "fdv-request": {
+          "title": "FdV an Autorisierungsdienst",
+          "summary": "SIMULIERT / KONZEPTUELL: Das FdV übergibt den konzeptionellen Zugriffswunsch; hier wird kein echter Request gesendet.",
+          "explanation": "Das FdV übergibt den konzeptionellen Zugriffswunsch; hier wird kein echter Request gesendet."
+        },
+        "par": {
+          "title": "Direkter PAR",
+          "summary": "SIMULIERT / KONZEPTUELL: Der ePA-Autorisierungsdienst ist OAuth-Client gegenüber dem IdP. PAR läuft direkt zwischen Diensten, nicht über einen Browser-Redirect.",
+          "explanation": "Der ePA-Autorisierungsdienst ist OAuth-Client gegenüber dem IdP. PAR läuft direkt zwischen Diensten, nicht über einen Browser-Redirect."
+        },
+        "par-reference": {
+          "title": "PAR-Referenz erklären",
+          "summary": "SIMULIERT / KONZEPTUELL: Das Modell erläutert request_uri als Referenz; es erzeugt keine verwendbare Referenz und nennt keinen normativen Endpunkt.",
+          "explanation": "Das Modell erläutert request_uri als Referenz; es erzeugt keine verwendbare Referenz und nennt keinen normativen Endpunkt."
+        },
+        "redirect": {
+          "title": "Browser-Redirect erklären",
+          "summary": "SIMULIERT / KONZEPTUELL: Der Autorisierungsdienst gibt die konzeptionelle Weiterleitung an das FdV zurück. Dies ist kein zusätzlicher PAR.",
+          "explanation": "Der Autorisierungsdienst gibt die konzeptionelle Weiterleitung an das FdV zurück. Dies ist kein zusätzlicher PAR."
+        },
+        "identity-navigation": {
+          "title": "Navigation zum IdP",
+          "summary": "SIMULIERT / KONZEPTUELL: Der Benutzeragent folgt konzeptionell zur Identitätsprüfung. Es wird keine reale Seite geöffnet.",
+          "explanation": "Der Benutzeragent folgt konzeptionell zur Identitätsprüfung. Es wird keine reale Seite geöffnet."
+        },
+        "identity-boundary": {
+          "title": "Identitätsgrenze",
+          "summary": "SIMULIERT / KONZEPTUELL: Akteur-lokale konzeptionelle Erklärung: keine beobachtete IdP-Transaktion, kein echter Authenticator und keine Gerätebindung.",
+          "explanation": "Akteur-lokale konzeptionelle Erklärung: keine beobachtete IdP-Transaktion, kein echter Authenticator und keine Gerätebindung."
+        },
+        "authorization-boundary": {
+          "title": "Autorisierungsgrenze",
+          "summary": "SIMULIERT / KONZEPTUELL: Das Lernmodell erreicht eine konzeptionelle Berechtigungsgrenze. Es stellt keine echte Sitzung und keine TI-Berechtigung her.",
+          "explanation": "Das Lernmodell erreicht eine konzeptionelle Berechtigungsgrenze. Es stellt keine echte Sitzung und keine TI-Berechtigung her."
+        },
+        "par-rejected": {
+          "title": "PAR konzeptionell abgelehnt",
+          "summary": "SIMULIERT / KONZEPTUELL: Das feste Fehlerbeispiel stoppt vor der Browser-Weiterleitung. Es entspricht keiner realen gematik-Fehlerantwort.",
+          "explanation": "Das feste Fehlerbeispiel stoppt vor der Browser-Weiterleitung. Es entspricht keiner realen gematik-Fehlerantwort."
+        },
+        "protected-intent": {
+          "title": "Geschützten Zugriff erläutern",
+          "summary": "SIMULIERT / KONZEPTUELL: Eine explizite Lernaktion erläutert den Zugriffswunsch. Es findet kein FHIR- oder ePA-Datenabruf statt.",
+          "explanation": "Eine explizite Lernaktion erläutert den Zugriffswunsch. Es findet kein FHIR- oder ePA-Datenabruf statt."
+        },
+        "protected-boundary": {
+          "title": "VAU nur als Konzept",
+          "summary": "SIMULIERT / KONZEPTUELL: Die geschützte Systemgrenze bleibt eine akteur-lokale Erklärung. Kein VAU-Handshake, keine klinischen Daten und kein Konformitätsnachweis.",
+          "explanation": "Die geschützte Systemgrenze bleibt eine akteur-lokale Erklärung. Kein VAU-Handshake, keine klinischen Daten und kein Konformitätsnachweis."
+        }
+      }
+    }
   }
 }

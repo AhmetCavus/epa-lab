@@ -179,11 +179,13 @@ for (const locale of ['de', 'en'] as const) {
         await fixture.install(page);
         await page.goto(`http://127.0.0.1:4173${workspacePath}`);
         await page.getByRole('combobox', { name: /^(Language|Sprache)$/ }).selectOption(locale);
+        await page.locator('[data-runtime-action="start"]').first().click();
+        for (let index = 0; index < 3; index += 1) {
+          await page.locator('[data-runtime-action="advance"]').first().click();
+        }
         await page
-          .getByRole('button', {
-            name: locale === 'en' ? 'Load fixture samples' : 'Beispiele laden',
-            exact: true,
-          })
+          .locator('.mc-header')
+          .getByRole('link', { name: 'Inspect', exact: true })
           .click();
         await page.locator('.timeline button').nth(2).click();
         await accessible(page);

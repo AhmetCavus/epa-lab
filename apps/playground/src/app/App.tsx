@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
-import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { Catalog } from '../features/mission';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { ApplicationHeader, Catalog } from '../features/mission';
 import { WorkspaceRoute } from './WorkspaceRoute';
 import { NotFound } from './NotFound';
 import { selectLanguage } from './i18n';
@@ -43,50 +43,14 @@ export function App() {
       <a className="skip-link" href="#main-content">
         {t('common:skipLink')}
       </a>
-      <header className="site-header">
-        <Link className="brand" to="/missions" aria-label={t('common:brandLink')}>
-          <span className="brand-mark" aria-hidden="true">
-            ⌖
-          </span>
-          <span>
-            <strong>AUTH PROTOCOL PLAYGROUND</strong>
-            <span className="brand-subtitle">{t('common:tagline')}</span>
-          </span>
-        </Link>
-        <nav aria-label={t('common:navigation.label')}>
-          <Link className="nav-link" to="/missions">
-            {t('common:navigation.missions')}
-          </Link>
-        </nav>
-        <span className="header-label">
-          {t(
-            publicOAuthRuntime
-              ? 'header.public'
-              : privateOAuthRuntime
-                ? 'header.private'
-                : 'header.slice',
-          )}
-          <span> / </span>
-          {t(
-            publicOAuthRuntime
-              ? 'header.demo'
-              : privateOAuthRuntime
-                ? 'header.integration'
-                : 'header.preview',
-          )}
-        </span>
-        {languageControl}
-      </header>
+      <ApplicationHeader languageControl={languageControl} />
       <Routes>
         <Route path="/" element={<Navigate to="/missions" replace />} />
         <Route
           path="/missions"
           element={<Catalog runtimeEnabled={executionRuntime} publicRuntime={publicOAuthRuntime} />}
         />
-        <Route
-          path="/missions/:missionId/workspace"
-          element={<WorkspaceRoute languageControl={languageControl} />}
-        />
+        <Route path="/missions/:missionId/workspace" element={<WorkspaceRoute />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <footer className="site-footer">

@@ -1,0 +1,222 @@
+[
+  {
+    "locale": "de",
+    "surface": "catalog",
+    "width": 1672,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1672,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-explore",
+    "width": 1672,
+    "header": {
+      "x": 0,
+      "y": -13,
+      "width": 1672,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-inspect",
+    "width": 1672,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1672,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-live",
+    "width": 1672,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1672,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "epa",
+    "width": 1672,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1672,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "catalog",
+    "width": 1585,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1585,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-explore",
+    "width": 1585,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1585,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-inspect",
+    "width": 1585,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1585,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-live",
+    "width": 1585,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1585,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "epa",
+    "width": 1585,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 1585,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "catalog",
+    "width": 390,
+    "header": {
+      "x": 0,
+      "y": -497,
+      "width": 390,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-explore",
+    "width": 390,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-inspect",
+    "width": 390,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-live",
+    "width": 390,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "epa",
+    "width": 390,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "catalog",
+    "width": 320,
+    "header": {
+      "x": 0,
+      "y": -587,
+      "width": 320,
+      "height": 58
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-explore",
+    "width": 320,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-inspect",
+    "width": 320,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "oauth-live",
+    "width": 320,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 109
+    }
+  },
+  {
+    "locale": "de",
+    "surface": "epa",
+    "width": 320,
+    "header": {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 109
+    }
+  }
+]
